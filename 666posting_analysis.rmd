@@ -1,0 +1,463 @@
+---
+title: "Alex G Census 2020 Analysis"
+author: "Tim Nieuwenhuis"
+date: "4/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+```
+
+Load data
+```{r}
+dat <- read.csv("inputs/alex_g_stats_5_19.csv", stringsAsFactors = F)
+dat
+
+#make it pretty
+CapStr <- function(y) {
+  c <- strsplit(y, " ")[[1]]
+  paste(toupper(substring(c, 1,1)), substring(c, 2),
+      sep="", collapse=" ")
+}
+```
+
+
+
+Questions redo previous age analysis, use substraction to gain more individuals based on previous data
+```{r}
+
+```
+
+Make a map of the world
+```{r}
+# library("rnaturalearth")
+# library("rnaturalearthdata")
+# library(rgeos)
+# 
+#world_dat <- dat %>% mutate(admin = ifelse(country == "United States"))
+
+country_codes <- read.csv("inputs/countrycode.csv", stringsAsFactors = F)
+
+ world_dat <- as.data.frame(table(dat$country), stringsAsFactors = F)
+ 
+ colnames(world_dat) <- c("Country.Name", "fans")
+# 
+# world <- left_join(world@data, world_dat)
+# 
+ 
+world_dat  <- left_join(country_codes, world_dat)
+ 
+ world_needed <- world_dat %>% select(fans, ISO2, ISO3, Country.Name) #%>% mutate(ISO_N3 = as.character(ISO_N3))
+
+####Try r world map
+library(rworldmap)
+library(mapproj)
+ library(wesanderson)
+ #colors
+ pal <- wes_palette("Zissou1", 100, type = "continuous")
+ 
+ 
+#higher rest This is is
+worldmap <- getMap(resolution = "low")
+
+worldmap@data <- left_join(worldmap@data, world_needed)
+worldmap_poly <- fortify(worldmap)
+worldmap_poly <- merge(worldmap_poly, worldmap@data, by.x="id", by.y="ADMIN", all.x=T)
+
+
+worldmap_poly_nUSA <- worldmap_poly %>% filter(Country.Name != "United States")
+
+# ####################
+# world_2 <-as.data.frame(world)
+# 
+# new_map <- joinCountryData2Map(world_2, joinCode = "ISO2", nameJoinColumn = "iso_a2", resolution = "high")
+# new_map_poly <- fortify(new_map)
+# new_map_poly <- merge(new_map_poly, new_map@data, by.x="id", by.y="ADMIN", all.x=T)
+# new_map_poly <- new_map_poly %>% arrange(id, order)
+
+# 
+# ###Higher res world
+# new_map_poly <- fortify(worldmap)
+# new_map_poly <- merge(new_map_poly, new_map@data, by.x="id", by.y="ADMIN", all.x=T)
+# #new_map_poly <- new_map_poly %>% arrange(id, order)
+
+
+
+#Whole world
+ggplot() + 
+  coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
+  geom_polygon(data = worldmap_poly, aes(long, lat, group = group, fill = log2(fans)),size = 0.3) +
+
+geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=1.5)   + 
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))
+
+
+# New Whole world
+ggplot() + 
+  coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
+  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans),size = 0.3) +
+
+#geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=5)   + 
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  +
+  labs(title = "Alex G fans around the world") + theme_gray(base_size =  14)
+#  coord_cartesian(xlim = c(-150, 180), ylim = c(-60,75)) + 
+
+ggsave("world_plots/world_no_us.png", width = 10, height = 10
+       )
+
+
+
+##Zoom in on North america
+#coord_cartesian(xlim = c(-150, -50), ylim = c(15, 60))
+# Make a vector of country names
+
+
+
+ggplot() + 
+  coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
+  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans),size = 0.3) +
+
+geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=5) +
+ coord_cartesian(xlim = c(-150, -50), ylim = c(15, 60)) +
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  + theme_void( base_size = 14) +
+  labs(title = "Alex G Fans Sans Americans")
+
+ggsave("world_plots/north_america.png")
+
+
+
+###South america
+ggplot() + 
+  coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
+  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans), color = "black" ,size = 0.3) +
+
+geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=5)+
+  coord_cartesian(xlim = c(-90, -30), ylim = c(-60, 15))  +
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) + theme_void( base_size = 14) +
+  labs(title = "Alex G Fans in South America")
+ggsave("world_plots/south_america.png", height = 8, width = 7)
+
+
+###Oceana and south east asia
+ggplot() + 
+  coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
+  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans), color = "black",size = 0.3) +
+
+geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=5)+
+  coord_cartesian(xlim = c(100, 180), ylim = c(-50, 45))  +
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  + theme_void( base_size = 14) +
+  labs(title = "Alex G Fans in East Asian and Oceania")
+
+ggsave("world_plots/south_asia_aus.png", height = 8, width = 7)
+
+
+###Europe
+ggplot() + 
+  coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
+  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans), color = "black",size = 0.3) +
+
+geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=(fans)), size=5)+
+  coord_cartesian(xlim = c(-10, 30), ylim = c(30, 70))   + 
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) + theme_void( base_size = 14) +
+  labs(title = "Alex G Fans in Europe")
+
+ggsave("world_plots/europe_current.png", height = 8, width = 7) 
+
+```
+
+Make a map of the US
+https://cran.r-project.org/web/packages/usmap/vignettes/mapping.html
+```{r}
+library(maps)
+us_states <- map_data("state")
+head(us_states)
+
+#Filter state data
+state_dat <- dat %>% filter(!(state %in% c("I don't live in the states", ""))) %>% mutate(region = tolower(state))
+
+state_df <- data.frame(table(state_dat$region), colnames = "regions", stringsAsFactors = F) %>% select(region = Var1, count = Freq)
+
+
+
+us_states_2 <- left_join(us_states, state_df)
+
+
+p <- ggplot(data = us_states_2,
+            mapping = aes(x = long, y = lat,
+                          group = group, fill = count))
+
+p + geom_polygon(color = "gray90", size = 0.1) +
+    coord_map(projection = "albers", lat0 = 39, lat1 = 45) 
+
+
+#######
+census <- read.csv("state_census.csv", stringsAsFactors = F) %>%
+          mutate(region = tolower(str_replace(region, pattern = "[.]", replacement = ""))) %>% select(region, X2019)
+          
+census <- census %>% mutate(X2019= round(as.numeric(str_replace_all(X2019, ",", ""))))
+
+#100000
+
+us_states_3 <- left_join(us_states_2, census) %>% mutate(count = ifelse(is.na(count), 0, count),
+                                                         adjust = round((count/X2019 * 100000), digits = 3))
+
+
+
+center_state <- read.csv(file = "statelatlong_2.csv", stringsAsFactors = F) %>% rename(region = name, lat_center = latitude, long_center = longitude) %>%
+  mutate(region = tolower(region))
+
+us_states_3 <- left_join(us_states_3, center_state)
+
+p <- ggplot(data = us_states_3,
+            mapping = aes(x = long, y = lat,
+                          group = group, fill = adjust), color = "black")
+
+#All of US
+p + geom_polygon(color = "gray90", size = 0.1) +
+    coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
+    geom_text(aes(long_center, lat_center, label = count))  + 
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
+  labs(title = "Alex G Fans in the USA",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
+ggsave("State Plots/all_us.png", height = 6, width = 8)
+
+#North East
+p + geom_polygon(color = "gray90", size = 0.1) +
+    coord_map(xlim = c(-80, -65), ylim = c(38,48)) +
+    geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
+  labs(title = "Alex G Fans in the North East",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
+ggsave("State Plots/NE_us.png", height = 8, width = 8)
+
+#THe south
+p + geom_polygon(color = "gray90", size = 0.1) +
+    coord_map(xlim = c(-110, -65), ylim = c(25,40)) +
+    geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
+  labs(title = "Alex G Fans in the South",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
+ggsave("State Plots/south_us.png", height = 8, width = 12)
+
+#THe Mid west
+p + geom_polygon(color = "gray90", size = 0.1) +
+    coord_map(xlim = c(-114, -80), ylim = c(32,49)) +
+    geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
+  labs(title = "Alex G Fans in the Mid West",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
+ggsave("State Plots/midwest_us.png", height = 8, width = 9)
+
+#THe west
+p + geom_polygon(color = "gray90", size = 0.1) +
+    coord_map(xlim = c(-125, -110), ylim = c(30,49)) +
+    geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
+  labs(title = "Alex G Fans in the West",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
+ggsave("State Plots/west_us.png", height = 9, width = 7)
+
+
+```
+
+Make a political compass
+```{r}
+poltical_dat <- select(dat,left_right, lib_auth, gender, age) %>% drop_na() %>% mutate(gender = ifelse(gender =="There are only 2 genders", "Prefer not to say", gender))
+
+#remove the one comment
+
+
+med_LR <- median(poltical_dat$left_right)
+med_LA <- median(poltical_dat$lib_auth)
+mean_LR <- mean(poltical_dat$left_right)
+mean_LA <- mean(poltical_dat$lib_auth)
+
+
+#Sex
+ggplot(poltical_dat) +
+           
+           geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.005) +
+           geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.005) +
+           geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.005) +
+           geom_rect(aes(xmin = 0, xmax= 5,ymin = 5, ymax=10), fill = "red", alpha = 0.005) + 
+          geom_jitter(aes(x = left_right, y = lib_auth, shape = gender), width =.5, height =.5, alpha = .5, ) +
+          #Adding median and mean
+          geom_point(aes(x=med_LR, y=med_LA), colour="blue", shape = 9, size =2) +
+          geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
+          #Add the dotplot annotation
+          geom_point(aes(x=8, y=3), colour="blue", shape = 9, size =3) +
+          geom_point(aes(x=8, y=1.5), colour="red", shape = 9, size =3) +
+  #Add annotations to the compass
+          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(poltical_dat))) + 
+   ylab("libertarian to authoritarian") +
+               xlab("left to right") +
+              coord_fixed() + annotate("text", x = c(2.5, 2.5, 7.5, 7.5),
+                                       y = c(10.5, -.5, 10.5, -.5),
+                                       label = c("Auth Left", "Lib Left", "Auth Right", "Lib Right"), size =5) +
+                                annotate("text", x = c(8, 8),
+                                       y = c(2, 3.5),
+                                       label = c("Mean", "Median"), size =4) + 
+                                       theme_void(base_size = 14)
+ggsave("outputs/political_compass_gender.png")
+#Age
+ggplot(poltical_dat) +
+           
+           geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.005) +
+           geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.005) +
+           geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.005) +
+           geom_rect(aes(xmin = 0, xmax= 5,ymin = 5, ymax=10), fill = "red", alpha = 0.005) + 
+          geom_jitter(aes(x = left_right, y = lib_auth, color = age), width =.5, height =.5 ) +
+          #Adding median and mean
+          geom_point(aes(x=med_LR, y=med_LA), colour="blue", shape = 9, size =2) +
+          geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
+          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(poltical_dat))) + 
+   ylab("libertarian to authoritarian") +
+               xlab("left to right") +
+              coord_fixed() + annotate("text", x = c(2.5, 2.5, 7.5, 7.5),
+                                       y = c(10.5, -.5, 10.5, -.5),
+                                       label = c("Auth Left", "Lib Left", "Auth Right", "Lib Right"), size =5) + 
+                                       scale_colour_gradient(low = "black", high = "white", na.value = NA) +
+                                       theme_void()
+
+
+
+#Second version change the size of points based on how many points there are there
+poltical_dat_2 <- rbind(poltical_dat, c(9, 8))
+
+pol_count <- as.data.frame(table(poltical_dat_2$left_right, poltical_dat_2$lib_auth))
+pol_count <- pol_count %>% mutate(Freq = ifelse((Var1 == "9" & Var2 == "8"), Freq - 1, Freq))
+
+colnames(pol_count)[1:2] <- c("left_right", "lib_auth")
+pol_count$left_right <- as.integer(as.character(pol_count$left_right))
+pol_count$lib_auth <- as.integer(as.character(pol_count$lib_auth))
+
+pol_count <- filter(pol_count, Freq != 0)
+
+ggplot(pol_count) +
+          #  
+            geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.02) +
+            geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.02) +
+            geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.02) +
+            geom_rect(aes(xmin = 0, xmax= 5,ymin = 5, ymax=10), fill = "red", alpha = 0.02) + 
+           geom_point(aes(x = left_right, y = lib_auth, size= Freq)) +
+           #Adding median and mean
+           geom_point(aes(x=med_LR, y=med_LA), colour="white", shape = 9, size =3) +
+           geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =3) +
+         #Add the dotplot annotation
+          geom_point(aes(x=8, y=3), colour="white", shape = 9, size =4) +
+          geom_point(aes(x=8, y=1.5), colour="red", shape = 9, size =4) +
+          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(poltical_dat))) + 
+   ylab("Libertarian to Authoritarian") +
+               xlab("Left to Right") +
+              # scale_x_continuous(breaks = c(0:10))+
+               #scale_y_continuous(breaks = c(0:10)) +
+              scale_x_continuous(breaks = c(0,2,4,6,8,10))+
+               scale_y_continuous(breaks = c(0,2,4,6,8,10)) +
+               scale_size_continuous(breaks = c(1, 3, 6, 9, 13, 15, 17),  range = c(2.5,8)) + 
+                                annotate("text", x = c(8, 8),
+                                       y = c(2, 3.5),
+                                       label = c("Mean", "Median"), size =4) +
+              coord_fixed() + theme_grey(base_size = 14)
+ggsave("outputs/political_compass_exact.png")
+
+# #############
+# pol_count <- as.data.frame(table(poltical_dat$left_right, poltical_dat$lib_auth))
+# colnames(pol_count)[1:2] <- c("left_right", "lib_auth")
+# pol_count$left_right <-factor(pol_count$left_right, levels = c("0","1", "2", "3", "4", "5", "6", "7", "8", "9","10"))
+# #pol_count$lib_auth <- as.integer(as.character(pol_count$lib_auth))
+# 
+# ggplot(pol_count) +
+#           geom_point(aes(x = left_right, y = lib_auth, size= Freq)) +
+#           #  
+#             geom_rect(aes(xmin = '5', xmax= '10',ymin = '0', ymax='5'), fill = "yellow", alpha = 0.005) +
+#              geom_rect(aes(xmin = '0', xmax= '5',ymin = '0', ymax='5'), fill = "green", alpha = 0.005) +
+#              geom_rect(aes(xmin = '5', xmax= '10',ymin = '5', ymax='10'), fill = "blue", alpha = 0.005) +
+#             geom_rect(aes(xmin = "0", xmax= "5",ymin = "5", ymax="10"), fill = "red", alpha = 0.005) + 
+#            
+#            #Adding median and mean
+#           # geom_point(aes(x=med_LR, y=med_LA), colour="white", shape = 9, size =2) +
+#            #geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
+#           labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(poltical_dat))) + 
+#    ylab("libertarian to authoritarian") +
+#                xlab("left to right") +
+#     
+#               coord_fixed() #+ theme_void()
+
+```
+
+Calculate how many possible bands can exist in this group
+```{r}
+band_dat <- dat %>% mutate(id = row_number(), 
+                           instruments = gsub("Music Software \\(eg. Ableton, FL studio\\)", "Music Software", instruments),
+                           instruments = str_replace_all(instruments, "a little bit of chinese flute", "Chinese Flute")) %>% 
+  filter(!(str_detect(instruments, "anymore")) | instruments != "Nope" | str_detect(instruments, "not")) %>% select(id, instruments, in_band) 
+
+band_dat_melt <- band_dat %>% mutate(instrument = (str_split(instruments, ","))) %>% unnest(cols = instrument) %>%
+  mutate(instrument =(str_trim(instrument, "both"))) %>% filter(!(instrument %in% c("Used to","but not anymore", "", "Nope")))
+
+unique(band_dat_melt$instrument)
+
+instr_dat <- (as.data.frame.matrix(table(band_dat_melt$id, band_dat_melt$instrument)))
+
+instr_dat 
+
+#General stats
+sum_instr <- as.data.frame(table(band_dat_melt$instrument), stringsAsFactors = F) %>% mutate(Var1 = str_to_title(Var1))
+
+#as.data.frame(table(band_dat_melt$instrument))
+
+ggplot(sum_instr, aes(x = reorder(Var1, -Freq), y = Freq, fill = Var1)) + geom_bar(stat= "identity") +
+  labs(title = "Instruments played in this group", subtitle = paste0("N = ", length(unique(band_dat_melt$id)))) +
+  ylab(label = "Count") + xlab(label = "Instruments")+ 
+    theme_classic(base_size = 16) +
+ theme(axis.text.x = element_text(angle=85, hjust=1, vjust = 1), legend.position = "None") +  geom_text(aes(label=Freq), position=position_dodge(width=0.9), vjust=-0.25)
+ggsave("outputs/instrument_summary.png", width = 8, height = 8)
+
+#Upset plot
+library(UpSetR)
+listInput <- list(one = c(1, 2, 3, 5, 7, 8, 11, 12, 13), two = c(1, 2, 4, 5, 
+    10), three = c(1, 5, 6, 7, 8, 9, 10, 12, 13))
+expressionInput <- c(one = 2, two = 1, three = 2, `one&two` = 1, `one&three` = 4, 
+    `two&three` = 1, `one&two&three` = 2)
+
+colnames(instr_dat) <- str_to_title(colnames(instr_dat))
+
+instru = 1
+instrument_list <- list()
+for (instru in 1:ncol(instr_dat)) {
+   instrument_list[[colnames(instr_dat)[instru]]] <- (1:nrow(instr_dat))[instr_dat[,instru] == 1]
+}
+
+
+
+plot_up <- upset(fromList(instrument_list), order.by = "freq", nsets = 6, point.size = 4, line.size = 1.8, mainbar.y.label = "Instrument Intersections", sets.x.label = "People Per Instrument", text.scale=c(4, 2, 2, 2, 2, 2))
+
+plot_up
+
+plot_ups <- upset(fromList(instrument_list), order.by = "freq", nsets = 30, point.size = 2.8, line.size = 1, mainbar.y.label = "Instrument Intersections", sets.x.label = "People Per Instrument", text.scale=c(4, 2, 2, 2, 2, 2))
+
+plot_ups
+
+png("outputs/instrument_plot.png", width = 800, height = 800)
+plot_ups
+dev.off()
+
+png("outputs/instrument_5_plot.png", width = 800, height = 800)
+plot_up
+dev.off()
+
+#How many skin cells?
+table(band_dat_melt$instrument, band_dat_melt$instrument)
+
+
+
+```
+
+Favorite Alex G Album
+```{r}
+
+```
+
+Is your favorite album related to your favorite song?
+```{r}
+
+```
+
