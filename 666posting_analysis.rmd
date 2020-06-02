@@ -105,7 +105,7 @@ ggplot() +
   labs(title = "Alex G fans around the world") + theme_gray(base_size =  14)
 #  coord_cartesian(xlim = c(-150, 180), ylim = c(-60,75)) + 
 
-ggsave("world_plots/world_no_us.png", width = 10, height = 10
+ggsave("outputs/world_no_us.png", width = 10, height = 10
        )
 
 
@@ -125,7 +125,7 @@ geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  + theme_void( base_size = 14) +
   labs(title = "Alex G Fans Sans Americans")
 
-ggsave("world_plots/north_america.png")
+ggsave("outputs/north_america.png")
 
 
 
@@ -138,7 +138,7 @@ geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label
   coord_cartesian(xlim = c(-90, -30), ylim = c(-60, 15))  +
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) + theme_void( base_size = 14) +
   labs(title = "Alex G Fans in South America")
-ggsave("world_plots/south_america.png", height = 8, width = 7)
+ggsave("outputs/south_america.png", height = 8, width = 7)
 
 
 ###Oceana and south east asia
@@ -151,7 +151,7 @@ geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  + theme_void( base_size = 14) +
   labs(title = "Alex G Fans in East Asian and Oceania")
 
-ggsave("world_plots/south_asia_aus.png", height = 8, width = 7)
+ggsave("outputs/south_asia_aus.png", height = 8, width = 7)
 
 
 ###Europe
@@ -164,7 +164,7 @@ geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) + theme_void( base_size = 14) +
   labs(title = "Alex G Fans in Europe")
 
-ggsave("world_plots/europe_current.png", height = 8, width = 7) 
+ggsave("outputs/europe_current.png", height = 8, width = 7) 
 
 ```
 
@@ -221,7 +221,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     geom_text(aes(long_center, lat_center, label = count))  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
   labs(title = "Alex G Fans in the USA",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
-ggsave("State Plots/all_us.png", height = 6, width = 8)
+ggsave("outputs/all_us.png", height = 6, width = 8)
 
 #North East
 p + geom_polygon(color = "gray90", size = 0.1) +
@@ -229,7 +229,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
   labs(title = "Alex G Fans in the North East",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
-ggsave("State Plots/NE_us.png", height = 8, width = 8)
+ggsave("outputs/NE_us.png", height = 8, width = 8)
 
 #THe south
 p + geom_polygon(color = "gray90", size = 0.1) +
@@ -237,7 +237,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
   labs(title = "Alex G Fans in the South",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
-ggsave("State Plots/south_us.png", height = 8, width = 12)
+ggsave("outputs/south_us.png", height = 8, width = 12)
 
 #THe Mid west
 p + geom_polygon(color = "gray90", size = 0.1) +
@@ -245,7 +245,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
   labs(title = "Alex G Fans in the Mid West",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
-ggsave("State Plots/midwest_us.png", height = 8, width = 9)
+ggsave("outputs/midwest_us.png", height = 8, width = 9)
 
 #THe west
 p + geom_polygon(color = "gray90", size = 0.1) +
@@ -253,7 +253,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
   labs(title = "Alex G Fans in the West",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
-ggsave("State Plots/west_us.png", height = 9, width = 7)
+ggsave("outputs/west_us.png", height = 9, width = 7)
 
 
 ```
