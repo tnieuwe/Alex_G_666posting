@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library("ztable")
-
+library(UpSetR)
 #For simulated p-values
 set.seed(1)
 ```
@@ -386,59 +386,105 @@ ggsave("outputs/political_compass_exact.png")
 
 ```
 
-Calculate how many possible bands can exist in this group
+# Musicians in 666posting
+
+Prepare the data and make a melted version of the datarframe
 ```{r}
 band_dat <- dat %>% mutate(id = row_number(), 
-                           instruments = gsub("Music Software \\(eg. Ableton, FL studio\\)", "Music Software", instruments),
-                           instruments = str_replace_all(instruments, "a little bit of chinese flute", "Chinese Flute")) %>% 
-  filter(!(str_detect(instruments, "anymore")) | instruments != "Nope" | str_detect(instruments, "not")) %>% select(id, instruments, in_band) 
+                           instruments = gsub("Music Software \\(eg. Ableton, FL studio\\)",
+                                              "Music Software",
+                                              instruments),
+                           instruments = str_replace_all(instruments,
+                                                         "a little bit of chinese flute",
+                                                         "Chinese Flute")) %>% 
+                     filter(!(str_detect(instruments, "anymore")) |
+                              instruments != "Nope" |
+                              str_detect(instruments, "not")) %>%
+                    select(id, instruments, in_band) 
 
-band_dat_melt <- band_dat %>% mutate(instrument = (str_split(instruments, ","))) %>% unnest(cols = instrument) %>%
-  mutate(instrument =(str_trim(instrument, "both"))) %>% filter(!(instrument %in% c("Used to","but not anymore", "", "Nope")))
+band_dat_melt <- band_dat %>%
+  mutate(instrument = (str_split(instruments, ","))) %>%
+  unnest(cols = instrument) %>%
+  mutate(instrument =(str_trim(instrument, "both"))) %>%
+  filter(!(instrument %in% c("Used to","but not anymore", "", "Nope")))
 
+#Check data looks okay
 unique(band_dat_melt$instrument)
 
+#Make dataframe giving a 1 or 0 to each person based on if they play the instrument or not, 1 is TRUE and 0 is false
 instr_dat <- (as.data.frame.matrix(table(band_dat_melt$id, band_dat_melt$instrument)))
+```
 
-instr_dat 
 
+Generate general summaries
+```{r}
 #General stats
-sum_instr <- as.data.frame(table(band_dat_melt$instrument), stringsAsFactors = F) %>% mutate(Var1 = str_to_title(Var1))
+sum_instr <- as.data.frame(table(band_dat_melt$instrument),
+                           stringsAsFactors = F) %>%
+              mutate(Var1 = str_to_title(Var1))
+```
 
-#as.data.frame(table(band_dat_melt$instrument))
-
-ggplot(sum_instr, aes(x = reorder(Var1, -Freq), y = Freq, fill = Var1)) + geom_bar(stat= "identity") +
-  labs(title = "Instruments played in this group", subtitle = paste0("N = ", length(unique(band_dat_melt$id)))) +
-  ylab(label = "Count") + xlab(label = "Instruments")+ 
+Plot of instruments played in 666posting
+```{r}
+ggplot(sum_instr, aes(x = reorder(Var1, -Freq), y = Freq, fill = Var1)) +
+  geom_bar(stat= "identity") +
+  labs(title = "Instruments played in this group",
+       subtitle = paste0("N = ", length(unique(band_dat_melt$id)))) +
+  ylab(label = "Count") +
+  xlab(label = "Instruments") + 
     theme_classic(base_size = 16) +
- theme(axis.text.x = element_text(angle=85, hjust=1, vjust = 1), legend.position = "None") +  geom_text(aes(label=Freq), position=position_dodge(width=0.9), vjust=-0.25)
+ theme(axis.text.x = element_text(angle=85, hjust=1, vjust = 1),
+       legend.position = "None") +
+  geom_text(aes(label=Freq),
+            position=position_dodge(width=0.9),
+            vjust=-0.25)
+
 ggsave("outputs/instrument_summary.png", width = 8, height = 8)
+```
 
-#Upset plot
-library(UpSetR)
-listInput <- list(one = c(1, 2, 3, 5, 7, 8, 11, 12, 13), two = c(1, 2, 4, 5, 
-    10), three = c(1, 5, 6, 7, 8, 9, 10, 12, 13))
-expressionInput <- c(one = 2, two = 1, three = 2, `one&two` = 1, `one&three` = 4, 
-    `two&three` = 1, `one&two&three` = 2)
-
+Prepare data to be Upset plots instead of venn diagrams
+```{r}
+#Make Instrument strings look like titles
 colnames(instr_dat) <- str_to_title(colnames(instr_dat))
 
 instru = 1
 instrument_list <- list()
+#Probably should change this to a lapply, but we use this loop to generate a list of ids that play a given instrument
 for (instru in 1:ncol(instr_dat)) {
    instrument_list[[colnames(instr_dat)[instru]]] <- (1:nrow(instr_dat))[instr_dat[,instru] == 1]
 }
+```
 
-
-
-plot_up <- upset(fromList(instrument_list), order.by = "freq", nsets = 6, point.size = 4, line.size = 1.8, mainbar.y.label = "Instrument Intersections", sets.x.label = "People Per Instrument", text.scale=c(4, 2, 2, 2, 2, 2))
+First Upset Plot
+```{r}
+plot_up <- upset(fromList(instrument_list),
+                 order.by = "freq",
+                 nsets = 6,
+                 point.size = 4,
+                 line.size = 1.8,
+                 mainbar.y.label = "Instrument Intersections",
+                 sets.x.label = "People Per Instrument",
+                 text.scale=c(4, 2, 2, 2, 2, 2))
 
 plot_up
+```
 
-plot_ups <- upset(fromList(instrument_list), order.by = "freq", nsets = 30, point.size = 2.8, line.size = 1, mainbar.y.label = "Instrument Intersections", sets.x.label = "People Per Instrument", text.scale=c(4, 2, 2, 2, 2, 2))
+Second Instrument plot, it contains more instruments
+```{r}
+plot_ups <- upset(fromList(instrument_list),
+                  order.by = "freq",
+                  nsets = 30,
+                  point.size = 2.8,
+                  line.size = 1,
+                  mainbar.y.label = "Instrument Intersections",
+                  sets.x.label = "People Per Instrument",
+                  text.scale=c(4, 2, 2, 2, 2, 2))
 
 plot_ups
+```
 
+Save them via graphical device
+```{r}
 png("outputs/instrument_plot.png", width = 800, height = 800)
 plot_ups
 dev.off()
@@ -446,10 +492,6 @@ dev.off()
 png("outputs/instrument_5_plot.png", width = 800, height = 800)
 plot_up
 dev.off()
-
-#How many skin cells?
-table(band_dat_melt$instrument, band_dat_melt$instrument)
-
 
 
 ```
@@ -494,19 +536,7 @@ ggplot(songs_dat, aes(x = forcats::fct_infreq(unreleased_album))) +
          subtitle = paste0("N = ",nrow(songs_dat)))
 ggsave("outputs/favorite_fancomp.png", height = 7, width = 7)
 
-# ###Unreleased word cloud
-# unreleased <- songs_dat %>% filter(unreleased_album != "I don't listen to them.") 
-# unreleased_tally <- data.frame(table(unreleased$unreleased_album), stringsAsFactors = F)
-# 
-# songs_dat <- songs_dat %>%
-#   mutate(unreleased_album = ifelse(unreleased_album %in% "I don't listen to them.", "Don't listen", unreleased_album))
-# 
-# not_listen_tally <- data.frame(table(songs_dat$unreleased_album), stringsAsFactors = F)
-# 
-# set.seed(1234)
-# wordcloud(words = not_listen_tally$Var1, freq = not_listen_tally$Freq, min.freq = 1,
-#           max.words=200, random.order=FALSE, rot.per=0.35, 
-#           colors=brewer.pal(8, "Dark2"))
+
 
 ```
 
@@ -1387,6 +1417,26 @@ auto_ztable(letter_dat_hp,
 
 
 ```
+
+
+```{r echo=F}
+#####UNUSED CODE
+
+# ###Unreleased word cloud
+# unreleased <- songs_dat %>% filter(unreleased_album != "I don't listen to them.") 
+# unreleased_tally <- data.frame(table(unreleased$unreleased_album), stringsAsFactors = F)
+# 
+# songs_dat <- songs_dat %>%
+#   mutate(unreleased_album = ifelse(unreleased_album %in% "I don't listen to them.", "Don't listen", unreleased_album))
+# 
+# not_listen_tally <- data.frame(table(songs_dat$unreleased_album), stringsAsFactors = F)
+# 
+# set.seed(1234)
+# wordcloud(words = not_listen_tally$Var1, freq = not_listen_tally$Freq, min.freq = 1,
+#           max.words=200, random.order=FALSE, rot.per=0.35, 
+#           colors=brewer.pal(8, "Dark2"))
+```
+
 
 # [Things to do](https://sandy.bandcamp.com/track/things-to-do)
 
