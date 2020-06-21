@@ -9,6 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library("ztable")
+
+#For simulated p-values
+set.seed(1)
 ```
 
 Load data
@@ -660,16 +663,16 @@ names(mb_types) = mb_names
 mb_df <- as.data.frame(mb_types) %>%
   rownames_to_column(var = "mbtis") %>%
   rename(mbti_percent = mb_types) %>%
-  mutate(IoE = ifelse(str_detect(mbtis, "I"), "I", "E"),
-         SoN = ifelse(str_detect(mbtis, "S"), "S", "N"),
-         FoT = ifelse(str_detect(mbtis, "F"), "F", "T"),
-         JoP = ifelse(str_detect(mbtis, "J"), "J", "P"))
+  mutate(IE = ifelse(str_detect(mbtis, "I"), "I", "E"),
+         SN = ifelse(str_detect(mbtis, "S"), "S", "N"),
+         FT = ifelse(str_detect(mbtis, "F"), "F", "T"),
+         JP = ifelse(str_detect(mbtis, "J"), "J", "P"))
 
 #Better way to do this?
-EI <- mb_df %>% group_by(IoE) %>% summarise(sum(mbti_percent))
-SN <- mb_df %>% group_by(SoN) %>% summarise(sum(mbti_percent))
-FT <- mb_df %>% group_by(FoT) %>% summarise(sum(mbti_percent))
-JP <- mb_df %>% group_by(JoP) %>% summarise(sum(mbti_percent))
+EI <- mb_df %>% group_by(IE) %>% summarise(sum(mbti_percent))
+SN <- mb_df %>% group_by(SN) %>% summarise(sum(mbti_percent))
+FT <- mb_df %>% group_by(FT) %>% summarise(sum(mbti_percent))
+JP <- mb_df %>% group_by(JP) %>% summarise(sum(mbti_percent))
 colnames(EI) <- c("type", "percent type")
 colnames(SN) <- c("type", "percent type")
 colnames(FT) <- c("type", "percent type")
@@ -756,17 +759,17 @@ mbti_dat$mbtis <- factor(mbti_dat$mbtis, levels = mb_names)
 Single Letter Myer-Briggs Data
 ```{r}
 mbti_dat <- mbti_dat %>%
-  mutate(IoE = ifelse(str_detect(mbtis, "I"), "I", "E"),
-         SoN = ifelse(str_detect(mbtis, "S"), "S", "N"),
-         FoT = ifelse(str_detect(mbtis, "F"), "F", "T"),
-         JoP = ifelse(str_detect(mbtis, "J"), "J", "P"))
+  mutate(IE = ifelse(str_detect(mbtis, "I"), "I", "E"),
+         SN = ifelse(str_detect(mbtis, "S"), "S", "N"),
+         FT = ifelse(str_detect(mbtis, "F"), "F", "T"),
+         JP = ifelse(str_detect(mbtis, "J"), "J", "P"))
 
 
 #Better way to do this?
-EI_g <- mbti_dat %>% group_by(IoE) %>% summarise(sum(count),sum(mbti_percent))
-SN_g <- mbti_dat %>% group_by(SoN) %>% summarise(sum(count),sum(mbti_percent))
-FT_g <- mbti_dat %>% group_by(FoT) %>% summarise(sum(count),sum(mbti_percent))
-JP_g <- mbti_dat %>% group_by(JoP) %>% summarise(sum(count),sum(mbti_percent))
+EI_g <- mbti_dat %>% group_by(IE) %>% summarise(sum(count),sum(mbti_percent))
+SN_g <- mbti_dat %>% group_by(SN) %>% summarise(sum(count),sum(mbti_percent))
+FT_g <- mbti_dat %>% group_by(FT) %>% summarise(sum(count),sum(mbti_percent))
+JP_g <- mbti_dat %>% group_by(JP) %>% summarise(sum(count),sum(mbti_percent))
 colnames(EI_g) <- c("type", "count type", "percent type")
 colnames(SN_g) <- c("type", "count type", "percent type")
 colnames(FT_g) <- c("type", "count type", "percent type")
@@ -1192,14 +1195,49 @@ hp_house_z %>% makeHeatmap() %>%
   print(caption = paste0("Heatmap Table of Hogwarts Houses and Myer-Briggs Types; Chi-Sqare p-value of ", format.pval(chi_hp_house_mbti$p.value, digits = 3)))
 ```
 
-MBTI letters vs Zodiac Signs
+Making sign table function
+```{r}
+
+col1 <- "FT"
+col2 <- "sign"
+title <- "Heatmap Table of Zodiac Signs and Intro vs Extra"
+simul_p <- F
+pval_digits <- 3
+
+
+
+auto_ztable <- function(df, col1, col2, title, simul_p = F, pval_digits = 3) {
+  temp_tab <- table(df[[col1]], df[[col2]])
+  temp_ztab <- ztable(temp_tab)
+  chi_result <- chisq.test(df[[col1]], df[[col2]], simulate.p.value = simul_p)
+  temp_ztab %>% makeHeatmap() %>%
+  print(caption = paste0(title," ; Chi-Sqare p-value of ", format.pval(chi_result$p.value, digits = pval_digits)))
+}
+
+# #Sign IE
+# IE_sign_tab <- table(letter_dat$IE, letter_dat$sign)
+# 
+# IE_sign_z <- ztable(IE_sign_tab)
+# 
+# chi_sign_IE <- chisq.test(letter_dat$IE, letter_dat$sign, simulate.p.value = T)
+# 
+# #No way to format this nicely
+# IE_sign_z %>% makeHeatmap() %>%
+#   print(caption = paste0("Heatmap Table of Zodiac Signs and Intro vs Extra; Chi-Sqare p-value of ", format.pval(chi_sign_IE$p.value, digits = 3)))
+
+```
+
+
+## MBTI letters vs Zodiac Signs
+
+Prepare data
 ```{r}
 letter_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
                     !(sign %in% c("", "Prefer not to answer", "I don't know"))) %>%
-              mutate(IoE = ifelse(str_detect(mbti, "I"), "I", "E"),
-                     SoN = ifelse(str_detect(mbti, "S"), "S", "N"),
-                     FoT = ifelse(str_detect(mbti, "F"), "F", "T"),
-                     JoP = ifelse(str_detect(mbti, "J"), "J", "P"))  %>%
+              mutate(IE = ifelse(str_detect(mbti, "I"), "I", "E"),
+                     SN = ifelse(str_detect(mbti, "S"), "S", "N"),
+                     FT = ifelse(str_detect(mbti, "F"), "F", "T"),
+                     JP = ifelse(str_detect(mbti, "J"), "J", "P"))  %>%
                 mutate(element = case_when(
                   sign %in% c("Aries", "Leo", "Sagittarius") ~ "Fire",
                   sign %in% c("Gemini", "Libra", "Aquarius") ~ "Air",
@@ -1207,152 +1245,147 @@ letter_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I d
                   sign %in% c("Cancer", "Scorpio", "Pisces") ~ "Water"
                   )
                 )
+```
 
+Sign and IE
+```{r}
 #Sign IE
-IE_sign_tab <- table(letter_dat$IoE, letter_dat$sign)
 
-IE_sign_z <- ztable(IE_sign_tab)
+auto_ztable(letter_dat,
+            "IE",
+            "sign",
+            "Heatmap Table oF Zodiac Signs and Intro vs Extra",
+            simul_p = T)
+```
 
-chi_sign_IE <- chisq.test(letter_dat$IoE, letter_dat$sign, simulate.p.value = T)
-
-#No way to format this nicely
-IE_sign_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Zodiac Signs and Intro vs Extra; Chi-Sqare p-value of ", format.pval(chi_sign_IE$p.value, digits = 3)))
+Sign and SN
+```{r}
 
 #Sign SN
-SN_sign_tab <- table(letter_dat$SoN, letter_dat$sign)
-
-SN_sign_z <- ztable(SN_sign_tab)
-
-chi_sign_SN <- chisq.test(letter_dat$SoN, letter_dat$sign, simulate.p.value = T)
-
-#No way to format this nicely
-SN_sign_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Zodiac Signs and Sense vs Intui; Chi-Sqare p-value of ", format.pval(chi_sign_SN$p.value, digits = 3)))
-
-#Sign FT
-FT_sign_tab <- table(letter_dat$FoT, letter_dat$sign)
-
-FT_sign_z <- ztable(FT_sign_tab)
-
-chi_sign_FT <- chisq.test(letter_dat$FoT, letter_dat$sign, simulate.p.value = T)
-
-#No way to format this nicely
-FT_sign_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Zodiac Signs and Feel vs Think; Chi-Sqare p-value of ", format.pval(chi_sign_FT$p.value, digits = 3)))
-
-#Sign JP
-JP_sign_tab <- table(letter_dat$JoP, letter_dat$sign)
-
-JP_sign_z <- ztable(JP_sign_tab)
-
-chi_sign_JP <- chisq.test(letter_dat$JoP, letter_dat$sign, simulate.p.value = T)
-
-#No way to format this nicely
-JP_sign_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Zodiac Signs and Judge vs Perceive; Chi-Sqare p-value of ", format.pval(chi_sign_JP$p.value, digits = 3)))
-
-
+auto_ztable(letter_dat,
+            "SN",
+            "sign",
+            "Heatmap Table oF Zodiac Signs and Intro vs Extra",
+            simul_p = T)
 ```
 
-Redo above with elements
-
+Sign and FT
 ```{r}
-#IE
-element_IE_tab <- table(letter_dat$IoE, letter_dat$element)
-element_IE_z <- ztable(element_IE_tab)
+#Sign FT
+auto_ztable(letter_dat,
+            "FT",
+            "sign",
+            "Heatmap Table oF Zodiac Signs and Intro vs Extra",
+            simul_p = T)
+```
 
-chi_element_IE <- chisq.test(letter_dat$IoE, letter_dat$element, simulate.p.value = T)
+Sign and JP
+```{r}
+#Sign JP
+auto_ztable(letter_dat,
+            "JP",
+            "sign",
+            "Heatmap Table of Zodiac Signs and Judge vs Perceive",
+            simul_p = T)
 
-element_IE_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Zodiac Elements and Intro vs Extra; Chi-Sqare p-value of ", format.pval(chi_element_IE$p.value, digits = 3)))
-
-#SN
-element_SN_tab <- table(letter_dat$SoN, letter_dat$element)
-element_SN_z <- ztable(element_SN_tab)
-
-chi_element_SN <- chisq.test(letter_dat$SoN, letter_dat$element, simulate.p.value = T)
-
-element_SN_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Zodiac Elements and Sense vs Intui; Chi-Sqare p-value of ", format.pval(chi_element_SN$p.value, digits = 3)))
-
-
-#FT
-element_FT_tab <- table(letter_dat$FoT, letter_dat$element)
-element_FT_z <- ztable(element_FT_tab)
-
-chi_element_FT <- chisq.test(letter_dat$FoT, letter_dat$element, simulate.p.value = T)
-
-element_FT_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Zodiac Elements and Feel vs Think; Chi-Sqare p-value of ", format.pval(chi_element_FT$p.value, digits = 3)))
-
-
-#JP
-element_JP_tab <- table(letter_dat$JoP, letter_dat$element)
-element_JP_z <- ztable(element_JP_tab)
-
-chi_element_JP <- chisq.test(letter_dat$JoP, letter_dat$element, simulate.p.value = T)
-
-element_JP_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Zodiac Elements and Judge vs Perceive; Chi-Sqare p-value of ", format.pval(chi_element_JP$p.value, digits = 3)))
 
 ```
 
-Hogwarts time
+## MBTI letters vs Zodiac Elements
+
+Element EI
+```{r}
+
+auto_ztable(letter_dat,
+            "IE",
+            "element",
+            "Heatmap Table oF Zodiac Elements and Intro vs Extra",
+            simul_p = T)
+```
+
+Element SN
+```{r}
+auto_ztable(letter_dat,
+            "SN",
+            "element",
+            "Heatmap Table oF Zodiac Elements and Intro vs Extra",
+            simul_p = T)
+```
+
+Element FT
+```{r}
+
+auto_ztable(letter_dat,
+            "FT",
+            "element",
+            "Heatmap Table oF Zodiac Elements and Intro vs Extra",
+            simul_p = T)
+```
+
+
+Element JP
+```{r}
+
+auto_ztable(letter_dat,
+            "JP",
+            "element",
+            "Heatmap Table of Zodiac Elements and Judge vs Perceive",
+            simul_p = T)
+
+```
+
+## Hogwarts MBTI Letter Analysis
+
+Prepare data
 ```{r}
 letter_dat_hp <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
                     !(hp_house %in% c("", "Prefer not to answer", "I don't know"))) %>%
-              mutate(IoE = ifelse(str_detect(mbti, "I"), "I", "E"),
-                     SoN = ifelse(str_detect(mbti, "S"), "S", "N"),
-                     FoT = ifelse(str_detect(mbti, "F"), "F", "T"),
-                     JoP = ifelse(str_detect(mbti, "J"), "J", "P"))
+              mutate(IE = ifelse(str_detect(mbti, "I"), "I", "E"),
+                     SN = ifelse(str_detect(mbti, "S"), "S", "N"),
+                     FT = ifelse(str_detect(mbti, "F"), "F", "T"),
+                     JP = ifelse(str_detect(mbti, "J"), "J", "P"))
+```
+
+House IE
+```{r}
+auto_ztable(letter_dat_hp,
+            "IE",
+            "hp_house",
+            "Heatmap Table of Hogwarts Houses and Intro vs Extra",
+            simul_p = T)
+```
+
+House SN
+```{r}
+
+auto_ztable(letter_dat_hp,
+            "SN",
+            "hp_house",
+            "Heatmap Table of Hogwarts Houses and Intro vs Extra",
+            simul_p = T)
+```
+
+House FT
+```{r}
+
+auto_ztable(letter_dat_hp,
+            "FT",
+            "hp_house",
+            "Heatmap Table of Hogwarts Houses and Intro vs Extra",
+            simul_p = T)
+
+```
+
+House JP
+```{r}
+auto_ztable(letter_dat_hp,
+            "JP",
+            "hp_house",
+            "Heatmap Table of Hogwarts Houses and Judge vs Perceive",
+            simul_p = T)
 
 
-#IE
-hp_house_IE_tab <- table(letter_dat_hp$IoE, letter_dat_hp$hp_house)
 
-hp_house_IE_z <- ztable(hp_house_IE_tab)
-
-chi_hp_house_IE <- chisq.test(letter_dat_hp$IoE, letter_dat_hp$hp_house, simulate.p.value = T)
-
-#No way to format this nicely
-hp_house_IE_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Hogwarts Houses and Intro vs Extra; Chi-Sqare p-value of ", format.pval(chi_hp_house_IE$p.value, digits = 3)))
-
-#SN
-hp_house_SN_tab <- table(letter_dat_hp$SoN, letter_dat_hp$hp_house)
-
-hp_house_SN_z <- ztable(hp_house_SN_tab)
-
-chi_hp_house_SN <- chisq.test(letter_dat_hp$SoN, letter_dat_hp$hp_house, simulate.p.value = T)
-
-#No way to format this nicely
-hp_house_SN_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Hogwarts Houses and Sense vs Intui; Chi-Sqare p-value of ", format.pval(chi_hp_house_SN$p.value, digits = 3)))
-
-
-#FT
-hp_house_FT_tab <- table(letter_dat_hp$FoT, letter_dat_hp$hp_house)
-
-hp_house_FT_z <- ztable(hp_house_FT_tab)
-
-chi_hp_house_FT <- chisq.test(letter_dat_hp$FoT, letter_dat_hp$hp_house, simulate.p.value = T)
-
-#No way to format this nicely
-hp_house_FT_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Hogwarts Houses and Feel vs Think; Chi-Sqare p-value of ", format.pval(chi_hp_house_FT$p.value, digits = 3)))
-
-
-#JP
-hp_house_JP_tab <- table(letter_dat_hp$JoP, letter_dat_hp$hp_house)
-
-hp_house_JP_z <- ztable(hp_house_JP_tab)
-
-chi_hp_house_JP <- chisq.test(letter_dat_hp$JoP, letter_dat_hp$hp_house, simulate.p.value = T)
-
-#No way to format this nicely
-hp_house_JP_z %>% makeHeatmap() %>%
-  print(caption = paste0("Heatmap Table of Hogwarts Houses and Judge vs Perceive; Chi-Sqare p-value of ", format.pval(chi_hp_house_JP$p.value, digits = 3)))
 ```
 
 # [Things to do](https://sandy.bandcamp.com/track/things-to-do)
