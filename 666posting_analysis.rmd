@@ -8,12 +8,12 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-
+library("ztable")
 ```
 
 Load data
 ```{r}
-dat <- read.csv("inputs/alex_g_stats_6_8.csv", stringsAsFactors = F)
+dat <- read.csv("inputs/alex_g_stats_6_19.csv", stringsAsFactors = F)
 dat
 
 #make it pretty
@@ -602,3 +602,759 @@ table(songs_dat_test$fav_song_fav_album)
 #It is more likely that you will not have your favorite song in your favorite album
 ```
 
+# Personality Questions
+
+```{r}
+##Pull personality data
+pers_dat <- dat %>% select(Timestamp, mbti, hp_house, sign, weed_use, alc_use) 
+
+
+#Figure size
+hght <- 7.29
+wdth <- 4.5
+```
+
+
+## Myers Briggs
+
+Not really sure what the best question to ask here is besides the distribution and how the distribution differs from the normal world. Data pulled from [here](https://www.myersbriggs.org/my-mbti-personality-type/my-mbti-results/how-frequent-is-my-type.htm)
+```{r}
+
+#Reduced the the percentaghe of ISFJ ESFJ and ISTJ because everywhere I look the percent is over 100
+mb_types = c( .137,
+              .122,
+              .115,
+              .088,
+              .087,
+              .085,
+              .081,
+              .054,
+              .044,
+              .043,
+              .033,
+              .032,
+              .025,
+              .021,
+              .018,
+              .015)
+  
+mb_names = c("ISFJ",	              
+            "ESFJ",	             	
+            "ISTJ",	             	
+            "ISFP",	          	
+            "ESTJ",	          	
+            "ESFP",	          	
+            "ENFP",	         	
+            "ISTP",	      	
+            "INFP",	     	
+            "ESTP",	     	
+            "INTP",	    	
+            "ENTP",	    	
+            "ENFJ",	    
+            "INTJ",	   
+            "ENTJ",
+            "INFJ")
+
+names(mb_types) = mb_names
+
+mb_df <- as.data.frame(mb_types) %>%
+  rownames_to_column(var = "mbtis") %>%
+  rename(mbti_percent = mb_types) %>%
+  mutate(IoE = ifelse(str_detect(mbtis, "I"), "I", "E"),
+         SoN = ifelse(str_detect(mbtis, "S"), "S", "N"),
+         FoT = ifelse(str_detect(mbtis, "F"), "F", "T"),
+         JoP = ifelse(str_detect(mbtis, "J"), "J", "P"))
+
+#Better way to do this?
+EI <- mb_df %>% group_by(IoE) %>% summarise(sum(mbti_percent))
+SN <- mb_df %>% group_by(SoN) %>% summarise(sum(mbti_percent))
+FT <- mb_df %>% group_by(FoT) %>% summarise(sum(mbti_percent))
+JP <- mb_df %>% group_by(JoP) %>% summarise(sum(mbti_percent))
+colnames(EI) <- c("type", "percent type")
+colnames(SN) <- c("type", "percent type")
+colnames(FT) <- c("type", "percent type")
+colnames(JP) <- c("type", "percent type")
+
+
+letter_df <- rbind(EI,SN,FT,JP)
+
+category <- factor(c("E or I", "E or I", "N or S", "N or S", "F or T", "F or T", "J or P", "J or P"),
+                   c("E or I", "N or S", "F or T", "J or P"))
+
+letter_df <-  cbind(letter_df, category)
+
+
+```
+
+General population plots Myer-Briggs Type
+```{r}
+
+#Factor levels to maintain look in plot
+mb_df$mbtis <- factor(mb_df$mbtis, levels = mb_names)
+
+ggplot(mb_df,
+       aes(x = mbtis,
+           y = mbti_percent,
+           fill = mbtis)) +
+  geom_col(color = "black") + 
+  scale_y_continuous(labels = scales::percent) +
+  ylab("Myer-Briggs Type Percent") +
+  xlab("Myer-Briggs Type") +
+  labs(title = "Population Myer-Briggs Types",
+       subtitle = "N Unknown, from studies between 1972-2002 (pls update website)") +
+
+
+ggsave(filename = "outputs/myer-brigg-gen-pop.png", width = hght, height = wdth)
+
+```
+
+General Population Single Type
+```{r}
+
+letter_df$type <- factor(letter_df$type, c("E", "I", "N", "S", "F", "T", "J", "P"))
+
+ggplot(letter_df, aes(x = category, y = `percent type`, fill = type)) +
+  geom_bar(position = "stack", stat = "Identity") +
+  scale_fill_brewer(palette = "Set1", name = "Discrete Types", labels = c("Extrovert", "Introvert",
+                                                          "Intuitives", "Sensors",
+                                                          "Feeling", "Thinking",
+                                                          "Judging", "Percieving"
+                                                          )) +
+  labs(title = "Population Myer-Briggs Single Letter Types",
+       subtitle = "N Unknown, from studies between 1972-2002")
+
+ggsave(filename = "outputs/myer-brigg-lett-gen-pop.png", width = hght, height = wdth)
+```
+
+Same analysis on Alex G
+
+Prepare data
+```{r}
+##Alex Data
+
+mbti_dat <- as.data.frame(table(pers_dat$mbti), stringsAsFactors = F) %>%
+                  filter(!(Var1 %in% c("",
+                                       "Prefer not to answer",
+                                       "I don't know"))) %>%
+                  rename(mbtis = Var1, count = Freq) %>%
+                  mutate(mbti_percent = count/sum(count)) 
+
+
+#They're missing data because of people gotta fill in some blanks
+missing_dat <- data.frame(as.character(mb_df$mbtis[!(mb_df$mbtis %in% mbti_dat$mbtis)]),
+                          rep(0, length(as.character(mb_df$mbtis[!(mb_df$mbtis %in% mbti_dat$mbtis)]))),
+                          rep(0, length(as.character(mb_df$mbtis[!(mb_df$mbtis %in% mbti_dat$mbtis)]))))
+
+colnames(missing_dat) <- c("mbtis", "count", "mbti_percent")
+
+mbti_dat <- rbind(mbti_dat, missing_dat)
+
+mbti_dat$mbtis <- factor(mbti_dat$mbtis, levels = mb_names)
+
+```
+
+Single Letter Myer-Briggs Data
+```{r}
+mbti_dat <- mbti_dat %>%
+  mutate(IoE = ifelse(str_detect(mbtis, "I"), "I", "E"),
+         SoN = ifelse(str_detect(mbtis, "S"), "S", "N"),
+         FoT = ifelse(str_detect(mbtis, "F"), "F", "T"),
+         JoP = ifelse(str_detect(mbtis, "J"), "J", "P"))
+
+
+#Better way to do this?
+EI_g <- mbti_dat %>% group_by(IoE) %>% summarise(sum(count),sum(mbti_percent))
+SN_g <- mbti_dat %>% group_by(SoN) %>% summarise(sum(count),sum(mbti_percent))
+FT_g <- mbti_dat %>% group_by(FoT) %>% summarise(sum(count),sum(mbti_percent))
+JP_g <- mbti_dat %>% group_by(JoP) %>% summarise(sum(count),sum(mbti_percent))
+colnames(EI_g) <- c("type", "count type", "percent type")
+colnames(SN_g) <- c("type", "count type", "percent type")
+colnames(FT_g) <- c("type", "count type", "percent type")
+colnames(JP_g) <- c("type", "count type", "percent type")
+
+
+letter_df_g <- rbind(EI_g,SN_g,FT_g,JP_g)
+
+category <- factor(c("E or I", "E or I", "N or S", "N or S", "F or T", "F or T", "J or P", "J or P"),
+                   c("E or I", "N or S", "F or T", "J or P"))
+
+letter_df_g <-  cbind(letter_df_g, category)
+
+```
+
+
+Run the Chi-square analysis against general population probabilities
+```{r}
+
+##Running the chi-square 
+
+mbti_dat$mbtis == mb_df$mbtis
+
+mbti_dat <- mbti_dat[match(mb_df$mbtis, mbti_dat$mbtis),]
+
+mbti_dat$mbtis == mb_df$mbtis
+
+mbti_chisq <- chisq.test(mbti_dat$count, p = mb_df$mbti_percent, simulate.p.value = T)
+
+
+#Can't lump all letters so here we go slow again
+EI_chisq <- chisq.test(letter_df_g$`count type`[1:2],
+                       p = letter_df$`percent type`[1:2],
+                       simulate.p.value = T)
+
+NS_chisq <- chisq.test(letter_df_g$`count type`[3:4],
+                       p = letter_df$`percent type`[3:4],
+                       simulate.p.value = T)
+
+FT_chisq <- chisq.test(letter_df_g$`count type`[5:6],
+                       p = letter_df$`percent type`[5:6],
+                       simulate.p.value = T)
+
+JP_chisq <- chisq.test(letter_df_g$`count type`[7:8],
+                       p = letter_df$`percent type`[7:8],
+                       simulate.p.value = T)
+
+pvals_lett <- format.pval(c(EI_chisq$p.value, NS_chisq$p.value, FT_chisq$p.value, JP_chisq$p.value), 3)
+```
+
+Plotting for general types
+```{r}
+
+##Plotting the data
+ggplot(mbti_dat,
+       aes(x = mbtis,
+           y = count,
+           fill = mbtis)) +
+  geom_col(color = "black") +
+  xlab("Myers–Briggs Type") +
+  ylab("Count")  +
+  labs(title = "666posting Myer-Briggs Types",
+       subtitle = paste0("N = ",
+                         sum(mbti_dat$count),
+                         " ; Chi-Square compared to population p-value = ",
+                         format.pval(mbti_chisq$p.value, digits = 3)))
+
+ggsave(filename = "outputs/myer-brigg-666.png", width = hght, height = wdth)
+
+
+```
+
+Plotting for single letters
+```{r}
+
+
+letter_df_g$type <- factor(letter_df_g$type, c("E", "I", "N", "S", "F", "T", "J", "P"))
+
+ggplot(letter_df_g, aes(x = category, y = `percent type`, fill = type)) +
+  geom_bar(position = "stack", stat = "Identity") +
+  scale_fill_brewer(palette = "Set1", name = "Discrete Types",
+                    labels = c("Extrovert", "Introvert",
+                                "Intuitives", "Sensors",
+                                "Feeling", "Thinking",
+                                "Judging", "Percieving"
+                                                          )) +
+  labs(title = "Population Myer-Briggs Single Letter Types",
+       subtitle = paste("P-values per letter group in respective order:", paste(pvals_lett, collapse = ' ; ')))
+
+ggsave(filename = "outputs/myer-brigg-lett-666.png", width = hght, height = wdth)
+```
+
+
+## Birthday/Zodiacs
+
+Pulling public data to make a fair general population example and then preparing it
+```{r}
+us_birth <- read.csv(
+  "https://raw.githubusercontent.com/fivethirtyeight/data/master/births/US_births_2000-2014_SSA.csv")
+
+all_births = sum(us_birth$births)
+
+us_birth_sum <- us_birth %>%
+  mutate(sign = case_when(
+  (month == 1 & date_of_month >= 21) | (month == 2 & date_of_month <= 18) ~ "Aquarius",
+  (month == 2 & date_of_month >= 19) | (month == 3 & date_of_month <= 20) ~ "Pisces",
+  (month == 3 & date_of_month >= 21) | (month == 4 & date_of_month <= 19) ~ "Aries",
+  (month == 4 & date_of_month >= 20) | (month == 5 & date_of_month <= 20) ~ "Taurus",
+  (month == 5 & date_of_month >= 21) | (month == 6 & date_of_month <= 20) ~ "Gemini",
+  (month == 6 & date_of_month >= 21) | (month == 7 & date_of_month <= 22) ~ "Cancer",
+  (month == 7 & date_of_month >= 23) | (month == 8 & date_of_month <= 22) ~ "Leo",
+  (month == 8 & date_of_month >= 23) | (month == 9 & date_of_month <= 22) ~ "Virgo",
+  (month == 9 & date_of_month >= 23) | (month == 10 & date_of_month <= 22) ~ "Libra",
+  (month == 10 & date_of_month >= 23) | (month == 11 & date_of_month <= 21) ~ "Scorpio",
+  (month == 11 & date_of_month >= 22) | (month == 12 & date_of_month <= 21) ~ "Sagittarius",
+  (month == 12 & date_of_month >= 22) | (month == 1 & date_of_month <= 21) ~ "Capricorn"
+  
+)) %>% group_by(sign) %>%
+  summarise(total_sign = sum(births)) %>%
+  mutate(element = case_when(
+    sign %in% c("Aries", "Leo", "Sagittarius") ~ "Fire",
+    sign %in% c("Gemini", "Libra", "Aquarius") ~ "Air",
+    sign %in% c("Taurus", "Virgo", "Capricorn") ~ "Earth",
+    sign %in% c("Cancer", "Scorpio", "Pisces") ~ "Water"
+  ),
+  sign_percent = (total_sign/sum(us_birth$births)))
+```
+
+
+Making both colors and general population plots for zodiac signs
+```{r}
+
+#Make element colors
+elem_cols = c("whitesmoke", "forestgreen", "firebrick3","deepskyblue4")
+
+##All signs of population
+ggplot(us_birth_sum, aes(x = sign, y = sign_percent, fill = element)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = elem_cols) + 
+  scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  ylab("Percent") +
+  xlab("Sign") +
+  labs(title = "General Population Signs (births 2000-2014)",
+       subtitle = paste0("N = ",
+                         format(sum(us_birth_sum$total_sign),
+                                big.mark = ",",
+                                scientific = F)))
+
+ggsave(filename = "outputs/horo-signs-gen-pop.png", width = hght, height = wdth)
+
+```
+
+
+Also zodiac elements
+```{r}
+
+#Element info
+element_summ <- us_birth_sum %>%
+                  group_by(element) %>%
+                  summarise(count = sum(total_sign)) %>%
+                  mutate(element_percent = count/sum(count))
+
+#Element plot
+ggplot(element_summ, aes(x = element, y = element_percent, fill = element)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = elem_cols) + 
+  scale_y_continuous(labels = scales::percent) +
+  ylab("Percent") + 
+  xlab("Elements") +
+  labs(title = "General Population Sign Elements (births 2000-2014)",
+       subtitle = paste0("N = ",
+                         format(sum(element_summ$count),
+                                big.mark = ",",
+                                scientific = F)))
+
+ggsave(filename = "outputs/horo-elements-gen-pop.png", width = hght, height = wdth)
+```
+
+
+Preparing the Alex G data for the analysis above
+```{r}
+#####Now for the Alex G group -----
+#Make Zodiac table
+g_Zodiac <- as.data.frame(table(pers_dat$sign), stringsAsFactors = F) %>%
+                  filter(!(Var1 %in% c("", "Prefer not to answer"))) %>%
+                  rename(sign = Var1, count = Freq) %>%
+                  mutate(sign_percent = count/sum(count)) 
+
+#Add sign elements
+g_Zodiac <- g_Zodiac %>%
+                mutate(element = case_when(
+                  sign %in% c("Aries", "Leo", "Sagittarius") ~ "Fire",
+                  sign %in% c("Gemini", "Libra", "Aquarius") ~ "Air",
+                  sign %in% c("Taurus", "Virgo", "Capricorn") ~ "Earth",
+                  sign %in% c("Cancer", "Scorpio", "Pisces") ~ "Water"
+                  )
+                )
+
+#Seperate element df
+g_element <- g_Zodiac %>%
+                  group_by(element) %>%
+                  summarise(count = sum(count)) %>%
+                  mutate(element_percent = count/sum(count))
+```
+
+Chi-square analysis against normal population probabilities
+```{r}
+
+##Chi-squares
+#Make sure in correct order, should all be TRUE
+g_Zodiac$sign == us_birth_sum$sign
+
+sign_chisq <- chisq.test(g_Zodiac$count, p = us_birth_sum$sign_percent)
+#Not sig according to probabilities 
+
+#Elements
+g_element$element == element_summ$element
+
+element_chisq <- chisq.test(g_element$count, p = element_summ$element_percent)
+```
+
+Basic Alex G zodiac sign plot
+```{r}
+#Alex G Zodiac plot
+ggplot(g_Zodiac, aes(x = sign, y = sign_percent, fill = element)) +
+  geom_col(color = "black") + 
+  scale_fill_manual(values = elem_cols) +
+  scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  ylab("Percent") +
+  xlab("Sign") +
+  labs(title = "666posting Zodiac Signs",
+       subtitle = paste0("N = ",
+                         sum(g_Zodiac$count),
+                         " ; Chi-Square compared to population p-value = ",
+                         format.pval(sign_chisq$p.value, digits = 3)))
+
+ggsave(filename = "outputs/horo-signs-666.png", width = hght, height = wdth)
+```
+
+Plotting the zodiac elements of the Alex G data
+```{r}
+#Alex G element plot
+ggplot(g_element, aes(x = element, y = element_percent, fill = element)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = elem_cols) + 
+  scale_y_continuous(labels = scales::percent) +
+  ylab("Percent") +
+  xlab("Elements") +
+  labs(title = "666posting Zodiac Sign Elements",
+       subtitle = paste0("N = ",
+                         sum(g_element$count),
+                         " ; Chi-Square compared to population p-value = ",
+                         format.pval(element_chisq$p.value, digits = 3)))
+  
+ggsave(filename = "outputs/horo-elements-666.png", width = hght, height = wdth)
+
+```
+
+## Hogwarts House
+
+~~Data taken from https://drive.google.com/file/d/0B8PCmhQmtcDKLXlzSGtnZ0hKbjQ/view~~
+Data taken from [Time Magazine](https://time.com/4921918/harry-potter-hogwarts-sorting-hat-quiz/), they don't have the actual percents posted, but a much larger sample size.
+
+```{r}
+#My best guess from eyeing The Times
+house_percent <- c(.15, .30, .47, .08)
+house <- c("Gryffindor", "Hufflepuff", "Ravenclaw", "Slytherin")
+house_colors <- c("firebrick", "goldenrod3", "dodgerblue4", "darkgreen")
+america_house <- data.frame(house, house_percent, stringsAsFactors = F) 
+```
+
+Replot the Times Data
+```{r}
+ggplot(america_house,
+       aes(x = house, y = house_percent, fill = house)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = house_colors) + 
+  scale_y_continuous(labels = scales::percent) +
+  labs(title = "US Hogwarts House Distribution (Time Magazine's Data)",
+       subtitle ="N = ~500,000")+
+  xlab("Hogwarts Houses")
+
+ggsave(filename = "outputs/hogwarts-gen-pop.png")
+
+
+```
+
+Preparing and cleaning Alex G data
+```{r}
+#Should turn this into a function by this point
+house_dat <- as.data.frame(table(pers_dat$hp_house), stringsAsFactors = F) %>%
+                filter(!(Var1 %in% c("",
+                                     "Prefer not to answer",
+                                     "I don't know"))) %>%
+                rename(house = Var1, count = Freq) %>%
+                mutate(house_percent = count/sum(count))
+
+```
+
+Chi-Square for houses
+```{r}
+#Sig difference
+house_chisq <- chisq.test(house_dat$count, p = house_percent)
+house_chisq
+```
+
+Plotting Alex G Hogwarts Houses
+```{r}
+###Plot house 
+ggplot(house_dat,
+       aes(x = house, y = count, fill = house)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = house_colors)  +
+  xlab("Hogwarts Houses") +
+  labs(title = "666posting Hogwarts Houses",
+       subtitle = paste0("N = ",
+                         sum(house_dat$count),
+                         " ; Chi-Square compared to population p-value = ",
+                         format.pval(house_chisq$p.value, digits = 3)))
+  ggsave(filename = "outputs/hogwarts-666.png", width = hght, height = wdth)
+
+
+```
+This is interesting because if you look at the Time's article as people age Slytherin decreases and so I'd argue that because we have such a larger population of younger individuals is why Slytherin is so high. Which I'd further argue to say this WOULDN'T be significant if adjusted for age, but idk how to do that currently.
+
+
+
+## Are there correlations betwen types?
+
+Using Ztables from this [link](https://cran.r-project.org/web/packages/ztable/vignettes/heatmapTable.html)
+
+Ztable signs vs MBTI
+```{r}
+
+hor_mbt_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
+                                   !(sign %in% c("", "Prefer not to answer", "I don't know"))) %>%
+                mutate(element = case_when(
+                  sign %in% c("Aries", "Leo", "Sagittarius") ~ "Fire",
+                  sign %in% c("Gemini", "Libra", "Aquarius") ~ "Air",
+                  sign %in% c("Taurus", "Virgo", "Capricorn") ~ "Earth",
+                  sign %in% c("Cancer", "Scorpio", "Pisces") ~ "Water"
+                  )
+                )
+
+#Sign
+sign_tab <- table(hor_mbt_dat$mbti, hor_mbt_dat$sign)
+
+sign_z <- ztable(sign_tab)
+
+chi_sign_mbti <- chisq.test(hor_mbt_dat$mbti, hor_mbt_dat$sign, simulate.p.value = T)
+
+#No way to format this nicely
+sign_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Signs and Myer-Briggs Types; Chi-Sqare p-value of ", format.pval(chi_sign_mbti$p.value, digits = 3)))
+```
+
+Ztable Element vs MBTI
+```{r}
+#Element
+element_tab <- table(hor_mbt_dat$element, hor_mbt_dat$mbti)
+element_z <- ztable(element_tab)
+
+chi_element_mbti <- chisq.test(hor_mbt_dat$mbti, hor_mbt_dat$element, simulate.p.value = T)
+
+element_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Elements and Myer-Briggs Types; Chi-Sqare p-value of ", format.pval(chi_element_mbti$p.value, digits = 3)))
+
+```
+
+Ztable for Zodiac and Houses
+Remove names that repeat above (This hasn't been done)
+```{r}
+hor_hp_dat <- pers_dat %>% filter(!(hp_house %in% c("", "Prefer not to answer", "I don't know")),
+                                   !(sign %in% c("", "Prefer not to answer", "I don't know"))) %>%
+                mutate(element = case_when(
+                  sign %in% c("Aries", "Leo", "Sagittarius") ~ "Fire",
+                  sign %in% c("Gemini", "Libra", "Aquarius") ~ "Air",
+                  sign %in% c("Taurus", "Virgo", "Capricorn") ~ "Earth",
+                  sign %in% c("Cancer", "Scorpio", "Pisces") ~ "Water"
+                  )
+                )
+#Sign
+sign_tab <- table(hor_hp_dat$hp_house, hor_hp_dat$sign)
+
+sign_z <- ztable(sign_tab)
+
+chi_sign_hp_house <- chisq.test(hor_hp_dat$hp_house, hor_hp_dat$sign, simulate.p.value = T)
+
+#No way to format this nicely
+sign_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Signs and Hogwarts Houses; Chi-Sqare p-value of ", format.pval(chi_sign_hp_house$p.value, digits = 3)))
+```
+
+Ztable for element and house
+```{r}
+#Element
+element_tab <- table(hor_hp_dat$hp_house, hor_hp_dat$element)
+element_z <- ztable(element_tab)
+
+chi_element_hp_house <- chisq.test(hor_hp_dat$hp_house, hor_hp_dat$element, simulate.p.value = T)
+
+element_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Elements and Hogwarts Houses; Chi-Sqare p-value of ", format.pval(chi_element_hp_house$p.value, digits = 3)))
+```
+
+MBTI vs Houses
+```{r}
+mbti_house_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
+                                   !(hp_house %in% c("", "Prefer not to answer", "I don't know"))) 
+
+
+#hp_house
+hp_house_tab <- table(mbti_house_dat$mbti, mbti_house_dat$hp_house)
+
+hp_house_z <- ztable(hp_house_tab)
+
+chi_hp_house_mbti <- chisq.test(mbti_house_dat$mbti, mbti_house_dat$hp_house, simulate.p.value = T)
+
+#No way to format this nicely
+hp_house_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Hogwarts Houses and Myer-Briggs Types; Chi-Sqare p-value of ", format.pval(chi_hp_house_mbti$p.value, digits = 3)))
+```
+
+MBTI letters vs Zodiac Signs
+```{r}
+letter_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
+                    !(sign %in% c("", "Prefer not to answer", "I don't know"))) %>%
+              mutate(IoE = ifelse(str_detect(mbti, "I"), "I", "E"),
+                     SoN = ifelse(str_detect(mbti, "S"), "S", "N"),
+                     FoT = ifelse(str_detect(mbti, "F"), "F", "T"),
+                     JoP = ifelse(str_detect(mbti, "J"), "J", "P"))  %>%
+                mutate(element = case_when(
+                  sign %in% c("Aries", "Leo", "Sagittarius") ~ "Fire",
+                  sign %in% c("Gemini", "Libra", "Aquarius") ~ "Air",
+                  sign %in% c("Taurus", "Virgo", "Capricorn") ~ "Earth",
+                  sign %in% c("Cancer", "Scorpio", "Pisces") ~ "Water"
+                  )
+                )
+
+#Sign IE
+IE_sign_tab <- table(letter_dat$IoE, letter_dat$sign)
+
+IE_sign_z <- ztable(IE_sign_tab)
+
+chi_sign_IE <- chisq.test(letter_dat$IoE, letter_dat$sign, simulate.p.value = T)
+
+#No way to format this nicely
+IE_sign_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Signs and Intro vs Extra; Chi-Sqare p-value of ", format.pval(chi_sign_IE$p.value, digits = 3)))
+
+#Sign SN
+SN_sign_tab <- table(letter_dat$SoN, letter_dat$sign)
+
+SN_sign_z <- ztable(SN_sign_tab)
+
+chi_sign_SN <- chisq.test(letter_dat$SoN, letter_dat$sign, simulate.p.value = T)
+
+#No way to format this nicely
+SN_sign_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Signs and Sense vs Intui; Chi-Sqare p-value of ", format.pval(chi_sign_SN$p.value, digits = 3)))
+
+#Sign FT
+FT_sign_tab <- table(letter_dat$FoT, letter_dat$sign)
+
+FT_sign_z <- ztable(FT_sign_tab)
+
+chi_sign_FT <- chisq.test(letter_dat$FoT, letter_dat$sign, simulate.p.value = T)
+
+#No way to format this nicely
+FT_sign_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Signs and Feel vs Think; Chi-Sqare p-value of ", format.pval(chi_sign_FT$p.value, digits = 3)))
+
+#Sign JP
+JP_sign_tab <- table(letter_dat$JoP, letter_dat$sign)
+
+JP_sign_z <- ztable(JP_sign_tab)
+
+chi_sign_JP <- chisq.test(letter_dat$JoP, letter_dat$sign, simulate.p.value = T)
+
+#No way to format this nicely
+JP_sign_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Signs and Judge vs Perceive; Chi-Sqare p-value of ", format.pval(chi_sign_JP$p.value, digits = 3)))
+
+
+```
+
+Redo above with elements
+
+```{r}
+#IE
+element_IE_tab <- table(letter_dat$IoE, letter_dat$element)
+element_IE_z <- ztable(element_IE_tab)
+
+chi_element_IE <- chisq.test(letter_dat$IoE, letter_dat$element, simulate.p.value = T)
+
+element_IE_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Elements and Intro vs Extra; Chi-Sqare p-value of ", format.pval(chi_element_IE$p.value, digits = 3)))
+
+#SN
+element_SN_tab <- table(letter_dat$SoN, letter_dat$element)
+element_SN_z <- ztable(element_SN_tab)
+
+chi_element_SN <- chisq.test(letter_dat$SoN, letter_dat$element, simulate.p.value = T)
+
+element_SN_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Elements and Sense vs Intui; Chi-Sqare p-value of ", format.pval(chi_element_SN$p.value, digits = 3)))
+
+
+#FT
+element_FT_tab <- table(letter_dat$FoT, letter_dat$element)
+element_FT_z <- ztable(element_FT_tab)
+
+chi_element_FT <- chisq.test(letter_dat$FoT, letter_dat$element, simulate.p.value = T)
+
+element_FT_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Elements and Feel vs Think; Chi-Sqare p-value of ", format.pval(chi_element_FT$p.value, digits = 3)))
+
+
+#JP
+element_JP_tab <- table(letter_dat$JoP, letter_dat$element)
+element_JP_z <- ztable(element_JP_tab)
+
+chi_element_JP <- chisq.test(letter_dat$JoP, letter_dat$element, simulate.p.value = T)
+
+element_JP_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Zodiac Elements and Judge vs Perceive; Chi-Sqare p-value of ", format.pval(chi_element_JP$p.value, digits = 3)))
+
+```
+
+Hogwarts time
+```{r}
+letter_dat_hp <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
+                    !(hp_house %in% c("", "Prefer not to answer", "I don't know"))) %>%
+              mutate(IoE = ifelse(str_detect(mbti, "I"), "I", "E"),
+                     SoN = ifelse(str_detect(mbti, "S"), "S", "N"),
+                     FoT = ifelse(str_detect(mbti, "F"), "F", "T"),
+                     JoP = ifelse(str_detect(mbti, "J"), "J", "P"))
+
+
+#IE
+hp_house_IE_tab <- table(letter_dat_hp$IoE, letter_dat_hp$hp_house)
+
+hp_house_IE_z <- ztable(hp_house_IE_tab)
+
+chi_hp_house_IE <- chisq.test(letter_dat_hp$IoE, letter_dat_hp$hp_house, simulate.p.value = T)
+
+#No way to format this nicely
+hp_house_IE_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Hogwarts Houses and Intro vs Extra; Chi-Sqare p-value of ", format.pval(chi_hp_house_IE$p.value, digits = 3)))
+
+#SN
+hp_house_SN_tab <- table(letter_dat_hp$SoN, letter_dat_hp$hp_house)
+
+hp_house_SN_z <- ztable(hp_house_SN_tab)
+
+chi_hp_house_SN <- chisq.test(letter_dat_hp$SoN, letter_dat_hp$hp_house, simulate.p.value = T)
+
+#No way to format this nicely
+hp_house_SN_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Hogwarts Houses and Sense vs Intui; Chi-Sqare p-value of ", format.pval(chi_hp_house_SN$p.value, digits = 3)))
+
+
+#FT
+hp_house_FT_tab <- table(letter_dat_hp$FoT, letter_dat_hp$hp_house)
+
+hp_house_FT_z <- ztable(hp_house_FT_tab)
+
+chi_hp_house_FT <- chisq.test(letter_dat_hp$FoT, letter_dat_hp$hp_house, simulate.p.value = T)
+
+#No way to format this nicely
+hp_house_FT_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Hogwarts Houses and Feel vs Think; Chi-Sqare p-value of ", format.pval(chi_hp_house_FT$p.value, digits = 3)))
+
+
+#JP
+hp_house_JP_tab <- table(letter_dat_hp$JoP, letter_dat_hp$hp_house)
+
+hp_house_JP_z <- ztable(hp_house_JP_tab)
+
+chi_hp_house_JP <- chisq.test(letter_dat_hp$JoP, letter_dat_hp$hp_house, simulate.p.value = T)
+
+#No way to format this nicely
+hp_house_JP_z %>% makeHeatmap() %>%
+  print(caption = paste0("Heatmap Table of Hogwarts Houses and Judge vs Perceive; Chi-Sqare p-value of ", format.pval(chi_hp_house_JP$p.value, digits = 3)))
+```
+
+# [Things to do](https://sandy.bandcamp.com/track/things-to-do)
+
+  - Turn repetitive code into functions for example in the personality block
