@@ -275,22 +275,23 @@ ggsave("outputs/west_us.png", height = 9, width = 7)
 
 # 666posting Political Compasss (spice alert)
 
-Make a political compass
+Preparing the data
 ```{r}
+
+#I remove one fill in the blank because... yeah
 poltical_dat <- select(dat,left_right, lib_auth, gender, age) %>% drop_na() %>% mutate(gender = ifelse(gender =="There are only 2 genders", "Prefer not to say", gender))
 
-#remove the one comment
 
-
+#Get the medians and means of the compass
 med_LR <- median(poltical_dat$left_right)
 med_LA <- median(poltical_dat$lib_auth)
 mean_LR <- mean(poltical_dat$left_right)
 mean_LA <- mean(poltical_dat$lib_auth)
+```
 
-
-#Sex
+First political compass using gender as a variable, I could probably make this a base plot and use the base to change the other ones.
+```{r}
 ggplot(poltical_dat) +
-           
            geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.005) +
            geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.005) +
            geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.005) +
@@ -314,6 +315,10 @@ ggplot(poltical_dat) +
                                        label = c("Mean", "Median"), size =4) + 
                                        theme_void(base_size = 14)
 ggsave("outputs/political_compass_gender.png")
+```
+
+Poltical compass with age as a variable
+```{r}
 #Age
 ggplot(poltical_dat) +
            
@@ -334,8 +339,10 @@ ggplot(poltical_dat) +
                                        scale_colour_gradient(low = "black", high = "white", na.value = NA) +
                                        theme_void()
 
+```
 
-
+Gender compass again, but without the jitter, instead using the size of the points to determine density. 
+```{r}
 #Second version change the size of points based on how many points there are there
 poltical_dat_2 <- rbind(poltical_dat, c(9, 8))
 
@@ -375,28 +382,7 @@ ggplot(pol_count) +
               coord_fixed() + theme_grey(base_size = 14)
 ggsave("outputs/political_compass_exact.png")
 
-# #############
-# pol_count <- as.data.frame(table(poltical_dat$left_right, poltical_dat$lib_auth))
-# colnames(pol_count)[1:2] <- c("left_right", "lib_auth")
-# pol_count$left_right <-factor(pol_count$left_right, levels = c("0","1", "2", "3", "4", "5", "6", "7", "8", "9","10"))
-# #pol_count$lib_auth <- as.integer(as.character(pol_count$lib_auth))
-# 
-# ggplot(pol_count) +
-#           geom_point(aes(x = left_right, y = lib_auth, size= Freq)) +
-#           #  
-#             geom_rect(aes(xmin = '5', xmax= '10',ymin = '0', ymax='5'), fill = "yellow", alpha = 0.005) +
-#              geom_rect(aes(xmin = '0', xmax= '5',ymin = '0', ymax='5'), fill = "green", alpha = 0.005) +
-#              geom_rect(aes(xmin = '5', xmax= '10',ymin = '5', ymax='10'), fill = "blue", alpha = 0.005) +
-#             geom_rect(aes(xmin = "0", xmax= "5",ymin = "5", ymax="10"), fill = "red", alpha = 0.005) + 
-#            
-#            #Adding median and mean
-#           # geom_point(aes(x=med_LR, y=med_LA), colour="white", shape = 9, size =2) +
-#            #geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
-#           labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(poltical_dat))) + 
-#    ylab("libertarian to authoritarian") +
-#                xlab("left to right") +
-#     
-#               coord_fixed() #+ theme_void()
+
 
 ```
 
@@ -1485,6 +1471,31 @@ auto_ztable(letter_dat_hp,
 # wordcloud(words = not_listen_tally$Var1, freq = not_listen_tally$Freq, min.freq = 1,
 #           max.words=200, random.order=FALSE, rot.per=0.35, 
 #           colors=brewer.pal(8, "Dark2"))
+
+
+
+# #############
+# pol_count <- as.data.frame(table(poltical_dat$left_right, poltical_dat$lib_auth))
+# colnames(pol_count)[1:2] <- c("left_right", "lib_auth")
+# pol_count$left_right <-factor(pol_count$left_right, levels = c("0","1", "2", "3", "4", "5", "6", "7", "8", "9","10"))
+# #pol_count$lib_auth <- as.integer(as.character(pol_count$lib_auth))
+# 
+# ggplot(pol_count) +
+#           geom_point(aes(x = left_right, y = lib_auth, size= Freq)) +
+#           #  
+#             geom_rect(aes(xmin = '5', xmax= '10',ymin = '0', ymax='5'), fill = "yellow", alpha = 0.005) +
+#              geom_rect(aes(xmin = '0', xmax= '5',ymin = '0', ymax='5'), fill = "green", alpha = 0.005) +
+#              geom_rect(aes(xmin = '5', xmax= '10',ymin = '5', ymax='10'), fill = "blue", alpha = 0.005) +
+#             geom_rect(aes(xmin = "0", xmax= "5",ymin = "5", ymax="10"), fill = "red", alpha = 0.005) + 
+#            
+#            #Adding median and mean
+#           # geom_point(aes(x=med_LR, y=med_LA), colour="white", shape = 9, size =2) +
+#            #geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
+#           labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(poltical_dat))) + 
+#    ylab("libertarian to authoritarian") +
+#                xlab("left to right") +
+#     
+#               coord_fixed() #+ theme_void()
 ```
 
 
