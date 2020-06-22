@@ -11,6 +11,10 @@ library(tidyverse)
 library(ztable)
 library(UpSetR)
 library(wordcloud)
+library(rworldmap)
+library(mapproj)
+library(wesanderson)
+library(maps)
 #For simulated p-values
 set.seed(123)
 ```
@@ -35,104 +39,80 @@ Questions redo previous age analysis, use substraction to gain more individuals 
 
 ```
 
-Make a map of the world
+# Make a map of the world
+
+
+Preparing and loading data
 ```{r}
-# library("rnaturalearth")
-# library("rnaturalearthdata")
-# library(rgeos)
-# 
-#world_dat <- dat %>% mutate(admin = ifelse(country == "United States"))
+
 
 country_codes <- read.csv("inputs/countrycode.csv", stringsAsFactors = F)
 
- world_dat <- as.data.frame(table(dat$country), stringsAsFactors = F)
+#Get a count of fans per each country
+world_dat <- as.data.frame(table(dat$country), stringsAsFactors = F)
  
- colnames(world_dat) <- c("Country.Name", "fans")
-# 
-# world <- left_join(world@data, world_dat)
-# 
- 
+colnames(world_dat) <- c("Country.Name", "fans")
+#Join with official data
 world_dat  <- left_join(country_codes, world_dat)
  
- world_needed <- world_dat %>% select(fans, ISO2, ISO3, Country.Name) #%>% mutate(ISO_N3 = as.character(ISO_N3))
+world_needed <- world_dat %>% select(fans, ISO2, ISO3, Country.Name) 
 
-####Try r world map
-library(rworldmap)
-library(mapproj)
- library(wesanderson)
- #colors
- pal <- wes_palette("Zissou1", 100, type = "continuous")
+#colors
+pal <- wes_palette("Zissou1", 100, type = "continuous")
  
  
-#higher rest This is is
+#Get a higher rsolution
 worldmap <- getMap(resolution = "low")
 
 worldmap@data <- left_join(worldmap@data, world_needed)
 worldmap_poly <- fortify(worldmap)
 worldmap_poly <- merge(worldmap_poly, worldmap@data, by.x="id", by.y="ADMIN", all.x=T)
 
-
+#Remove the US because they have to many indiiduals
 worldmap_poly_nUSA <- worldmap_poly %>% filter(Country.Name != "United States")
-
-# ####################
-# world_2 <-as.data.frame(world)
-# 
-# new_map <- joinCountryData2Map(world_2, joinCode = "ISO2", nameJoinColumn = "iso_a2", resolution = "high")
-# new_map_poly <- fortify(new_map)
-# new_map_poly <- merge(new_map_poly, new_map@data, by.x="id", by.y="ADMIN", all.x=T)
-# new_map_poly <- new_map_poly %>% arrange(id, order)
-
-# 
-# ###Higher res world
-# new_map_poly <- fortify(worldmap)
-# new_map_poly <- merge(new_map_poly, new_map@data, by.x="id", by.y="ADMIN", all.x=T)
-# #new_map_poly <- new_map_poly %>% arrange(id, order)
+```
 
 
+##Plottin the world
 
-#Whole world
+Plot the whole world with the US
+```{r}
+#Whole world with US
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
   geom_polygon(data = worldmap_poly, aes(long, lat, group = group, fill = log2(fans)),size = 0.3) +
 
 geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=1.5)   + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))
+```
 
-
-# New Whole world
+As you can see the US has to many fans and so it will get its own figure later on below is the world without the US
+```{r}
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
   geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans),size = 0.3) +
-
-#geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=5)   + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  +
   labs(title = "Alex G fans around the world") + theme_gray(base_size =  14)
-#  coord_cartesian(xlim = c(-150, 180), ylim = c(-60,75)) + 
 
-ggsave("outputs/world_no_us.png", width = 10, height = 10
-       )
+ggsave("outputs/world_no_us.png", width = 10, height = 10)
 
+```
 
-
-##Zoom in on North america
-#coord_cartesian(xlim = c(-150, -50), ylim = c(15, 60))
-# Make a vector of country names
-
-
-
+Focusing on North America
+```{r}
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
   geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans),size = 0.3) +
-
-geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=5) +
+  geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=5) +
  coord_cartesian(xlim = c(-150, -50), ylim = c(15, 60)) +
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  + theme_void( base_size = 14) +
   labs(title = "Alex G Fans Sans Americans")
 
 ggsave("outputs/north_america.png")
+```
 
-
-
+Focusing on South America
+```{r}
 ###South america
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
@@ -143,8 +123,11 @@ geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) + theme_void( base_size = 14) +
   labs(title = "Alex G Fans in South America")
 ggsave("outputs/south_america.png", height = 8, width = 7)
+```
 
 
+Focusing on South East Asia and Oceana
+```{r}
 ###Oceana and south east asia
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
@@ -156,8 +139,10 @@ geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label
   labs(title = "Alex G Fans in East Asian and Oceania")
 
 ggsave("outputs/south_asia_aus.png", height = 8, width = 7)
+```
 
-
+Focusing on Europe
+```{r}
 ###Europe
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
@@ -172,30 +157,39 @@ ggsave("outputs/europe_current.png", height = 8, width = 7)
 
 ```
 
-Make a map of the US
+# Make a map of the US
+I used the below vignette to do this
 https://cran.r-project.org/web/packages/usmap/vignettes/mapping.html
+
+Preparing data
 ```{r}
-library(maps)
 us_states <- map_data("state")
-head(us_states)
+#head(us_states)
 
 #Filter state data
 state_dat <- dat %>% filter(!(state %in% c("I don't live in the states", ""))) %>% mutate(region = tolower(state))
 
-state_df <- data.frame(table(state_dat$region), colnames = "regions", stringsAsFactors = F) %>% select(region = Var1, count = Freq)
-
-
+state_df <- data.frame(table(state_dat$region),
+                       colnames = "regions",
+                       stringsAsFactors = F) %>%
+              select(region = Var1, count = Freq)
 
 us_states_2 <- left_join(us_states, state_df)
 
+```
 
+Testing the ggplot2 way to map the UD
+```{r}
 p <- ggplot(data = us_states_2,
             mapping = aes(x = long, y = lat,
                           group = group, fill = count))
 
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(projection = "albers", lat0 = 39, lat1 = 45) 
+```
 
+Using state census data (where did I get that?) to pull control for state population density. 
+```{r}
 
 #######
 census <- read.csv("inputs/state_census.csv", stringsAsFactors = F) %>%
@@ -207,18 +201,25 @@ census <- census %>% mutate(X2019= round(as.numeric(str_replace_all(X2019, ",", 
 
 us_states_3 <- left_join(us_states_2, census) %>% mutate(count = ifelse(is.na(count), 0, count),
                                                          adjust = round((count/X2019 * 100000), digits = 3))
+```
 
-
-
+Reading in other census data, not sure what the difference between them here is, gotta figure that out.
+```{r}
 center_state <- read.csv(file = "inputs/statelatlong_2.csv", stringsAsFactors = F) %>% rename(region = name, lat_center = latitude, long_center = longitude) %>%
   mutate(region = tolower(region))
 
 us_states_3 <- left_join(us_states_3, center_state)
+```
 
+Making a blank canvas for the plots
+```{r}
 p <- ggplot(data = us_states_3,
             mapping = aes(x = long, y = lat,
                           group = group, fill = adjust), color = "black")
+```
 
+Plotting all of the US
+```{r}
 #All of US
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
@@ -226,7 +227,10 @@ p + geom_polygon(color = "gray90", size = 0.1) +
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
   labs(title = "Alex G Fans in the USA",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
 ggsave("outputs/all_us.png", height = 6, width = 8)
+```
 
+Plotting the North East
+```{r}
 #North East
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-80, -65), ylim = c(38,48)) +
@@ -234,24 +238,31 @@ p + geom_polygon(color = "gray90", size = 0.1) +
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
   labs(title = "Alex G Fans in the North East",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
 ggsave("outputs/NE_us.png", height = 8, width = 8)
+```
 
-#THe south
+Plotting the South
+```{r}
+#The south
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-110, -65), ylim = c(25,40)) +
     geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
   labs(title = "Alex G Fans in the South",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
 ggsave("outputs/south_us.png", height = 8, width = 12)
-
-#THe Mid west
+```
+Plotting the Midwest
+```{r}
+#The Mid West
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-114, -80), ylim = c(32,49)) +
     geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
   labs(title = "Alex G Fans in the Mid West",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
 ggsave("outputs/midwest_us.png", height = 8, width = 9)
-
-#THe west
+```
+Plotting the West
+```{r}
+#The west
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-125, -110), ylim = c(30,49)) +
     geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
@@ -261,6 +272,8 @@ ggsave("outputs/west_us.png", height = 9, width = 7)
 
 
 ```
+
+# 666posting Political Compasss (spice alert)
 
 Make a political compass
 ```{r}
@@ -1443,6 +1456,21 @@ auto_ztable(letter_dat_hp,
 
 ```{r echo=F}
 #####UNUSED CODE
+
+
+# ####################
+# world_2 <-as.data.frame(world)
+# 
+# new_map <- joinCountryData2Map(world_2, joinCode = "ISO2", nameJoinColumn = "iso_a2", resolution = "high")
+# new_map_poly <- fortify(new_map)
+# new_map_poly <- merge(new_map_poly, new_map@data, by.x="id", by.y="ADMIN", all.x=T)
+# new_map_poly <- new_map_poly %>% arrange(id, order)
+
+# 
+# ###Higher res world
+# new_map_poly <- fortify(worldmap)
+# new_map_poly <- merge(new_map_poly, new_map@data, by.x="id", by.y="ADMIN", all.x=T)
+# #new_map_poly <- new_map_poly %>% arrange(id, order)
 
 # ###Unreleased word cloud
 # unreleased <- songs_dat %>% filter(unreleased_album != "I don't listen to them.") 
