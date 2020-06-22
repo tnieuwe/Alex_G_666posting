@@ -8,10 +8,11 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library("ztable")
+library(ztable)
 library(UpSetR)
+library(wordcloud)
 #For simulated p-values
-set.seed(1)
+set.seed(123)
 ```
 
 Load data
@@ -496,11 +497,17 @@ dev.off()
 
 ```
 
-Favorite Alex G Album
+# Alex G Music 
+
+##Favorite Album
+ Prepare data
 ```{r}
 ##Filter down to Albums and songs to make an object usable in the next two chuncks
 songs_dat <- dat%>% select(Timestamp, favorite_song, favorite_album, unreleased_album)
+```
 
+Favorite Album Plot
+```{r}
 ggplot(songs_dat, aes(x = forcats::fct_infreq(favorite_album)),
       fill = forcats::fct_infreq(favorite_album)) +
       geom_bar(aes(fill = forcats::fct_infreq(favorite_album))) +
@@ -524,7 +531,10 @@ ggplot(songs_dat, aes(x = forcats::fct_infreq(favorite_album)),
     labs(title = "Favorite Alex G Album",
          subtitle = paste0("N = ",nrow(songs_dat)))
 ggsave("outputs/favorite_album.png", height = 7, width = 7)
+```
 
+Favorite Unreleased Album/Compilation
+```{r}
 ggplot(songs_dat, aes(x = forcats::fct_infreq(unreleased_album))) +
   geom_bar(aes(fill = forcats::fct_infreq(unreleased_album))) +
   theme_grey(base_size = 14)  +
@@ -534,37 +544,31 @@ ggplot(songs_dat, aes(x = forcats::fct_infreq(unreleased_album))) +
         legend.title = element_blank()) +
     labs(title = "Favorite Alex G Fan Compilation",
          subtitle = paste0("N = ",nrow(songs_dat)))
+
+#Save it
 ggsave("outputs/favorite_fancomp.png", height = 7, width = 7)
-
-
-
 ```
 
-Is your favorite album related to your favorite song?
+Prepare song data for plotting
 ```{r}
-#Read in songs for albums
+#Read in songs for albums, A CSV I made.
 album_songs <- read.csv("inputs/alex_g_album_songs.csv", stringsAsFactors = F)
 album_songs <- album_songs %>% mutate_all(str_to_title)
-#Word cloud package, eventually move up top
-library(wordcloud)
-
-#Fix naming conventions
-#Fix titles with this
 
 
+#Fixing various naming issues
 songs_dat <- songs_dat %>% mutate(favorite_song = case_when(
                                     str_detect(favorite_song, "Bonus") ~ "Good",
                                     str_detect(favorite_song, "House") ~ "Sugarhouse",
                                     TRUE ~ favorite_song
-                                    
                                   ),
                                   favorite_song = str_to_title(str_trim(favorite_song, side = "both")))
 
-
+#Get count of songs
 songs_only <- as.data.frame(table(songs_dat$favorite_song), stringsAsFactors = F)
 
-#Add complex colorations based on album
 
+#Color songs based on album source
 songs_only <- songs_only %>% mutate(color = case_when(
                                     Var1 %in% album_songs$house_of_sugar ~ "darkorchid4",
                                     Var1 %in% album_songs$rocket_ ~ "red3",
@@ -576,25 +580,35 @@ songs_only <- songs_only %>% mutate(color = case_when(
                                     Var1 %in% album_songs$race ~ "deeppink1",
                                     Var1 %in% album_songs$winner ~ "yellow4",
                                     TRUE ~ "gray34"
-                                    
-                                    
                                   ))
 
+#Clean up data
+songs_clean <- songs_only %>%
+  arrange(desc(Freq)) %>%
+  filter(Var1 != "")
 
 
-#Word cloud
-set.seed(123)
+```
 
+Word Cloud of Favorite Alex G Songs
+
+(change to songs clean eventually)
+```{r}
+#Word cloud for markdown
+
+wordcloud(words = songs_only$Var1, freq = songs_only$Freq, min.freq = 1,
+                            max.words=200, random.order=FALSE, rot.per=0.35, 
+                            colors=songs_only$color, ordered.colors = T)
+#Print word cloud
 png("outputs/favorite_song_cloud.png", units="in", width=5, height=5, res=300)
 wordcloud(words = songs_only$Var1, freq = songs_only$Freq, min.freq = 1,
                             max.words=200, random.order=FALSE, rot.per=0.35, 
                             colors=songs_only$color, ordered.colors = T)
 dev.off()
+```
 
-# Now an actual graph with the top songs
-songs_clean <- songs_only %>%
-  arrange(desc(Freq)) %>%
-  filter(Var1 != "")
+Histogram of top songs
+```{r}
 top_ten_songs <- head(songs_clean, 10)
 
 ggplot(top_ten_songs, aes(x = reorder(Var1, -Freq), Freq)) +
@@ -607,7 +621,10 @@ ggplot(top_ten_songs, aes(x = reorder(Var1, -Freq), Freq)) +
   theme(axis.title.x=element_blank(),
                            axis.text.x = element_text(angle = 90, hjust = 0))
 ggsave("outputs/top_10_songs.png", height = 7, width = 7)
+```
 
+Analyze
+```{r}
 ### Make chi-square analysis
 songs_dat_test <- songs_dat %>% mutate(favorite_album_csv = case_when(
   favorite_album %in% "Rocket" ~ "rocket_",
@@ -625,15 +642,20 @@ songs_dat_test <- songs_dat %>% mutate(favorite_album_csv = case_when(
     favorite_song %in% album_songs$race & favorite_album_csv == "race" ~ T,
     T ~ F
     )
-) %>% filter(favorite_song %in% as.vector(unlist(album_songs)), favorite_song != "")
+  ) %>% filter(favorite_song %in% as.vector(unlist(album_songs)), favorite_song != "")
 
 
-t.test(songs_dat_test$fav_song_fav_album, mu = .5)
+
 
 table(songs_dat_test$fav_song_fav_album)
 
-#It is more likely that you will not have your favorite song in your favorite album
+favorite_song_chi <- chisq.test(table(songs_dat_test$fav_song_fav_album))
+
+favorite_song_chi
+
+#
 ```
+It is more likely that you will not have your favorite song in your favorite album
 
 # Personality Questions
 
