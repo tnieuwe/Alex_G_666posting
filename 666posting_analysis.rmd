@@ -5,8 +5,8 @@ date: "4/30/2020"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=T}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(ztable)
 library(UpSetR)
@@ -15,6 +15,8 @@ library(rworldmap)
 library(mapproj)
 library(wesanderson)
 library(maps)
+
+options(ztable.type = "html")
 #For simulated p-values
 set.seed(123)
 ```
@@ -22,7 +24,7 @@ set.seed(123)
 Load data
 ```{r}
 dat <- read.csv("inputs/alex_g_stats_6_19.csv", stringsAsFactors = F)
-dat
+head(dat)
 
 #make it pretty
 CapStr <- function(y) {
@@ -32,6 +34,28 @@ CapStr <- function(y) {
 }
 ```
 
+#Demographics questions
+
+```{r}
+#Age
+ggplot(dat, aes(age)) + geom_histogram(breaks=seq(15, 45, by=1), fill = "white", color = "black")
+
+#Race plot
+race_plot <- ggplot(dat, aes(race)) + geom_bar() + coord_flip()
+
+#gender plot
+gender_plot <- ggplot(dat, aes(gender)) + geom_bar() +
+  theme(axis.text.x = element_text(angle = -20, vjust = 0))                         
+#trans identity plot
+trans_plot <-  ggplot(dat, aes(transgender)) + geom_bar()
+
+#orientation plot
+orientation_plot <-  ggplot(dat, aes(orientation)) + geom_bar()
+
+#polyamorous identity plot
+poly_plot <-  ggplot(dat, aes(polyamorous)) + geom_bar()
+```
+
 
 
 Questions redo previous age analysis, use substraction to gain more individuals based on previous data
@@ -39,8 +63,8 @@ Questions redo previous age analysis, use substraction to gain more individuals 
 
 ```
 
-# Make a map of the world
 
+# Make a map of the world
 
 Preparing and loading data
 ```{r}
@@ -112,7 +136,7 @@ ggsave("outputs/north_america.png")
 ```
 
 Focusing on South America
-```{r}
+```{r fig.height = 8, fig.width = 6, fig.align = "center"}
 ###South america
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
@@ -127,7 +151,7 @@ ggsave("outputs/south_america.png", height = 8, width = 7)
 
 
 Focusing on South East Asia and Oceana
-```{r}
+```{r fig.height = 8, fig.width = 6, fig.align = "center"}
 ###Oceana and south east asia
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
@@ -142,7 +166,7 @@ ggsave("outputs/south_asia_aus.png", height = 8, width = 7)
 ```
 
 Focusing on Europe
-```{r}
+```{r fig.height = 8, fig.width = 6, fig.align = "center"}
 ###Europe
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
@@ -178,16 +202,6 @@ us_states_2 <- left_join(us_states, state_df)
 
 ```
 
-Testing the ggplot2 way to map the UD
-```{r}
-p <- ggplot(data = us_states_2,
-            mapping = aes(x = long, y = lat,
-                          group = group, fill = count))
-
-p + geom_polygon(color = "gray90", size = 0.1) +
-    coord_map(projection = "albers", lat0 = 39, lat1 = 45) 
-```
-
 Using state census data (where did I get that?) to pull control for state population density. 
 ```{r}
 
@@ -219,53 +233,53 @@ p <- ggplot(data = us_states_3,
 ```
 
 Plotting all of the US
-```{r}
+```{r fig.height = 6, fig.width = 8, fig.align = "center"}
 #All of US
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
     geom_text(aes(long_center, lat_center, label = count))  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
-  labs(title = "Alex G Fans in the USA",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
+  labs(title = "Alex G Fans in the USA",fill = "Fans per 100,000 indv")
 ggsave("outputs/all_us.png", height = 6, width = 8)
 ```
 
 Plotting the North East
-```{r}
+```{r fig.height = 6, fig.width = 6, fig.align = "center"}
 #North East
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-80, -65), ylim = c(38,48)) +
-    geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
+    geom_text(aes(long_center, lat_center, label = count), size = 3.3)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
-  labs(title = "Alex G Fans in the North East",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
+  labs(title = "Alex G Fans in the North East",fill = "Fans per 100,000 indv")
 ggsave("outputs/NE_us.png", height = 8, width = 8)
 ```
 
 Plotting the South
-```{r}
+```{r fig.height = 5, fig.width = 8, fig.align = "center"}
 #The south
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-110, -65), ylim = c(25,40)) +
-    geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
+    geom_text(aes(long_center, lat_center, label = count), size = 3.3)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
-  labs(title = "Alex G Fans in the South",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
+  labs(title = "Alex G Fans in the South",fill = "Fans per 100,000 indv")
 ggsave("outputs/south_us.png", height = 8, width = 12)
 ```
 Plotting the Midwest
-```{r}
+```{r fig.height = 5, fig.width = 7.5, fig.align = "center"}
 #The Mid West
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-114, -80), ylim = c(32,49)) +
-    geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
+    geom_text(aes(long_center, lat_center, label = count))  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
-  labs(title = "Alex G Fans in the Mid West",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
+  labs(title = "Alex G Fans in the Mid West",fill = "Fans per 100,000 indv")
 ggsave("outputs/midwest_us.png", height = 8, width = 9)
 ```
 Plotting the West
-```{r}
+```{r, fig.height = 9, fig.width = 6, fig.align = "center"}
 #The west
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-125, -110), ylim = c(30,49)) +
-    geom_text(aes(long_center, lat_center, label = count), size = 7)  + 
+    geom_text(aes(long_center, lat_center, label = count))  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
   labs(title = "Alex G Fans in the West",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
 ggsave("outputs/west_us.png", height = 9, width = 7)
@@ -460,25 +474,27 @@ First Upset Plot
 plot_up <- upset(fromList(instrument_list),
                  order.by = "freq",
                  nsets = 6,
-                 point.size = 4,
-                 line.size = 1.8,
+                 #point.size = 4,
+                 #line.size = 1.8,
+                 #text.scale=c(4, 2, 2, 2, 2, 2),
                  mainbar.y.label = "Instrument Intersections",
-                 sets.x.label = "People Per Instrument",
-                 text.scale=c(4, 2, 2, 2, 2, 2))
+                 sets.x.label = "People Per Instrument"
+                 )
 
 plot_up
 ```
 
 Second Instrument plot, it contains more instruments
-```{r}
+```{r  fig.height = 6, fig.width = 10, fig.align = "center"}
 plot_ups <- upset(fromList(instrument_list),
                   order.by = "freq",
                   nsets = 30,
-                  point.size = 2.8,
-                  line.size = 1,
+                  #point.size = 2.8,
+                  #line.size = 1,
+                  #text.scale=c(4, 2, 2, 2, 2, 2),
                   mainbar.y.label = "Instrument Intersections",
-                  sets.x.label = "People Per Instrument",
-                  text.scale=c(4, 2, 2, 2, 2, 2))
+                  sets.x.label = "People Per Instrument"
+                  )
 
 plot_ups
 ```
@@ -495,10 +511,146 @@ dev.off()
 
 
 ```
+# Favorite Music/Musicians
+## Clean up data
+
+
+Select out and clean musicians
+```{r}
+musician_dat <- dat %>%
+        select(Timestamp, favorite_musician, sec_musician = second_favorite_musician, music_genre)  %>%
+        #Mutate all names to lower first and trim whitesppace
+        mutate(favorite_musician = str_trim(tolower(favorite_musician)),
+               sec_musician = str_trim(tolower(sec_musician)),
+        #Fix all spelling of musician names that stand out to me
+               favorite_musician = case_when(
+                 favorite_musician == "elliot smith" ~ "elliott smith",
+                 str_detect(favorite_musician, "suicide") ~ "teen suicide",
+                 str_detect(favorite_musician, "title") ~ "title fight",
+                 T ~ favorite_musician),
+               sec_musician = case_when(
+                 favorite_musician == "elliot smith" ~ "elliott smith",
+                 str_detect(favorite_musician, "suicide") ~ "teen suicide",
+                 T ~ sec_musician
+               ),
+        #Clean up alex g titles to new/old official spelling and string to title for presentation
+               favorite_musician = ifelse(favorite_musician == "(sandy) alex g", "Alex G", str_to_title(favorite_musician)),
+               sec_musician = ifelse(sec_musician == "(sandy) alex g", "Alex G", str_to_title(sec_musician))) %>%
+        #clean all blanks
+        filter(favorite_musician != "", sec_musician != "", music_genre != "")
+
+fave_musician <- as.data.frame(table(musician_dat$favorite_musician), stringsAsFactors = F)
+sec_musician <- as.data.frame(table(musician_dat$sec_musician), stringsAsFactors = F)
+```
+
+
+Color on number of fans
+```{r}
+
+color_artist <- brewer.pal(n = 3, name = "Dark2")
+
+fave_musician <- fave_musician %>% mutate(color_fan = case_when(
+                            Freq >= 29 ~ color_artist[1],
+                            Freq > 1 ~ color_artist[2],
+                            T ~ "black"
+                          ))
+
+
+sec_musician <- sec_musician %>% mutate(color_fan = case_when(
+                            Freq >= 29 ~ color_artist[1],
+                            Freq > 1 ~ color_artist[2],
+                            T ~ "black"
+                          ))
+
+
+```
+
+Word cloud For Favorite musician
+```{r}
+#Word cloud for markdown
+
+wordcloud(words = fave_musician$Var1, freq = fave_musician$Freq, min.freq = 1,
+                            max.words=200, random.order=FALSE, rot.per=0.35, 
+                            colors=fave_musician$color_fan, ordered.colors = T
+                            )
+#Print word cloud
+png("outputs/favorite_musician.png", units="in", width=5, height=5, res=300)
+wordcloud(words = fave_musician$Var1, freq = fave_musician$Freq, min.freq = 1,
+                            max.words=200, random.order=FALSE, rot.per=0.35, 
+                            colors=fave_musician$color_fan, ordered.colors = T
+                            )
+dev.off()
+```
+
+Word cloud For Second Favorite musician
+```{r}
+#Word cloud for markdown
+
+wordcloud(words = sec_musician$Var1, freq = sec_musician$Freq, min.freq = 1,
+                            max.words=200, random.order=FALSE, rot.per=0.35, 
+                            colors=sec_musician$color_fan, ordered.colors = T
+                            )
+#Print word cloud
+png("outputs/second_musician.png", units="in", width=5, height=5, res=300)
+wordcloud(words = sec_musician$Var1, freq = sec_musician$Freq, min.freq = 1,
+                            max.words=200, random.order=FALSE, rot.per=0.35, 
+                            colors=sec_musician$color_fan, ordered.colors = T
+                            )
+dev.off()
+```
+
+
+Clean up data for favorite Genres
+
+```{r}
+genre_dat <- musician_dat %>%
+                  mutate(music_genre = str_replace(str_to_lower(str_trim(music_genre)), "-", " ")) %>%
+                  filter(music_genre != "") %>%
+                  mutate(music_genre = case_when(
+                    music_genre %in% "imdie rock" ~ "indie rock",
+                    music_genre %in% "lofi / 'indie rock' i guess lol" ~ "lofi",
+                    music_genre %in% "indite rock" ~ "indie rock",
+                    music_genre %in% "indie rock / folk / jazz" ~ "jazz",
+                    music_genre %in% "indie rock, punk, alternative." ~ "punk",
+                    music_genre %in% "shoegaze/indie rock" ~ "shoegaze",
+                    T ~ music_genre
+                    ),
+                    music_genre = str_to_title(music_genre))
+
+genre_table <- data.frame(table(genre_dat$music_genre), stringsAsFactors = F)
+
+
+genre_table <- genre_table %>% mutate(color_fan = case_when(
+                            Freq >= 30 ~ color_artist[1],
+                            Freq > 1 ~ color_artist[2],
+                            T ~ "black"
+                          ))
+
+
+```
+
+Word cloud For Favorite Genre
+```{r}
+#Word cloud for markdown
+
+wordcloud(words = genre_table$Var1, freq = genre_table$Freq, min.freq = 1,
+                            max.words=200, random.order=FALSE, rot.per=0.30, 
+                            colors=genre_table$color_fan, ordered.colors = T
+                            )
+#Print word cloud
+png("outputs/favorite_genre.png", units="in", width=5, height=5, res=300)
+wordcloud(words = genre_table$Var1, freq = genre_table$Freq, min.freq = 1,
+                            max.words=200, random.order=FALSE, rot.per=0.30, 
+                            colors=genre_table$color_fan, ordered.colors = T
+                            )
+dev.off()
+```
+
+
 
 # Alex G Music 
 
-##Favorite Album
+## Favorite Album
  Prepare data
 ```{r}
 ##Filter down to Albums and songs to make an object usable in the next two chuncks
@@ -1155,7 +1307,7 @@ This is interesting because if you look at the Time's article as people age Slyt
 Using Ztables from this [link](https://cran.r-project.org/web/packages/ztable/vignettes/heatmapTable.html)
 
 Ztable signs vs MBTI
-```{r}
+```{r results='asis'}
 
 hor_mbt_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
                                    !(sign %in% c("", "Prefer not to answer", "I don't know"))) %>%
@@ -1180,7 +1332,7 @@ sign_z %>% makeHeatmap() %>%
 ```
 
 Ztable Element vs MBTI
-```{r}
+```{r results='asis'}
 #Element
 element_tab <- table(hor_mbt_dat$element, hor_mbt_dat$mbti)
 element_z <- ztable(element_tab)
@@ -1194,7 +1346,7 @@ element_z %>% makeHeatmap() %>%
 
 Ztable for Zodiac and Houses
 Remove names that repeat above (This hasn't been done)
-```{r}
+```{r results='asis'}
 hor_hp_dat <- pers_dat %>% filter(!(hp_house %in% c("", "Prefer not to answer", "I don't know")),
                                    !(sign %in% c("", "Prefer not to answer", "I don't know"))) %>%
                 mutate(element = case_when(
@@ -1217,7 +1369,7 @@ sign_z %>% makeHeatmap() %>%
 ```
 
 Ztable for element and house
-```{r}
+```{r results='asis'}
 #Element
 element_tab <- table(hor_hp_dat$hp_house, hor_hp_dat$element)
 element_z <- ztable(element_tab)
@@ -1229,7 +1381,7 @@ element_z %>% makeHeatmap() %>%
 ```
 
 MBTI vs Houses
-```{r}
+```{r results='asis'}
 mbti_house_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
                                    !(hp_house %in% c("", "Prefer not to answer", "I don't know"))) 
 
@@ -1245,6 +1397,29 @@ chi_hp_house_mbti <- chisq.test(mbti_house_dat$mbti, mbti_house_dat$hp_house, si
 hp_house_z %>% makeHeatmap() %>%
   print(caption = paste0("Heatmap Table of Hogwarts Houses and Myer-Briggs Types; Chi-Sqare p-value of ", format.pval(chi_hp_house_mbti$p.value, digits = 3)))
 ```
+
+
+
+
+## MBTI letters vs Zodiac Signs
+
+Prepare data
+```{r}
+letter_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
+                    !(sign %in% c("", "Prefer not to answer", "I don't know"))) %>%
+              mutate(IE = ifelse(str_detect(mbti, "I"), "I", "E"),
+                     SN = ifelse(str_detect(mbti, "S"), "S", "N"),
+                     FT = ifelse(str_detect(mbti, "F"), "F", "T"),
+                     JP = ifelse(str_detect(mbti, "J"), "J", "P"))  %>%
+                mutate(element = case_when(
+                  sign %in% c("Aries", "Leo", "Sagittarius") ~ "Fire",
+                  sign %in% c("Gemini", "Libra", "Aquarius") ~ "Air",
+                  sign %in% c("Taurus", "Virgo", "Capricorn") ~ "Earth",
+                  sign %in% c("Cancer", "Scorpio", "Pisces") ~ "Water"
+                  )
+                )
+```
+
 
 Making sign table function
 ```{r}
@@ -1279,27 +1454,8 @@ auto_ztable <- function(df, col1, col2, title, simul_p = F, pval_digits = 3) {
 ```
 
 
-## MBTI letters vs Zodiac Signs
-
-Prepare data
-```{r}
-letter_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
-                    !(sign %in% c("", "Prefer not to answer", "I don't know"))) %>%
-              mutate(IE = ifelse(str_detect(mbti, "I"), "I", "E"),
-                     SN = ifelse(str_detect(mbti, "S"), "S", "N"),
-                     FT = ifelse(str_detect(mbti, "F"), "F", "T"),
-                     JP = ifelse(str_detect(mbti, "J"), "J", "P"))  %>%
-                mutate(element = case_when(
-                  sign %in% c("Aries", "Leo", "Sagittarius") ~ "Fire",
-                  sign %in% c("Gemini", "Libra", "Aquarius") ~ "Air",
-                  sign %in% c("Taurus", "Virgo", "Capricorn") ~ "Earth",
-                  sign %in% c("Cancer", "Scorpio", "Pisces") ~ "Water"
-                  )
-                )
-```
-
 Sign and IE
-```{r}
+```{r results='asis'}
 #Sign IE
 
 auto_ztable(letter_dat,
@@ -1310,7 +1466,7 @@ auto_ztable(letter_dat,
 ```
 
 Sign and SN
-```{r}
+```{r results='asis'}
 
 #Sign SN
 auto_ztable(letter_dat,
@@ -1321,7 +1477,7 @@ auto_ztable(letter_dat,
 ```
 
 Sign and FT
-```{r}
+```{r results='asis'}
 #Sign FT
 auto_ztable(letter_dat,
             "FT",
@@ -1331,7 +1487,7 @@ auto_ztable(letter_dat,
 ```
 
 Sign and JP
-```{r}
+```{r results='asis'}
 #Sign JP
 auto_ztable(letter_dat,
             "JP",
@@ -1345,7 +1501,7 @@ auto_ztable(letter_dat,
 ## MBTI letters vs Zodiac Elements
 
 Element EI
-```{r}
+```{r results='asis'}
 
 auto_ztable(letter_dat,
             "IE",
@@ -1355,7 +1511,7 @@ auto_ztable(letter_dat,
 ```
 
 Element SN
-```{r}
+```{r results='asis'}
 auto_ztable(letter_dat,
             "SN",
             "element",
@@ -1364,7 +1520,7 @@ auto_ztable(letter_dat,
 ```
 
 Element FT
-```{r}
+```{r results='asis'}
 
 auto_ztable(letter_dat,
             "FT",
@@ -1375,7 +1531,7 @@ auto_ztable(letter_dat,
 
 
 Element JP
-```{r}
+```{r results='asis'}
 
 auto_ztable(letter_dat,
             "JP",
@@ -1388,7 +1544,7 @@ auto_ztable(letter_dat,
 ## Hogwarts MBTI Letter Analysis
 
 Prepare data
-```{r}
+```{r results='asis'}
 letter_dat_hp <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
                     !(hp_house %in% c("", "Prefer not to answer", "I don't know"))) %>%
               mutate(IE = ifelse(str_detect(mbti, "I"), "I", "E"),
@@ -1398,7 +1554,7 @@ letter_dat_hp <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "
 ```
 
 House IE
-```{r}
+```{r results='asis'}
 auto_ztable(letter_dat_hp,
             "IE",
             "hp_house",
@@ -1407,7 +1563,7 @@ auto_ztable(letter_dat_hp,
 ```
 
 House SN
-```{r}
+```{r results='asis'}
 
 auto_ztable(letter_dat_hp,
             "SN",
@@ -1417,7 +1573,7 @@ auto_ztable(letter_dat_hp,
 ```
 
 House FT
-```{r}
+```{r results='asis'}
 
 auto_ztable(letter_dat_hp,
             "FT",
@@ -1428,16 +1584,123 @@ auto_ztable(letter_dat_hp,
 ```
 
 House JP
-```{r}
+```{r results='asis'}
 auto_ztable(letter_dat_hp,
-            "JP",
-            "hp_house",
-            "Heatmap Table of Hogwarts Houses and Judge vs Perceive",
-            simul_p = T)
-
-
-
+          "JP",
+          "hp_house",
+          "Heatmap Table of Hogwarts Houses and Judge vs Perceive",
+          simul_p = T)
+  
 ```
+#Habits
+
+## Substance Usage
+```{r}
+options(ztable.type = "viewer")
+dat_habits <- dat %>%
+          select(id, age, gender, weed_use, alc_use, concerts) %>%
+          mutate(weed_use = case_when(
+                    weed_use == "I used to smoke weed, but now I don't" ~ "I don't smoke weed anymore",
+                    T ~ weed_use
+                  ),
+                 alc_use = case_when(
+                    alc_use == "I used to drink, but don't anymore" ~ "I don't drink anymore",
+                    T ~ alc_use
+                 ))
+
+
+dat_drugs <- dat_habits  %>% filter(alc_use != "", weed_use != "")
+
+
+auto_ztable(dat_drugs,
+          "alc_use",
+          "weed_use",
+          "Heatmap Table of Alcohol and Weed Usage",
+          simul_p = T)
+
+#Make a histogram of ages and habits
+dat_drugs$alc_use <- factor(dat_drugs$alc_use, names(sort(table(dat_drugs$alc_use), decreasing= F)))
+ggplot(dat_drugs, aes(x=age, fill=alc_use)) +
+  geom_histogram(breaks=seq(15, 45, by=1), color="black")
+
+dat_drugs$weed_use <- factor(dat_drugs$weed_use, names(sort(table(dat_drugs$weed_use), decreasing= F)))
+ggplot(dat_drugs, aes(x=age, fill=weed_use)) +
+  geom_histogram(breaks=seq(15, 45, by=1), color="black")
+
+#Simple barplot
+
+dat_drugs$alc_use <- factor(dat_drugs$alc_use, c("I never had alcohol",
+                                                 "I don't drink anymore",
+                                                 "Once a month/socially",
+                                                 "Once a week",
+                                                 "Multiple times per week",
+                                                 "Every day",
+                                                 "Multiple times a day"))
+
+ggplot(dat_drugs, aes(x=alc_use, fill=alc_use)) +
+  geom_bar(color="black") + coord_flip()
+
+dat_drugs$weed_use <- factor(dat_drugs$weed_use, c("I have never smoked weed",
+                                                 "I don't smoke weed anymore",
+                                                 "Once a month",
+                                                 "Once a week",
+                                                 "Multiple times per week",
+                                                 "Every day",
+                                                 "Multiple times a day"))
+
+ggplot(dat_drugs, aes(x=weed_use, fill=weed_use)) +
+  geom_bar(color="black") + coord_flip()
+```
+
+
+
+
+
+# The most average Alex G person
+```{r}
+library(lubridate)
+#When the average person filled out the survey
+mean(mdy_hm(dat$Timestamp))
+#Average age
+avg_age <- mean(dat$age)
+#They live in the US
+avg_country <- names(sort(table(dat$country),decreasing=TRUE)[1])
+#In California
+avg_state <- names(sort(table(dat$state),decreasing=TRUE)[3])
+# They are white
+avg_race <- names(sort(table(dat$race),decreasing=TRUE)[1])
+#They are male
+avg_gender <- names(sort(table(dat$gender),decreasing=TRUE)[1])
+#They are cis
+avg_identity <- names(sort(table(dat$transgender),decreasing=TRUE)[1])
+#They are straight
+avg_orientation <- names(sort(table(dat$orientation),decreasing=TRUE)[1])
+#They are monogomous
+avg_poly <- names(sort(table(dat$polyamorous),decreasing=TRUE)[1])
+#They started listening to alex G at the age of 19
+avg_start_listen <- median(dat$first_age)
+#They've been to 2 Alex G concerts
+avg_alex_conc <- median(dat$alex_g_concerts, na.rm = T)
+# They found Alex G through a friend
+avg_discovery <- names(sort(table(dat$discover_method),decreasing=TRUE)[1])
+#Their favorite song is Snot
+avg_fave_song <- names(sort(table(dat$favorite_son),decreasing=TRUE)[1:3])
+#Their favorite album is Trick
+avg_fave_album <- names(sort(table(dat$favorite_album),decreasing=TRUE)[1])
+#They don't listen to Alex G's unreleased albums
+avg_unreleased <- names(sort(table(dat$unreleased_album),decreasing=TRUE)[1])
+#They like the gretel music video
+avg_music_vid <- names(sort(table(dat$music_vid),decreasing=TRUE)[1])
+#They listen to music via spotify
+avg_music_source <- names(sort(table(dat$music_method),decreasing=TRUE)[1:3])
+#They probably play guitar
+avg_instrument <- (sum_instr %>% arrange(desc(Freq)))[1,1]
+#They are not in a band
+avg_band <- sort(table(dat$in_band),decreasing=TRUE)[1:3]
+####NEED TO DO ART
+#
+```
+
 
 
 ```{r echo=F}
@@ -1499,6 +1762,7 @@ auto_ztable(letter_dat_hp,
 ```
 
 
-# [Things to do](https://sandy.bandcamp.com/track/things-to-do)
+# [Things to Do](https://sandy.bandcamp.com/track/things-to-do)
 
   - Turn repetitive code into functions for example in the personality block
+  - Add Alex G Habits
