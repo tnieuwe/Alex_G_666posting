@@ -15,6 +15,9 @@ library(rworldmap)
 library(mapproj)
 library(wesanderson)
 library(maps)
+library(viridis)
+library(rstatix)
+library(EnvStats)
 
 options(ztable.type = "html")
 #For simulated p-values
@@ -23,37 +26,59 @@ set.seed(123)
 
 Load data
 ```{r}
-dat <- read.csv("inputs/alex_g_stats_6_19.csv", stringsAsFactors = F)
+dat <- read.csv("inputs/alex_g_stats_8_1.csv", stringsAsFactors = F)
 head(dat)
 
-#make it pretty
-CapStr <- function(y) {
-  c <- strsplit(y, " ")[[1]]
-  paste(toupper(substring(c, 1,1)), substring(c, 2),
-      sep="", collapse=" ")
+#functions
+hi_low_fact <- function(x, decrease = F){
+  names(table(x)[order(table(x), decreasing = decrease)])
 }
+
 ```
 
 #Demographics questions
 
+Data Clean
+```{r}
+dat <- dat %>% mutate(
+  race = str_to_title(race),
+  orientation = str_to_title(orientation),
+  gender = factor(gender, hi_low_fact(gender, decrease = F)),
+  transgender = factor(transgender, levels = c("No", "Yes", "Prefer not to answer")),
+  polyamorous = ifelse(polyamorous == "Prefer not to say", "Prefer not to answer", polyamorous),
+  polyamorous = factor(polyamorous, levels = c("No", "Yes", "Prefer not to answer"))
+)
+```
+
+
+Plot
 ```{r}
 #Age
 ggplot(dat, aes(age)) + geom_histogram(breaks=seq(15, 45, by=1), fill = "white", color = "black")
 
 #Race plot
-race_plot <- ggplot(dat, aes(race)) + geom_bar() + coord_flip()
-
+race_plot <- ggplot(dat, aes(race)) +
+  geom_bar() +
+  coord_flip()
+race_plot
 #gender plot
-gender_plot <- ggplot(dat, aes(gender)) + geom_bar() +
-  theme(axis.text.x = element_text(angle = -20, vjust = 0))                         
+gender_plot <- ggplot(dat, aes(gender, fill = gender)) + geom_bar() +
+  coord_flip()
+  
+gender_plot
+
 #trans identity plot
-trans_plot <-  ggplot(dat, aes(transgender)) + geom_bar()
-
+trans_dat <- filter(dat, transgender != "") %>% select(age, transgender)
+trans_plot <-  ggplot(trans_dat, aes(transgender)) + geom_bar()
+trans_plot
 #orientation plot
-orientation_plot <-  ggplot(dat, aes(orientation)) + geom_bar()
-
+orientation_plot <-  ggplot(dat, aes(orientation, fill = gender)) + geom_bar() +
+  coord_flip() + theme(legend.position="bottom")
+orientation_plot
 #polyamorous identity plot
 poly_plot <-  ggplot(dat, aes(polyamorous)) + geom_bar()
+
+poly_plot
 ```
 
 
@@ -85,14 +110,17 @@ world_needed <- world_dat %>% select(fans, ISO2, ISO3, Country.Name)
 pal <- wes_palette("Zissou1", 100, type = "continuous")
  
  
-#Get a higher rsolution
+#Get a higher resolution
 worldmap <- getMap(resolution = "low")
 
 worldmap@data <- left_join(worldmap@data, world_needed)
 worldmap_poly <- fortify(worldmap)
 worldmap_poly <- merge(worldmap_poly, worldmap@data, by.x="id", by.y="ADMIN", all.x=T)
 
-#Remove the US because they have to many indiiduals
+#Make fans per 100,000
+worldmap_poly <- worldmap_poly %>% mutate(fans_per = ifelse(is.na(fans), 0, fans),
+                                        fans_per = round((fans/POP_EST * 100000), digits = 3))
+#Remove the US because they have to many individuals
 worldmap_poly_nUSA <- worldmap_poly %>% filter(Country.Name != "United States")
 ```
 
@@ -104,19 +132,23 @@ Plot the whole world with the US
 #Whole world with US
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
-  geom_polygon(data = worldmap_poly, aes(long, lat, group = group, fill = log2(fans)),size = 0.3) +
+  geom_polygon(data = worldmap_poly, aes(long, lat, group = group, fill = fans_per),size = 0.3) +
 
 geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=1.5)   + 
-  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) + 
+  labs(fill = "Fans per
+100,000 indv")
 ```
 
 As you can see the US has to many fans and so it will get its own figure later on below is the world without the US
 ```{r}
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
-  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans),size = 0.3) +
+  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans_per),size = 0.3) +
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  +
-  labs(title = "Alex G fans around the world") + theme_gray(base_size =  14)
+  labs(title = "Alex G fans around the world", 
+  fill = "Fans per
+100,000 indv") + theme_gray(base_size =  14)
 
 ggsave("outputs/world_no_us.png", width = 10, height = 10)
 
@@ -126,11 +158,13 @@ Focusing on North America
 ```{r}
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
-  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans),size = 0.3) +
+  geom_polygon(data = worldmap_poly, aes(long, lat, group = group, fill = fans_per),size = 0.3) +
   geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=5) +
  coord_cartesian(xlim = c(-150, -50), ylim = c(15, 60)) +
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  + theme_void( base_size = 14) +
-  labs(title = "Alex G Fans Sans Americans")
+  labs(title = "Alex G Fans in North America", 
+  fill = "Fans per
+100,000 indv")
 
 ggsave("outputs/north_america.png")
 ```
@@ -140,12 +174,14 @@ Focusing on South America
 ###South america
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
-  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans), color = "black" ,size = 0.3) +
+  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans_per), color = "black" ,size = 0.3) +
 
 geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=5)+
   coord_cartesian(xlim = c(-90, -30), ylim = c(-60, 15))  +
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) + theme_void( base_size = 14) +
-  labs(title = "Alex G Fans in South America")
+  labs(title = "Alex G Fans in South America", 
+  fill = "Fans per
+100,000 indv")
 ggsave("outputs/south_america.png", height = 8, width = 7)
 ```
 
@@ -155,12 +191,14 @@ Focusing on South East Asia and Oceana
 ###Oceana and south east asia
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
-  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans), color = "black",size = 0.3) +
+  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans_per), color = "black",size = 0.3) +
 
 geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=5)+
   coord_cartesian(xlim = c(100, 180), ylim = c(-50, 45))  +
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  + theme_void( base_size = 14) +
-  labs(title = "Alex G Fans in East Asian and Oceania")
+  labs(title = "Alex G Fans in East Asian and Oceania", 
+  fill = "Fans per
+100,000 indv")
 
 ggsave("outputs/south_asia_aus.png", height = 8, width = 7)
 ```
@@ -170,12 +208,14 @@ Focusing on Europe
 ###Europe
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
-  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans), color = "black",size = 0.3) +
+  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans_per), color = "black",size = 0.3) +
 
 geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=(fans)), size=5)+
   coord_cartesian(xlim = c(-10, 30), ylim = c(30, 70))   + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) + theme_void( base_size = 14) +
-  labs(title = "Alex G Fans in Europe")
+  labs(title = "Alex G Fans in Europe", 
+  fill = "Fans per
+100,000 indv")
 
 ggsave("outputs/europe_current.png", height = 8, width = 7) 
 
@@ -239,7 +279,8 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
     geom_text(aes(long_center, lat_center, label = count))  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
-  labs(title = "Alex G Fans in the USA",fill = "Fans per 100,000 indv")
+  labs(title = "Alex G Fans in the USA",fill = "Fans per
+100,000 indv")
 ggsave("outputs/all_us.png", height = 6, width = 8)
 ```
 
@@ -250,7 +291,8 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-80, -65), ylim = c(38,48)) +
     geom_text(aes(long_center, lat_center, label = count), size = 3.3)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
-  labs(title = "Alex G Fans in the North East",fill = "Fans per 100,000 indv")
+  labs(title = "Alex G Fans in the North East",fill = "Fans per 
+100,000 indv")
 ggsave("outputs/NE_us.png", height = 8, width = 8)
 ```
 
@@ -261,7 +303,8 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-110, -65), ylim = c(25,40)) +
     geom_text(aes(long_center, lat_center, label = count), size = 3.3)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
-  labs(title = "Alex G Fans in the South",fill = "Fans per 100,000 indv")
+  labs(title = "Alex G Fans in the South",fill = "Fans per 
+100,000 indv")
 ggsave("outputs/south_us.png", height = 8, width = 12)
 ```
 Plotting the Midwest
@@ -271,7 +314,8 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-114, -80), ylim = c(32,49)) +
     geom_text(aes(long_center, lat_center, label = count))  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
-  labs(title = "Alex G Fans in the Mid West",fill = "Fans per 100,000 indv")
+  labs(title = "Alex G Fans in the Mid West",fill = "Fans per
+100,000 indv")
 ggsave("outputs/midwest_us.png", height = 8, width = 9)
 ```
 Plotting the West
@@ -281,7 +325,8 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-125, -110), ylim = c(30,49)) +
     geom_text(aes(long_center, lat_center, label = count))  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
-  labs(title = "Alex G Fans in the West",fill = "Fans per 100,000 indv") + theme_grey(base_size = 14)
+  labs(title = "Alex G Fans in the West",fill = "Fans per
+100,000 indv") + theme_grey(base_size = 14)
 ggsave("outputs/west_us.png", height = 9, width = 7)
 
 
@@ -293,19 +338,20 @@ Preparing the data
 ```{r}
 
 #I remove one fill in the blank because... yeah
-poltical_dat <- select(dat,left_right, lib_auth, gender, age) %>% drop_na() %>% mutate(gender = ifelse(gender =="There are only 2 genders", "Prefer not to say", gender))
+political_dat <- select(dat,left_right, lib_auth, gender, age) %>% drop_na() 
+#%>% mutate(gender = ifelse(gender =="There are only 2 genders", "Prefer not to say", gender))
 
 
 #Get the medians and means of the compass
-med_LR <- median(poltical_dat$left_right)
-med_LA <- median(poltical_dat$lib_auth)
-mean_LR <- mean(poltical_dat$left_right)
-mean_LA <- mean(poltical_dat$lib_auth)
+med_LR <- median(political_dat$left_right)
+med_LA <- median(political_dat$lib_auth)
+mean_LR <- mean(political_dat$left_right)
+mean_LA <- mean(political_dat$lib_auth)
 ```
 
 First political compass using gender as a variable, I could probably make this a base plot and use the base to change the other ones.
 ```{r}
-ggplot(poltical_dat) +
+ggplot(political_dat) +
            geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.005) +
            geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.005) +
            geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.005) +
@@ -318,7 +364,7 @@ ggplot(poltical_dat) +
           geom_point(aes(x=8, y=3), colour="blue", shape = 9, size =3) +
           geom_point(aes(x=8, y=1.5), colour="red", shape = 9, size =3) +
   #Add annotations to the compass
-          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(poltical_dat))) + 
+          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(political_dat))) + 
    ylab("libertarian to authoritarian") +
                xlab("left to right") +
               coord_fixed() + annotate("text", x = c(2.5, 2.5, 7.5, 7.5),
@@ -331,20 +377,29 @@ ggplot(poltical_dat) +
 ggsave("outputs/political_compass_gender.png")
 ```
 
-Poltical compass with age as a variable
+Political compass with age as a variable
 ```{r}
+
+to_zcore <- function(x){
+  (x - mean(x))/sd(x)
+}
+
+#make age normalized because of skewing
+political_dat <- political_dat %>% mutate(norm_age = to_zcore(age),
+                                          log2_age = log2(age))
+
 #Age
-ggplot(poltical_dat) +
+ggplot(political_dat) +
            
            geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.005) +
            geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.005) +
            geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.005) +
            geom_rect(aes(xmin = 0, xmax= 5,ymin = 5, ymax=10), fill = "red", alpha = 0.005) + 
-          geom_jitter(aes(x = left_right, y = lib_auth, color = age), width =.5, height =.5 ) +
+          geom_jitter(aes(x = left_right, y = lib_auth, color = log2_age), width =.5, height =.5 ) +
           #Adding median and mean
           geom_point(aes(x=med_LR, y=med_LA), colour="blue", shape = 9, size =2) +
           geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
-          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(poltical_dat))) + 
+          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(political_dat))) + 
    ylab("libertarian to authoritarian") +
                xlab("left to right") +
               coord_fixed() + annotate("text", x = c(2.5, 2.5, 7.5, 7.5),
@@ -358,9 +413,9 @@ ggplot(poltical_dat) +
 Gender compass again, but without the jitter, instead using the size of the points to determine density. 
 ```{r}
 #Second version change the size of points based on how many points there are there
-poltical_dat_2 <- rbind(poltical_dat, c(9, 8))
+political_dat_2 <- rbind(political_dat, c(9, 8))
 
-pol_count <- as.data.frame(table(poltical_dat_2$left_right, poltical_dat_2$lib_auth))
+pol_count <- as.data.frame(table(political_dat_2$left_right, political_dat_2$lib_auth))
 pol_count <- pol_count %>% mutate(Freq = ifelse((Var1 == "9" & Var2 == "8"), Freq - 1, Freq))
 
 colnames(pol_count)[1:2] <- c("left_right", "lib_auth")
@@ -382,7 +437,7 @@ ggplot(pol_count) +
          #Add the dotplot annotation
           geom_point(aes(x=8, y=3), colour="white", shape = 9, size =4) +
           geom_point(aes(x=8, y=1.5), colour="red", shape = 9, size =4) +
-          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(poltical_dat))) + 
+          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(political_dat))) + 
    ylab("Libertarian to Authoritarian") +
                xlab("Left to Right") +
               # scale_x_continuous(breaks = c(0:10))+
@@ -1432,11 +1487,11 @@ pval_digits <- 3
 
 
 
-auto_ztable <- function(df, col1, col2, title, simul_p = F, pval_digits = 3) {
+auto_ztable <- function(df, col1, col2, title, simul_p = F, pval_digits = 3, marg = 0) {
   temp_tab <- table(df[[col1]], df[[col2]])
   temp_ztab <- ztable(temp_tab)
   chi_result <- chisq.test(df[[col1]], df[[col2]], simulate.p.value = simul_p)
-  temp_ztab %>% makeHeatmap() %>%
+  temp_ztab %>% makeHeatmap(margin = marg) %>%
   print(caption = paste0(title," ; Chi-Sqare p-value of ", format.pval(chi_result$p.value, digits = pval_digits)))
 }
 
@@ -1594,11 +1649,11 @@ auto_ztable(letter_dat_hp,
 ```
 #Habits
 
-## Substance Usage
+Step one, per usual, is cleaning up the data for our specific purposes, one of the main changes is shortening of names and adding a fun variable about alcohol consumption. 
 ```{r}
 options(ztable.type = "viewer")
 dat_habits <- dat %>%
-          select(id, age, gender, weed_use, alc_use, concerts) %>%
+          select(id, age, gender, weed_use, alc_use, concerts, country) %>%
           mutate(weed_use = case_when(
                     weed_use == "I used to smoke weed, but now I don't" ~ "I don't smoke weed anymore",
                     T ~ weed_use
@@ -1606,28 +1661,21 @@ dat_habits <- dat %>%
                  alc_use = case_when(
                     alc_use == "I used to drink, but don't anymore" ~ "I don't drink anymore",
                     T ~ alc_use
-                 ))
+                 ),
+                 `Drinks in the USA` = ifelse(country == "United States" & 
+                                           alc_use != "I never had alcohol", "Yes", "No"),
+                 underage_drinking = ifelse(`Drinks in the USA` == "Yes" & age <= 20,
+                                            "Yes",
+                                            "No"))
+```
 
+
+## Substance Usage
+
+Let us first make a some barplots of both drugs followed by a z-table to see what our distribution of recorded substance usage is. I will also run a Chi-square (because the function already does that) to see if the distribution of usage is unexpected, aka, are weed use and alcohol use random, or are they correlated in some manner. I am also ordering factors to make the tables and following graphs more readable.
+```{r}
 
 dat_drugs <- dat_habits  %>% filter(alc_use != "", weed_use != "")
-
-
-auto_ztable(dat_drugs,
-          "alc_use",
-          "weed_use",
-          "Heatmap Table of Alcohol and Weed Usage",
-          simul_p = T)
-
-#Make a histogram of ages and habits
-dat_drugs$alc_use <- factor(dat_drugs$alc_use, names(sort(table(dat_drugs$alc_use), decreasing= F)))
-ggplot(dat_drugs, aes(x=age, fill=alc_use)) +
-  geom_histogram(breaks=seq(15, 45, by=1), color="black")
-
-dat_drugs$weed_use <- factor(dat_drugs$weed_use, names(sort(table(dat_drugs$weed_use), decreasing= F)))
-ggplot(dat_drugs, aes(x=age, fill=weed_use)) +
-  geom_histogram(breaks=seq(15, 45, by=1), color="black")
-
-#Simple barplot
 
 dat_drugs$alc_use <- factor(dat_drugs$alc_use, c("I never had alcohol",
                                                  "I don't drink anymore",
@@ -1637,23 +1685,273 @@ dat_drugs$alc_use <- factor(dat_drugs$alc_use, c("I never had alcohol",
                                                  "Every day",
                                                  "Multiple times a day"))
 
-ggplot(dat_drugs, aes(x=alc_use, fill=alc_use)) +
-  geom_bar(color="black") + coord_flip()
-
 dat_drugs$weed_use <- factor(dat_drugs$weed_use, c("I have never smoked weed",
                                                  "I don't smoke weed anymore",
                                                  "Once a month",
                                                  "Once a week",
                                                  "Multiple times per week",
                                                  "Every day",
-                                                 "Multiple times a day"))
+                                                 "Multiple times a day")) 
+```
 
-ggplot(dat_drugs, aes(x=weed_use, fill=weed_use)) +
-  geom_bar(color="black") + coord_flip()
+Alcohol and weed barplots:
+```{r}
+
+alc_count <- dat_drugs %>% count(alc_use)
+weed_count  <- dat_drugs %>% count(weed_use)
+
+ggplot(alc_count, aes(x=alc_use, y = n, fill=alc_use)) +
+  geom_col(color="black", ) +
+  coord_flip() +
+  scale_fill_viridis_d()  +
+  theme(legend.position = "none") +
+  geom_text(aes(label = n), nudge_y = 3, size=4)
+  
+
+ggplot(weed_count, aes(x=weed_use, y = n, fill=weed_use)) +
+  geom_col(color="black", ) +
+  coord_flip() +
+  scale_fill_viridis_d()  +
+  theme(legend.position = "none") +
+  geom_text(aes(label = n), nudge_y = 3, size=4)
+```
+
+Now lets look at that Z table
+```{r}
+
+auto_ztable(dat_drugs,
+          "alc_use",
+          "weed_use",
+          "Heatmap Table of Alcohol and Weed Usage",
+          simul_p = T)
+```
+
+So it appears, according the the Chi-Square that our data might be trending towards significance, but there is nothing to be concluded here. Overall it appears most people use to smoke weed, but not anymore, and most people seem to drink socially. 
+
+
+Now let us see if there are any interesting distributions with age
+```{r}
+#Make a histogram of ages and habits
+dat_drugs$alc_use <- factor(dat_drugs$alc_use, names(sort(table(dat_drugs$alc_use), decreasing= F)))
+ggplot(dat_drugs, aes(x=age, fill=alc_use)) +
+  geom_histogram(breaks=seq(15, 45, by=1), color="black") +
+  scale_fill_viridis_d(option = "A", direction = -1)
+```
+
+This is an interesting way to view the distribution, but to see differences there are better plots:
+```{r}
+ggplot(dat_drugs, aes(y=age, x= alc_use, fill=alc_use)) +
+  geom_violin() +
+  stat_n_text(size = 3) +
+  scale_fill_viridis_d(option = "A", direction = -1) +
+  coord_flip()
+```
+
+These distributions don't seem that different from one another. As a test I'll run a linear model to see if these drinking groups are a good predictor of age. That said, I'm not really going to check any assumptions (don't do this), I will remove the one older individual because they are an outlier, but I don't expect there to be a difference.
+```{r}
+no_out_drugs <- dat_drugs %>% filter(age <= 38) %>%
+  mutate(center_age = age - mean(age))
+no_out_drugs %>%
+  group_by(alc_use)%>%
+  get_summary_stats(age, type = "mean_sd")
+
+lm_alc <- lm(center_age ~ alc_use, data = no_out_drugs)
+summary(lm_alc)
+```
+Nothing significant, but social drinking trends towards younger individuals which is interesting. 
+
+
+And now I'm going to reveal all the filthy filthy law breakers in this group (I'm being sarcastic, but I think its an interesting question)
+```{r}
+#Alcohol based on country
+dat_drugs$alc_use <- factor(dat_drugs$alc_use, names(sort(table(dat_drugs$alc_use), decreasing= F)))
+ggplot(dat_drugs, aes(x=age, fill=`Drinks in the USA`)) +
+  geom_histogram(breaks=seq(15, 45, by=1), color="black") +
+  geom_vline(xintercept = 21, linetype = "dashed", color = "red", size = 1.4) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Woah, that's illegal buddies!",
+       subtitle = paste0("I'm reporting all ",
+                         sum(dat_drugs$underage_drinking == "Yes"),
+                         " of you to the police! /s"))
+```
+Disgusting...
+
+
+Alright on to the completely legal topic of weed usage
+```{r}
+#Weed
+dat_drugs$weed_use <- factor(dat_drugs$weed_use, names(sort(table(dat_drugs$weed_use), decreasing= F)))
+ggplot(dat_drugs, aes(x=age, fill=weed_use)) +
+  geom_histogram(breaks=seq(15, 45, by=1), color="black") +
+  scale_fill_viridis_d(option = "A", direction = -1)
+
+
+```
+Same question above with weed:
+```{r}
+ggplot(dat_drugs, aes(y=age, x= weed_use, fill=weed_use)) +
+  geom_violin() +
+  stat_n_text(size = 3) +
+  scale_fill_viridis_d(option = "A", direction = -1) +
+  coord_flip()
+
+```
+```{r}
+no_out_drugs %>%
+  group_by(weed_use)%>%
+  get_summary_stats(age, type = "mean_sd")
+
+lm_weed <- lm(center_age ~ weed_use, data = no_out_drugs)
+summary(lm_weed)
 ```
 
 
 
+
+# Concerts
+
+## In general
+```{r}
+ggplot(dat_habits, aes(x=concerts, fill = concerts)) +
+  geom_bar(color = "black") + coord_flip() +
+  labs(title = "How often do you go to concerts?",
+       subtitle = paste("N = ", nrow(dat_habits)))  +
+  scale_fill_brewer(palette = "Dark2")
+```
+# Alex G concerts
+
+Preparing the data
+```{r}
+alex_g_conc_dat <- dat %>% select(Timestamp, alex_g_concerts, state, living_area, concerts) %>%
+  filter(!is.na(alex_g_concerts)) %>%
+  mutate(`Lives Near Philly?` = ifelse(state %in% c("Pennsylvania",
+                                                    "New Jersey",
+                                                    "Delaware"), "Yes", "No"))
+```
+
+Making a histogram showing the general results. As you can see there are some outliers, but I have theories on why these outliers exist. 
+```{r}
+ggplot(alex_g_conc_dat, aes(x = alex_g_concerts)) +
+           geom_bar(color="black") 
+```
+
+My theory is they live near Philly, and by using the state data I've collected I can determine that two of the largest outliers indeed do live near Philly (defined by living in Pennsylvania, New Jersey or Delaware). That said, the individual who has seen Alex 40 times lives in Missouri.
+
+Fun fact: According to (setlist.fm)[https://www.setlist.fm/search?query=artist:%28%28Sandy%29+Alex+G%29+date:%5B2020-01-01+TO+2020-12-31%5D] Alex has played 284 concerts
+```{r}
+ggplot(alex_g_conc_dat, aes(x = alex_g_concerts, fill = `Lives Near Philly?`)) +
+  geom_bar(color="black") +
+  scale_fill_brewer(palette = "Dark2") +
+  annotate(geom="text", x=c(37, 17), y=5, label=c("Lives in Missouri", "Lives in South Carolina"),
+              color="Black") +
+  labs(
+    title = "Does seeing Alex G concerts correlate with
+living near Philly?",
+ subtitle = paste0("N = ", nrow(alex_g_conc_dat))
+  ) +
+  xlab("How many Alex G concerts have you seen?") +
+  ylab("Count")
+
+
+ggsave(filename = "outputs/alex_g_conc_philly.png", width = hght, height = wdth)
+```
+
+But another theory I had is that maybe living near cities in general will increase the probability of an individual going to more concerts
+```{r}
+alex_g_conc_dat$living_area <- factor(alex_g_conc_dat$living_area,
+                                      names(sort(table(alex_g_conc_dat$living_area),
+                                                 decreasing= F)))
+ggplot(alex_g_conc_dat, aes(x = alex_g_concerts, fill = living_area)) +
+           geom_bar(color="black")  
+```
+```{r}
+ggplot(alex_g_conc_dat, aes(y = alex_g_concerts, x = living_area, fill = living_area)) +
+   geom_violin() +
+  coord_flip() +
+  stat_n_text(size = 3)
+
+no_out_conc <- alex_g_conc_dat %>% filter(alex_g_concerts < 10)
+
+
+ggplot(no_out_conc, aes(y = alex_g_concerts, x = living_area, fill = living_area)) +
+   geom_violin() +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set1") +
+  stat_n_text(size = 3)  +
+  theme(legend.position = "none") +
+  labs(
+    title = "Does seeing Alex G concerts depend on
+how close you are to a city?",
+    subtitle = paste0("N = ", nrow(no_out_conc))
+  ) +
+  xlab("Living area") +
+  ylab("Number of Alex G Concerts")
+ggsave(filename = "outputs/alex_g_where_live.png", width = hght, height = wdth)
+```
+
+Check distribution with concert activity
+```{r}
+ggplot(alex_g_conc_dat, aes(y = alex_g_concerts, x = concerts, fill = concerts)) +
+   geom_violin() +
+  coord_flip() +
+  stat_n_text(size = 3)
+
+ggplot(no_out_conc, aes(y = alex_g_concerts, x = concerts, fill = concerts)) +
+   geom_violin() +
+  coord_flip() +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none") +
+  stat_n_text(size = 3) +
+  labs(
+    title = "How many Alex G concerts have you seen
+depending on your concert habits",
+    subtitle = paste0("N = ", nrow(no_out_conc))
+  ) +
+  xlab("Concert Habits") +
+  ylab("Number of Alex G Concerts")
+ggsave(filename = "outputs/alex_g_conc_hab.png", width = hght, height = wdth)
+```
+
+
+I decided to use som linear models to check if any of these variable were good predictors
+```{r}
+conc_lm <- lm(formula = alex_g_concerts ~ living_area + `Lives Near Philly?` + concerts,
+                data = alex_g_conc_dat)
+
+sum_conc_lm <- summary(conc_lm)
+sum_conc_lm$coefficients
+```
+It seems that the best predictor in this case is living near Philly! But that's not an honest analysis, because this result is likely driven by outliers, so we're going to toss them. 
+```{r}
+  ## Without the outliers
+
+
+conc_lm <- lm(formula = alex_g_concerts ~ living_area + `Lives Near Philly?` + concerts,
+                data = no_out_conc)
+
+sum_conc_lm <- summary(conc_lm)
+sum_conc_lm$coefficients
+
+```
+And so the significance of living near Philly is gone when you remove the two individual skewing the data. 
+
+So it appears that the biggest determinant of seeing Alex G concerts is if you live near Philly, which makes sense as, before Alex was touring most of his shows were in that area (and people could've included Skin Cells concerts as Alex G concerts). That said, if you remove the outliers, in the dataset, living near Philly is no longer a strong predictor on how many Alex G concerts you've seen, instead living in a city trends towards significance.
+
+```{r}
+ggplot(no_out_conc, aes(y = alex_g_concerts, x = `Lives Near Philly?`, fill = `Lives Near Philly?`)) +
+   geom_violin() +
+  coord_flip() +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none") +
+  stat_n_text(size = 3) +
+  labs(
+    title = "How many Alex G concerts have you seen
+base on living near Philly",
+    subtitle = paste0("N = ", nrow(no_out_conc))
+  ) +
+  xlab("Live near Philly?") +
+  ylab("Number of Alex G Concerts")
+```
 
 
 # The most average Alex G person
@@ -1738,7 +2036,7 @@ avg_band <- sort(table(dat$in_band),decreasing=TRUE)[1:3]
 
 
 # #############
-# pol_count <- as.data.frame(table(poltical_dat$left_right, poltical_dat$lib_auth))
+# pol_count <- as.data.frame(table(political_dat$left_right, political_dat$lib_auth))
 # colnames(pol_count)[1:2] <- c("left_right", "lib_auth")
 # pol_count$left_right <-factor(pol_count$left_right, levels = c("0","1", "2", "3", "4", "5", "6", "7", "8", "9","10"))
 # #pol_count$lib_auth <- as.integer(as.character(pol_count$lib_auth))
@@ -1754,7 +2052,7 @@ avg_band <- sort(table(dat$in_band),decreasing=TRUE)[1:3]
 #            #Adding median and mean
 #           # geom_point(aes(x=med_LR, y=med_LA), colour="white", shape = 9, size =2) +
 #            #geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
-#           labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(poltical_dat))) + 
+#           labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(political_dat))) + 
 #    ylab("libertarian to authoritarian") +
 #                xlab("left to right") +
 #     
