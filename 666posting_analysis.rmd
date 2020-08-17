@@ -2,10 +2,30 @@
 title: "Alex G Census 2020 Analysis"
 author: "Tim Nieuwenhuis"
 date: "4/30/2020"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_depth: 1
 ---
 
-```{r setup, include=T}
+## Libraries used
+
++ `tidyverse`: Used for general exploratory analysis, primarily used dplyr within it
++ `ztablel`: Used to make various tables
++ `UpSetR`: Used to make Upset plots
++ `wordcloud`: Used to make wordclouds (surprise!)
++ `rworldmap`: The map of the world!
++ `mapproj`: The map of... US?
++ `maps`: More maps... I gotta clean this up
++ `viridis`: Used for colorblind friendly palletes
++ `rstatix`: Ummmm
++ `EnvStats`: Used to get the N on ggplots for groupings
++ `ggpubr`: Arranging the plots
+
+### Seed
+`set.seed(123)` This was just to keep consistency of the wordcloud
+
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(ztable)
@@ -18,13 +38,14 @@ library(maps)
 library(viridis)
 library(rstatix)
 library(EnvStats)
-
+library(ggpubr)
+library(gridExtra)
 options(ztable.type = "html")
 #For simulated p-values
 set.seed(123)
 ```
 
-Load data
+# Loading the data
 ```{r}
 dat <- read.csv("inputs/alex_g_stats_8_1.csv", stringsAsFactors = F)
 head(dat)
@@ -36,9 +57,9 @@ hi_low_fact <- function(x, decrease = F){
 
 ```
 
-#Demographics questions
+# Demographics questions
 
-Data Clean
+Data clean for demographics
 ```{r}
 dat <- dat %>% mutate(
   race = str_to_title(race),
@@ -54,36 +75,70 @@ dat <- dat %>% mutate(
 Plot
 ```{r}
 #Age
-ggplot(dat, aes(age)) + geom_histogram(breaks=seq(15, 45, by=1), fill = "white", color = "black")
+age_plot <- ggplot(dat, aes(age)) +
+  geom_histogram(breaks=seq(15, 45, by=1),
+                 fill = "white", color = "black")
 
 #Race plot
 race_plot <- ggplot(dat, aes(race)) +
   geom_bar() +
-  coord_flip()
-race_plot
+  coord_flip() 
+
+#race_plot
+race_df <- as.data.frame(t(as.data.frame(table(dat$race))))
+colnames(race_df) <- names(table(dat$race))
+race_df <- race_df[2,]
+rownames(race_df) <- "Individuals"
+
+race_table <- ggtexttable(race_df)
+  
+  
+ggarrange(age_plot, race_plot, race_df, nrow = 3)
+```
+
+```{r, fig.width=8, fig.height=6}
 #gender plot
 gender_plot <- ggplot(dat, aes(gender, fill = gender)) + geom_bar() +
-  coord_flip()
+  coord_flip() +
+  theme(legend.position="bottom")
   
-gender_plot
+#gender_plot
 
 #trans identity plot
 trans_dat <- filter(dat, transgender != "") %>% select(age, transgender)
-trans_plot <-  ggplot(trans_dat, aes(transgender)) + geom_bar()
-trans_plot
+trans_plot <-  ggplot(trans_dat, aes(transgender)) + geom_bar() +
+  coord_flip()
+
+#trans_plot
+
 #orientation plot
 orientation_plot <-  ggplot(dat, aes(orientation, fill = gender)) + geom_bar() +
   coord_flip() + theme(legend.position="bottom")
-orientation_plot
-#polyamorous identity plot
-poly_plot <-  ggplot(dat, aes(polyamorous)) + geom_bar()
+#orientation_plot
 
-poly_plot
+#polyamorous identity plot
+poly_plot <-  ggplot(dat, aes(polyamorous, fill = gender)) +
+  geom_bar() +
+  coord_flip() +
+  theme(legend.position = "none") 
+
+#poly_plot
+
+
+gpt_plot <- ggarrange(gender_plot,
+                      poly_plot, trans_plot,
+                      nrow = 3, common.legend = T)
+
+
+annotate_figure(gpt_plot, top = text_grob(
+  "Gender count, polyamory colored on gender, and trans individuals"
+))
+
 ```
 
 
 
-Questions redo previous age analysis, use substraction to gain more individuals based on previous data
+Questions redo previous age analysis, use subtraction to gain more individuals based on previous data
 ```{r}
 
 ```
@@ -125,7 +180,7 @@ worldmap_poly_nUSA <- worldmap_poly %>% filter(Country.Name != "United States")
 ```
 
 
-##Plottin the world
+## Plotting the world
 
 Plot the whole world with the US
 ```{r}
@@ -140,21 +195,7 @@ geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label
 100,000 indv")
 ```
 
-As you can see the US has to many fans and so it will get its own figure later on below is the world without the US
-```{r}
-ggplot() + 
-  coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
-  geom_polygon(data = worldmap_poly_nUSA, aes(long, lat, group = group, fill = fans_per),size = 0.3) +
-  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))  +
-  labs(title = "Alex G fans around the world", 
-  fill = "Fans per
-100,000 indv") + theme_gray(base_size =  14)
-
-ggsave("outputs/world_no_us.png", width = 10, height = 10)
-
-```
-
-Focusing on North America
+## North American Alex G Fans
 ```{r}
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
@@ -169,7 +210,7 @@ ggplot() +
 ggsave("outputs/north_america.png")
 ```
 
-Focusing on South America
+## South American Alex G Fans
 ```{r fig.height = 8, fig.width = 6, fig.align = "center"}
 ###South america
 ggplot() + 
@@ -186,7 +227,8 @@ ggsave("outputs/south_america.png", height = 8, width = 7)
 ```
 
 
-Focusing on South East Asia and Oceana
+## South East Asia and Oceania Alex G Fans
+
 ```{r fig.height = 8, fig.width = 6, fig.align = "center"}
 ###Oceana and south east asia
 ggplot() + 
@@ -203,7 +245,7 @@ geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label
 ggsave("outputs/south_asia_aus.png", height = 8, width = 7)
 ```
 
-Focusing on Europe
+## Europe Alex G Fans
 ```{r fig.height = 8, fig.width = 6, fig.align = "center"}
 ###Europe
 ggplot() + 
@@ -223,7 +265,7 @@ ggsave("outputs/europe_current.png", height = 8, width = 7)
 ```
 
 
-Malta!
+## Malta!
 ```{r fig.height = 6, fig.width = 8, fig.align = "center"}
 ###Europe
 ggplot() + 
@@ -242,7 +284,8 @@ ggsave("outputs/europe_current.png", height = 8, width = 7)
 
 ```
 
-# Make a map of the US
+# Map of Alex G Fans in the United States
+
 I used the below vignette to do this
 https://cran.r-project.org/web/packages/usmap/vignettes/mapping.html
 
@@ -264,6 +307,7 @@ us_states_2 <- left_join(us_states, state_df)
 ```
 
 Using state census data (where did I get that?) to pull control for state population density. 
+
 ```{r}
 
 #######
@@ -293,7 +337,7 @@ p <- ggplot(data = us_states_3,
                           group = group, fill = adjust), color = "black")
 ```
 
-Plotting all of the US
+## Plotting all of the US
 ```{r fig.height = 6, fig.width = 8, fig.align = "center"}
 #All of US
 p + geom_polygon(color = "gray90", size = 0.1) +
@@ -305,7 +349,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
 ggsave("outputs/all_us.png", height = 6, width = 8)
 ```
 
-Plotting the North East
+## Plotting the North East
 ```{r fig.height = 6, fig.width = 6, fig.align = "center"}
 #North East
 p + geom_polygon(color = "gray90", size = 0.1) +
@@ -317,7 +361,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
 ggsave("outputs/NE_us.png", height = 8, width = 8)
 ```
 
-Plotting the South
+## Plotting the South
 ```{r fig.height = 5, fig.width = 8, fig.align = "center"}
 #The south
 p + geom_polygon(color = "gray90", size = 0.1) +
@@ -328,7 +372,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
 100,000 indv")
 ggsave("outputs/south_us.png", height = 8, width = 12)
 ```
-Plotting the Midwest
+## Plotting the Midwest
 ```{r fig.height = 5, fig.width = 7.5, fig.align = "center"}
 #The Mid West
 p + geom_polygon(color = "gray90", size = 0.1) +
@@ -339,7 +383,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
 100,000 indv")
 ggsave("outputs/midwest_us.png", height = 8, width = 9)
 ```
-Plotting the West
+## Plotting the West
 ```{r, fig.height = 9, fig.width = 6, fig.align = "center"}
 #The west
 p + geom_polygon(color = "gray90", size = 0.1) +
@@ -1673,8 +1717,9 @@ auto_ztable(letter_dat_hp,
 Step one, per usual, is cleaning up the data for our specific purposes, one of the main changes is shortening of names and adding a fun variable about alcohol consumption. 
 ```{r}
 options(ztable.type = "viewer")
+
 dat_habits <- dat %>%
-          select(id, age, gender, weed_use, alc_use, concerts, country) %>%
+          select(id, age, gender, weed_use, alc_use, concerts, country, state) %>%
           mutate(weed_use = case_when(
                     weed_use == "I used to smoke weed, but now I don't" ~ "I don't smoke weed anymore",
                     T ~ weed_use
@@ -1715,6 +1760,36 @@ dat_drugs$weed_use <- factor(dat_drugs$weed_use, c("I have never smoked weed",
                                                  "Multiple times a day")) 
 ```
 
+Bringing in data about weed use about the world [world](https://worldpopulationreview.com/country-rankings/countries-where-weed-is-illegal) and the [states](https://data.world/sya/marijuana-laws-by-state)
+```{r}
+world_weed <- read.csv("inputs/weed_world_legality.csv", stringsAsFactors = F, encoding = "UTF-8-BOM")
+colnames(world_weed)[1:3] <- c("country",
+                          "recreational",
+                          "medical")
+world_weed <- mutate(world_weed, weed_laws = case_when(
+  medical == "Illegal" ~ "not legal",
+  str_detect(medical, "Legal") ~ "medical/complicated",
+  recreational == "Legal" ~ "recreational",
+  TRUE ~ "decriminalized/complicated"
+  
+  
+))
+
+state_weed <- read.csv("inputs/state_marijuana_laws_10_2016.csv", stringsAsFactors = F)
+colnames(state_weed) <- c("state", "medical", "recreational", "no_laws")
+state_weed <- mutate(state_weed, weed_laws = case_when(
+  no_laws == "Yes" ~ "not legal",
+  recreational == "Yes" ~ "recreational",
+  medical == "Yes" ~ "medical"
+))
+
+
+
+
+```
+
+
+
 Alcohol and weed barplots:
 ```{r}
 
@@ -1724,21 +1799,35 @@ weed_count  <- dat_drugs %>% count(weed_use)
 ggplot(alc_count, aes(x=alc_use, y = n, fill=alc_use)) +
   geom_col(color="black", ) +
   coord_flip() +
-  scale_fill_viridis_d()  +
+  scale_fill_viridis_d(option = "A", direction = -1)  +
   theme(legend.position = "none") +
-  geom_text(aes(label = n), nudge_y = 3, size=4)
-  
+  geom_text(aes(label = n), nudge_y = 3, size=4) +
+  labs(title = "Alcohol Usage in 666posting",
+       subtitle = paste("N =", sum(alc_count$n))) +
+  labs(fill = "Alcohol Usage") +
+  xlab("Alcohol Usage") +
+  ylab("Count of Individuals")
+
+ggsave("outputs/alcohol_usage_barplot.png")
 
 ggplot(weed_count, aes(x=weed_use, y = n, fill=weed_use)) +
   geom_col(color="black", ) +
   coord_flip() +
-  scale_fill_viridis_d()  +
+  scale_fill_viridis_d(direction = -1)  +
   theme(legend.position = "none") +
-  geom_text(aes(label = n), nudge_y = 3, size=4)
+  geom_text(aes(label = n), nudge_y = 3, size=4) +
+  labs(title = "Weed Usage in 666posting",
+       subtitle = paste("N =", sum(weed_count$n))) +
+  labs(fill = "Weed Usage")+
+  xlab("Weed Usage") +
+  ylab("Count of Individuals")
+
+
+ggsave("outputs/weed_usage_barplot.png")
 ```
 
 Now lets look at that Z table
-```{r}
+```{r results='asis'}
 
 auto_ztable(dat_drugs,
           "alc_use",
@@ -1753,10 +1842,14 @@ So it appears, according the the Chi-Square that our data might be trending towa
 Now let us see if there are any interesting distributions with age
 ```{r}
 #Make a histogram of ages and habits
-dat_drugs$alc_use <- factor(dat_drugs$alc_use, names(sort(table(dat_drugs$alc_use), decreasing= F)))
+#dat_drugs$alc_use <- factor(dat_drugs$alc_use, names(sort(table(dat_drugs$alc_use), decreasing= F)))
 ggplot(dat_drugs, aes(x=age, fill=alc_use)) +
   geom_histogram(breaks=seq(15, 45, by=1), color="black") +
-  scale_fill_viridis_d(option = "A", direction = -1)
+  scale_fill_viridis_d(option = "A", direction = -1) +
+  labs(title = "Alcohol Usage Histogram in 666posting",
+       subtitle = paste("N =", sum(alc_count$n)),
+       fill = "Alcohol Usage")
+ggsave("outputs/alcohol_histogram.png")
 ```
 
 This is an interesting way to view the distribution, but to see differences there are better plots:
@@ -1765,7 +1858,12 @@ ggplot(dat_drugs, aes(y=age, x= alc_use, fill=alc_use)) +
   geom_boxplot() +
   stat_n_text(size = 3) +
   scale_fill_viridis_d(option = "A", direction = -1) +
-  coord_flip()
+  coord_flip() +
+  labs(title = "Alcohol Usage in 666posting",
+       subtitle = paste("N =", sum(alc_count$n)),
+       fill = "Alcohol Usage")
+
+ggsave("outputs/alcohol_boxplot.png")
 ```
 
 These distributions don't seem that different from one another. As a test I'll run a linear model to see if these drinking groups are a good predictor of age. That said, I'm not really going to check any assumptions (don't do this), I will remove the one older individual because they are an outlier, but I don't expect there to be a difference.
@@ -1794,6 +1892,8 @@ ggplot(dat_drugs, aes(x=age, fill=`Drinks in the USA`)) +
        subtitle = paste0("I'm reporting all ",
                          sum(dat_drugs$underage_drinking == "Yes"),
                          " of you to the police! /s"))
+
+ggsave("outputs/underage_drinking.png")
 ```
 Disgusting...
 
@@ -1801,22 +1901,93 @@ Disgusting...
 Alright on to the completely legal topic of weed usage
 ```{r}
 #Weed
-dat_drugs$weed_use <- factor(dat_drugs$weed_use, names(sort(table(dat_drugs$weed_use), decreasing= F)))
+#dat_drugs$weed_use <- factor(dat_drugs$weed_use, names(sort(table(dat_drugs$weed_use), decreasing= F)))
 ggplot(dat_drugs, aes(x=age, fill=weed_use)) +
   geom_histogram(breaks=seq(15, 45, by=1), color="black") +
-  scale_fill_viridis_d(option = "A", direction = -1)
+  scale_fill_viridis_d(direction = -1) +
+  labs(title = "Weed Usage in 666posting",
+       subtitle = paste("N =", sum(weed_count$n)),
+       fill = "Weed Usage")
+ggsave("outputs/weed_usage_histogram.png")
+
+```
+
+Mutate dat drugs to add weed data in
+```{r}
+
+map <- match(dat_drugs$country, world_weed$country)
+
+dat_drugs$weed_laws <- world_weed$weed_laws[map]
+
+map <- match(dat_drugs$state, state_weed$state)
+
+ind <- dat_drugs$country %in% "United States"
+
+dat_drugs$weed_laws[ind] <- (state_weed$weed_laws[map])[ind]
+
+dat_drugs <- mutate(dat_drugs, weed_laws = case_when(
+  state == "District of Columbia" ~ "recreational",
+  state == "" ~ "medical/complicated",
+  TRUE ~ weed_laws
+))
+
+
+dat_drugs$weed_laws <- factor(dat_drugs$weed_laws,
+                              c("not legal",
+                                "medical/complicated",
+                                "medical",
+                                "decriminalized/complicated",
+                                "recreational"))
+
+dat_drugs <- mutate(dat_drugs, `General Weed Use` = ifelse(
+    weed_use == "I have never smoked weed" | weed_use == "I don't smoke weed anymore",
+    "Doesn't actively smoke weed",
+    "Actively smokes weed"
+  ))
+
+
+auto_ztable(dat_drugs,
+          "weed_laws",
+          "General Weed Use",
+          "Heatmap Table of Weed Usage and Laws",
+          simul_p = T)
 
 
 ```
+
+Colored Z table
+```{r results='asis'}
+drug_table <- table(dat_drugs$weed_laws, dat_drugs$`General Weed Use`)
+
+z <- ztable(drug_table,
+            caption = "Weed use to compared to country/state laws",
+            align = "ccccccc")
+
+z$caption <-  "Weed use to compared to country/state laws"
+z$position <- "ccccccc"
+
+z %>%
+  addCellColor(rows = 2, cols = 2, "lava") %>%
+  addCellColor(rows = 2:6, cols = 3, "indiagreen") %>%
+  addCellColor(rows = 3:4, cols = 2, "orange") %>%
+  addCellColor(rows = 5:6, cols = 2, "indiagreen")
+```
+
+
 Same question above with weed:
 ```{r}
 ggplot(dat_drugs, aes(y=age, x= weed_use, fill=weed_use)) +
-  geom_violin() +
+  geom_boxplot() +
   stat_n_text(size = 3) +
-  scale_fill_viridis_d(option = "A", direction = -1) +
-  coord_flip()
-
+  scale_fill_viridis_d(direction = -1) +
+  coord_flip() +
+  labs(title = "Weed Usage in 666posting",
+        subtitle = paste("N =", sum(weed_count$n)),
+       fill = "Weed Usage") +
+  xlab("Weed Usage") 
+ggsave("outputs/weed_usage_boxplot.png")
 ```
+
 ```{r}
 no_out_drugs %>%
   group_by(weed_use)%>%
