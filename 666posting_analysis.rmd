@@ -40,6 +40,8 @@ library(rstatix)
 library(EnvStats)
 library(ggpubr)
 library(gridExtra)
+library(reshape2)
+library(scales)
 options(ztable.type = "html")
 #For simulated p-values
 set.seed(123)
@@ -48,11 +50,22 @@ set.seed(123)
 # Loading the data
 ```{r}
 dat <- read.csv("inputs/alex_g_stats_8_1.csv", stringsAsFactors = F)
-head(dat)
 
 #functions
 hi_low_fact <- function(x, decrease = F){
   names(table(x)[order(table(x), decreasing = decrease)])
+}
+
+auto_ztable <- function(df, col1, col2, title, simul_p = F, pval_digits = 3, marg = 0) {
+  temp_tab <- table(df[[col1]], df[[col2]])
+  temp_ztab <- ztable(temp_tab)
+  chi_result <- chisq.test(df[[col1]], df[[col2]], simulate.p.value = simul_p)
+  temp_ztab %>% makeHeatmap(margin = marg) %>%
+  print(caption = paste0(title," ; Chi-Sqare p-value of ", format.pval(chi_result$p.value, digits = pval_digits)))
+}
+
+to_zcore <- function(x){
+  (x - mean(x))/sd(x)
 }
 
 ```
@@ -72,79 +85,278 @@ dat <- dat %>% mutate(
 ```
 
 
-Plot
-```{r}
+  So the first demographics we'll take a quick peak at is at age a race. First we'll look at age at a histogram, and get used to it, we're going to be looking at age a lot in these plots. But overall age is right skewed, with only one real outlier at around 42. Alex G is about 26-27 at the time of me writing this and has been writing music since his early teenage years, so the demographics of teens and 20-somethings is unsurprising.
+  As a straight white dude (who we will see is the average Alex G listener), I can't really speak to why or why not Alex is popular or not popular with the other demographics, and frankly I'm not sure it is my place to speculate. As a result for race, gender, trans identity, and polyamory I will let you draw your own conclusions. I just don't feel I as an individual should be speaking didactically about such a subject.
+```{r, fig.width=10, fig.height=8}
 #Age
 age_plot <- ggplot(dat, aes(age)) +
   geom_histogram(breaks=seq(15, 45, by=1),
-                 fill = "white", color = "black")
+                 fill = "white", color = "black")+
+  ylab("Count") +
+  xlab("Age") +
+  scale_x_continuous(breaks = round(seq(min(dat$age), max(dat$age), by = 5)/5) * 5)
+
+age_summary <- round(t(as.matrix(summary(dat$age))), digits = 2)
+
+rownames(age_summary) <- "Age"
+
+age_summ_table <- ggtexttable(age_summary)
+
 
 #Race plot
-race_plot <- ggplot(dat, aes(race)) +
-  geom_bar() +
-  coord_flip() 
+race_dat <- dat %>% count(race)
 
-#race_plot
-race_df <- as.data.frame(t(as.data.frame(table(dat$race))))
-colnames(race_df) <- names(table(dat$race))
-race_df <- race_df[2,]
-rownames(race_df) <- "Individuals"
 
-race_table <- ggtexttable(race_df)
+race_plot <- ggplot(race_dat, aes(race, n)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  geom_text(aes(label=n), nudge_y = 2.5) +
+  ylab("Count") +
+  xlab("Race")
+
+
+
   
   
-ggarrange(age_plot, race_plot, race_df, nrow = 3)
+dem_plot <- ggarrange(age_plot, age_summ_table, race_plot, nrow = 3,
+                      heights = c(1, .3, 1))
+
+annotate_figure(dem_plot, top = text_grob(
+  "Age and Race of individuals in 666posting"
+))
 ```
 
-```{r, fig.width=8, fig.height=6}
+```{r, fig.width=8, fig.height=12}
 #gender plot
-gender_plot <- ggplot(dat, aes(gender, fill = gender)) + geom_bar() +
+gender_plot <- ggplot(dat, aes(gender, fill = gender)) +
+  geom_bar() +
   coord_flip() +
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") +
+  geom_text(stat='count', aes(label=..count..), nudge_y = 2.5)
   
 #gender_plot
 
 #trans identity plot
 trans_dat <- filter(dat, transgender != "") %>% select(age, transgender)
 trans_plot <-  ggplot(trans_dat, aes(transgender)) + geom_bar() +
-  coord_flip()
+  coord_flip()+
+  geom_text(stat='count', aes(label=..count..), nudge_y = 4)
 
 #trans_plot
 
 #orientation plot
-orientation_plot <-  ggplot(dat, aes(orientation, fill = gender)) + geom_bar() +
-  coord_flip() + theme(legend.position="bottom")
-#orientation_plot
+orientation_totals <- dat %>% group_by(orientation) %>%
+  count(orientation)
+
+
+orientation_plot <-  ggplot(dat, aes(orientation, fill = gender)) +
+  geom_bar(position = "dodge") +
+  coord_flip() +
+  theme(legend.position="bottom")+
+  geom_text(stat='count',
+            aes(label=..count..),
+            position = position_dodge(width = 1),
+            hjust = -.08,
+            size = 4)
+    #geom_text(aes(orientation, n, label = n, fill = NULL), data = orientation_totals, nudge_y = 4)
 
 #polyamorous identity plot
+poly_totals <- dat %>% group_by(polyamorous) %>%
+  count(polyamorous)
+
 poly_plot <-  ggplot(dat, aes(polyamorous, fill = gender)) +
-  geom_bar() +
+  geom_bar(position = "Dodge") +
   coord_flip() +
-  theme(legend.position = "none") 
+  theme(legend.position = "none") +
+  geom_text(stat='count', aes(label=..count..), position = position_dodge(width = 1), hjust = -.08)
+ #   geom_text(aes(polyamorous, n, label = n, fill = NULL), data = poly_totals, nudge_y = 4)
 
 #poly_plot
 
 
-gpt_plot <- ggarrange(gender_plot,
+gpt_plot <- ggarrange(gender_plot, orientation_plot,
                       poly_plot, trans_plot,
-                      nrow = 3, common.legend = T)
+                      nrow = 4, common.legend = T,
+                      heights = c(.4, 1.5, 1, .8))
 
 
 annotate_figure(gpt_plot, top = text_grob(
-  "Gender count, polyamory colored on gender, and trans individuals"
+  "Gender count, polyamory colored on gender, and trans identity"
 ))
 
 ```
 
 
-
-Questions redo previous age analysis, use subtraction to gain more individuals based on previous data
+#plot
+I should see if it is possible for me to clean up this histogram
 ```{r}
+##Two histograms
+
+dat <- dat %>% mutate(difference = age - first_age, year_learned = 2020 - difference)
+
+#melt_dat <- melt(dat %>% select(-difference, -year_learned))
+melt_dat <- melt(dat %>% select(age, first_age))
+
+
+
+#get mean
+start_mean <- mean(dat$first_age)
+start_median <- median(dat$first_age)
+
+end_mean <- mean(dat$age)
+end_median <- median(dat$age)
+
+sum_dat <- NULL
+sum_dat$mean <- c(end_mean, start_mean)
+sum_dat$median <- c(end_median, start_median)
+sum_dat$group <- factor(c("end", "start"), levels = c("start", "end"))
+sum_dat <- as.data.frame(sum_dat)
+
+# Interweaved histograms
+ggplot(melt_dat, aes(x=value, fill=variable)) +
+  geom_histogram(position="identity", alpha=0.5, color = "black" ,
+                 #bins = (max(melt_dat$value) - min(melt_dat$value)
+                  binwidth = 1)+
+  
+  scale_x_continuous(breaks=seq(min(melt_dat$value),max(melt_dat$value),2)) +   
+  #geom_vline(data=sum_dat, aes(xintercept=mean, color=group), size = 1.5,
+            # linetype="dashed")+
+    #geom_vline(data=sum_dat, aes(xintercept=median, color=group), size = 1.5,
+             #linetype="dashed") +
+  geom_vline(xintercept = c(end_median, start_median), size = 1.8,
+             linetype="dashed", color = c("royalblue3","red3")) +
+  annotate(geom="text", vjust = 1.7, size = 3.5, x = c(35),
+           y = c(13.1, 16), label = c("Current Age Median", "Starting Age Median")) +
+   geom_segment(aes(x = 32, y = 15.5, xend = 38, yend = 15.5),
+                linetype="dashed", size = 1.5, color = "red3")+
+   geom_segment(aes(x = 32, y = 12.5, xend = 38, yend = 12.5),
+                linetype="dashed", size = 1.5, color = "royalblue3")+
+  labs(title = "Age of Finding Alex G and Current Age", subtitle = "Overlapping Histogram", y = "# of Individuals", x = "Age", legend = "") +
+  scale_fill_discrete(name = "",labels=c("Current Age", "Starting Listening Age")) +
+  theme_classic(base_size = 13) + theme(legend.position="top")
+ggsave("start_age_current.png", width = 9, height = 7)
 
 ```
 
+One of the other plots I found interesting in my analysis that set this off was looking at the growth of Alex G's fanbase through his career. However, unlike my initial making of this plot based on people just commenting on a facebook post, this data is a little... odd. 
+```{r}
+##Second histogram
+fact_order <- as.character(sort(unique(dat$year_learned)))
+
+
+##Add album years
+race = 2010
+winner = 2011
+Rules_Trick = 2012
+DSU = 2014
+beach_music = 2015
+rocket = 2017
+HoS = 2019
+
+
+dat_2 <- (dat %>% select(year_learned))
+
+ggplot(dat_2, aes(x=year_learned)) +
+  geom_histogram(color = "black",  fill = "grey", binwidth = 1)+
+    scale_x_continuous(breaks=seq(2009,2020,2)) +
+  
+  geom_vline(xintercept = race, linetype="dotted", 
+                color = "deeppink1", size=1.5) +
+   geom_vline(xintercept = winner, 
+                color = "yellow3", size=1.5, linetype ="dotted") + 
+  geom_vline(xintercept = Rules_Trick, 
+                color = "deepskyblue1", size= 1.5, linetype ="dotted") +
+    geom_vline(xintercept = DSU, 
+                color = "springgreen4", size= 1.5, linetype ="dotted") +
+      geom_vline(xintercept = beach_music, 
+                color = "royalblue4", size= 1.5, linetype ="dotted") +
+        geom_vline(xintercept = rocket, 
+                color = "red3", size= 1.5, linetype ="dotted")  +
+          geom_vline(xintercept = HoS, 
+                color = "darkorchid4", size= 1.5, linetype ="dotted") + 
+  annotate(geom="text", angle = 90, vjust = 1.3, size = 5,  
+           x=c(race, winner, Rules_Trick, DSU, beach_music, rocket, HoS), 
+           y=c(10, 10, 10, 10, 10, 10, 10), 
+           label=c("Race", "Winner", "Rules/Trick", "DSU", "Beach Music", "Rocket", "House of Sugar"),
+              #color="red"
+           color = c("deeppink", "yellow3", "deepskyblue1", "springgreen4", "royalblue4", "red3", "darkorchid4")
+           ) +
+          labs(title = "Histogram of when people first heard of Alex G", x = "Year First Heard", y = "# of Individuals") +
+  theme_classic(base_size = 13)
+
+ggsave("year_start_listening.png", width = 9, height = 7)
+
+```
+So below is the original figure.
+
+ (FIGURE)
+ 
+ And compared to this figure our new one is definitely different. First of all we we have much more of a normal distribution besides the person... who first heard Alex G in '07. Frankly I'm a little dubious and would be interested in hearing that story. The individual did not identifty which state they live in, so I though my worries would be assuaged by hearing they lived in PA, but alas, I have no idea. The other interesting aspect is our first non '07 fan comes in around 2011, after Race, an arguably seminal Alex G album. I would frankly be expecting a larger boost with Race, and the previous plot I made did have individuals listening around the time of Race, admittedly few, but more than none.
+ Also compared to the previous plot we have a lot more 2018-202 fans, but I think that's primarily because the original data was pulled from late March/early April 2020, and this current survey has been rolling open the entire year, so that in not unsuspected. But on the topic of the actual data, the data is for the most part normal, which is more indicative of the sample we're pulling from as it should just continue increasing with each album most likely. However it is interesting that 2015 and the release of Beach Music is his largest jump in popularity, as it is also the same year he signed with Domino Records.
+
+### How long have we been listening to Alex G?
+
+
+This long.
+```{r}
+dat_3 <- dat %>% select(difference)
+
+ggplot(dat_3, aes(x=difference)) +
+  geom_histogram(color = "black",  fill = "grey", binwidth = 1) + 
+  scale_x_continuous(breaks=seq(min(dat_3$difference),max(dat_3$difference),1)) +
+ # geom_vline(xintercept = mean(dat_3$difference)) +
+  labs(title = "How Many Years Have We Been Listening?", x ="Length of Time in Years", y = "# of Indivduals") +
+  theme_classic(base_size = 17)
+  
+ggsave("how_long_listening.png", width = 9, height = 7)
+
+```
+
+It's the previous plot inverted, what can I say. 
+
+### Cumulative Distribution Plot of Fan Growth
+
+I just like cumulative distribution plots, its all the same data.
+```{r}
+
+ggplot(dat, aes(x=year_learned)) + stat_ecdf() + scale_x_continuous(breaks=seq(2009,2020,2))+
+  scale_y_continuous(labels = percent) +
+  geom_vline(xintercept = race, linetype="dotted", 
+                color = "deeppink1", size=1.5) +
+   geom_vline(xintercept = winner, 
+                color = "yellow3", size=1.5, linetype ="dotted") + 
+  geom_vline(xintercept = Rules_Trick, 
+                color = "deepskyblue1", size= 1.5, linetype ="dotted") +
+    geom_vline(xintercept = DSU, 
+                color = "springgreen4", size= 1.5, linetype ="dotted") +
+      geom_vline(xintercept = beach_music, 
+                color = "royalblue4", size= 1.5, linetype ="dotted") +
+        geom_vline(xintercept = rocket, 
+                color = "red3", size= 1.5, linetype ="dotted")  +
+          geom_vline(xintercept = HoS, 
+                color = "darkorchid4", size= 1.5, linetype ="dotted") + 
+  annotate(geom="text", angle = 90, vjust = 1.3, size = 5,  
+           x=c(race, winner, Rules_Trick, DSU, beach_music, rocket, HoS), 
+           y=c(.10, .20, .30, .50, .80, .60, .75), 
+           label=c("Race", "Winner", "Rules/Trick", "DSU", "Beach Music", "Rocket", "House of Sugar"),
+              #color="red"
+           color = c("deeppink", "yellow3", "deepskyblue1", "springgreen4", "royalblue4", "red3", "darkorchid4")
+           ) +
+          labs(title = "How has Alex G's Fanbase Grown?",subtitle = "Cummulative Distribution Plot of Alex G Fanbase Growth", x ="Year", y = "Percent of Current Fanbase") +
+  theme_classic(base_size = 13)
+
+
+ggsave("alex_g_fanbase_growth.png", width = 9, height = 7)
+
+
+
+
+```
 
 # Make a map of the world
+
+ So Alex G, for those not in the know, lives in Philly, however like most succesful artists people want to hear him elsewhere and he tours pretty regularly. So I thought it would be intersting to see where Alex G fans are all over the world!
+
 
 Preparing and loading data
 ```{r}
@@ -182,7 +394,7 @@ worldmap_poly_nUSA <- worldmap_poly %>% filter(Country.Name != "United States")
 
 ## Plotting the world
 
-Plot the whole world with the US
+A simple plot of the whole world colored on fans per 100,000 individuals in each of those countries.
 ```{r}
 #Whole world with US
 ggplot() + 
@@ -194,6 +406,11 @@ geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label
   labs(fill = "Fans per
 100,000 indv")
 ```
+
+**HOLD UP, WHERE IS ALL THE RED?** 
+You may say, to which I respond,
+**"GIVE ME A SECOND I'LL GET TO IT WE GOTTA ZOOM IN EVERYWHERE FIRST TO FIND IT"**
+
 
 ## North American Alex G Fans
 ```{r}
@@ -284,7 +501,52 @@ ggsave("outputs/europe_current.png", height = 8, width = 7)
 
 ```
 
+So with all that said, the only interesting thing I could think of to compare this data to is what countries does Alex G most frequently tour in so... tada, I took this from [setlist.fm](https://www.setlist.fm/stats/concert-map/sandy-alex-g-13d8c919.html), they actually have interesting concert statistics so I suggest checking them out. I actually had a project where I was gonna scrape their data and make an average Alex G setlist for each year and generate a naive bayes model/shiny app allowing people to put in their perfect setlist and return the probability of that concert happening. But they already did the first thing, and I ended up doing this entire analysis instead of the naive bayes thing, that's life. Right, TADA:
+
+![Alex G Concerts Around the World](inputs/alex_g_concerts_world.png)
+
+So I put that data into the following csv file I load  in. And I want to see if the amount of fans correlate with how many concerts Alex has in that country. But you can see when I gave this data a quick look.
+```{r}
+concerts_world <- read.csv("inputs/countries_concerts.csv", fileEncoding = "UTF-8-BOM")
+
+joined_country_concerts <- left_join(concerts_world, world_dat)
+
+ggplot(joined_country_concerts, aes(y = concerts, x = fans, label = Country.Name)) +
+  geom_point() +
+  labs(title = "Thanks America, guess we'll log scale") +
+  theme_classic()
+
+```
+
+America ruined the graph. So I decided to log scale it and make it more informative with shapes and colors.
+
+```{r}
+#We keepin Ireland
+#joined_country_concerts <- joined_country_concerts %>% filter(!is.na(joined_country_concerts$fans))
+
+shape_levels <- rev(1:nlevels(as.factor(joined_country_concerts$Country.Name)))
+
+
+
+
+ggplot(joined_country_concerts, aes(y = concerts,
+                                    x = fans,
+                                    shape = Country.Name,
+                                    color = Country.Name)) +
+  geom_point(size = 3) +
+  scale_x_continuous(breaks=c(0,1,2,3,4,5,10,30,100,300), trans="log1p") +
+  scale_y_continuous(breaks=c(0,1,2,3,4,5,10,30,100,300), trans="log1p") +
+             scale_shape_manual(values=shape_levels) +
+  labs(title = "Alex G Concerts compared to number of fans, log10 + 1") +
+  theme_classic()
+
+```
+
+Ireland had 2 concerts and no fans which is why you can't see it :(
+
 # Map of Alex G Fans in the United States
+
+So now let us look at the Alex G Fans around the US. 
 
 I used the below vignette to do this
 https://cran.r-project.org/web/packages/usmap/vignettes/mapping.html
@@ -306,7 +568,8 @@ us_states_2 <- left_join(us_states, state_df)
 
 ```
 
-Using state census data (where did I get that?) to pull control for state population density. 
+I got the census data from [census.gov](https://www.census.gov/newsroom/press-kits/2019/national-state-estimates.html) particularly the file named:
+`NST-EST2019-01: Table 1. Annual Estimates of the Resident Population for the United States, Regions, States, and Puerto Rico: April 1, 2010 to July 1, 2019` I'm not gonna lie, I was lazy and cleaned up the data in excel, but basically I selected the 2019 data only as it was most relevant. I used this data primarily to control for population in the coloration of the maps below. I don't really have much to say on them so enjoy!
 
 ```{r}
 
@@ -342,7 +605,7 @@ p <- ggplot(data = us_states_3,
 #All of US
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
-    geom_text(aes(long_center, lat_center, label = count))  + 
+    geom_text(aes(long_center, lat_center, label = count), size = 3.2)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
   labs(title = "Alex G Fans in the USA",fill = "Fans per
 100,000 indv")
@@ -396,8 +659,58 @@ ggsave("outputs/west_us.png", height = 9, width = 7)
 
 
 ```
+So the analysis I decided to do here was where is Alex's fan base the largest (when controlling for population size) in the United States. I pulled this region data from [kaggle](https://www.kaggle.com/omer2040/usa-states-to-region) and will use it to test our hypothesis. "Our hypothesis?" you say? Yes obviously it is the [East Coast which has the most representation, if its not all hope will be lost](https://www.youtube.com/watch?v=VgRYMNiePus). 
+
+(P.S. I've learned of the state.region data in R, but womp womp here we R, let's just go with it)
+
+```{r}
+state_region <- read.csv("inputs/states.csv", stringsAsFactors = FALSE)
+
+us_state_region <- us_states_3 %>%
+  select(State = region, count, adjusted_fans = adjust, State.Code = state) %>%
+  mutate(State = str_to_title(State)) %>% unique()
+
+us_state_region <- left_join(us_state_region, state_region) %>%
+  mutate(Region = case_when(
+    State == "District Of Columbia" ~ "South",
+    TRUE ~ Region
+  ), Division = case_when(
+    State == "District Of Columbia" ~ "South Atlantic",
+    TRUE ~ Division
+  ))
+```
+
+
+```{r}
+summarised_region <- us_state_region %>%
+  group_by(Region) %>%
+  summarise(adjusted_fans = sum(adjusted_fans))
+
+
+
+ggplot(summarised_region, aes(Region, adjusted_fans, fill = Region)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Adjusted Fans Per Region",
+       subtitle = paste("I mean... I think the east coast still wins when you add its sections together?",
+                        "N = ", nrow(state_dat))) +
+  ylab("Adjusted Fans") +
+  theme_classic()
+
+```
+
+I'm not sure what statistical test fits here, but its at least interesting to see. I feel like I need to use a chi-square, but adjusted for population size, so if anyone knows a correct method for that please tell me.
 
 # 666posting Political Compasss (spice alert)
+
+
+The first graph is a scatterplot of the political information you gave, shapes are based on the gender identity of the individuals who participated. Some plots are off the compass, that’s because of the jitter I placed on the data to prevent too many points from overlapping. I also marked the median and mean political identity. 
+
+The second graph is another scatterplot, but using the non-jittered values and instead using the size of the points to indicate how many individuals identify with said political identity. 
+
+I have also added the image I used in the survey for the political compass.
+
+I am not surprised by these results, based on the general demographics of those who answered the survey. Also Alex G is a supporter of Bernie Sanders so I assume he would most likely fall in the general area most people did.
+
 
 Preparing the data
 ```{r}
@@ -442,25 +755,22 @@ ggplot(political_dat) +
 ggsave("outputs/political_compass_gender.png")
 ```
 
-Political compass with age as a variable
+Political compass with age as a variable, I had to remove the individual over 40 because that threw the scale off.
 ```{r}
 
-to_zcore <- function(x){
-  (x - mean(x))/sd(x)
-}
+
 
 #make age normalized because of skewing
-political_dat <- political_dat %>% mutate(norm_age = to_zcore(age),
-                                          log2_age = log2(age))
+political_dat_age <- political_dat %>% filter(age < 40)
 
 #Age
-ggplot(political_dat) +
+ggplot(political_dat_age) +
            
            geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.005) +
            geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.005) +
            geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.005) +
            geom_rect(aes(xmin = 0, xmax= 5,ymin = 5, ymax=10), fill = "red", alpha = 0.005) + 
-          geom_jitter(aes(x = left_right, y = lib_auth, color = log2_age), width =.5, height =.5 ) +
+          geom_jitter(aes(x = left_right, y = lib_auth, color = age), width =.5, height =.5 ) +
           #Adding median and mean
           geom_point(aes(x=med_LR, y=med_LA), colour="blue", shape = 9, size =2) +
           geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
@@ -513,7 +823,10 @@ ggplot(pol_count) +
                                 annotate("text", x = c(8, 8),
                                        y = c(2, 3.5),
                                        label = c("Mean", "Median"), size =4) +
-              coord_fixed() + theme_grey(base_size = 14)
+   annotate("text", x = c(2.5, 2.5, 7.5, 7.5),
+                                       y = c(10.5, -.5, 10.5, -.5),
+                                       label = c("Auth Left", "Lib Left", "Auth Right", "Lib Right"), size =5) + 
+              coord_fixed() + theme_void(base_size = 14)
 ggsave("outputs/political_compass_exact.png")
 
 
@@ -550,7 +863,7 @@ instr_dat <- (as.data.frame.matrix(table(band_dat_melt$id, band_dat_melt$instrum
 ```
 
 
-Generate general summaries
+Generate general summaries to be used in the first plot
 ```{r}
 #General stats
 sum_instr <- as.data.frame(table(band_dat_melt$instrument),
@@ -564,9 +877,10 @@ ggplot(sum_instr, aes(x = reorder(Var1, -Freq), y = Freq, fill = Var1)) +
   geom_bar(stat= "identity") +
   labs(title = "Instruments played in this group",
        subtitle = paste0("N = ", length(unique(band_dat_melt$id)))) +
+  scale_y_continuous(limits = c(0, 125)) +
   ylab(label = "Count") +
   xlab(label = "Instruments") + 
-    theme_classic(base_size = 16) +
+    theme_classic(base_size = 13) +
  theme(axis.text.x = element_text(angle=85, hjust=1, vjust = 1),
        legend.position = "None") +
   geom_text(aes(label=Freq),
@@ -576,7 +890,18 @@ ggplot(sum_instr, aes(x = reorder(Var1, -Freq), y = Freq, fill = Var1)) +
 ggsave("outputs/instrument_summary.png", width = 8, height = 8)
 ```
 
-Prepare data to be Upset plots instead of venn diagrams
+## Prepare data to be Upset plots instead of venn diagrams.
+
+Okay here I'm about to go on a visualization tirade. So I'm sure you're used to venn diagrams, but have probably not hear of Upset plots. So venn diagrams are the classic way to represent count crossover between multiple groups, but when groups are large this generally reduces to circles with numbers inside of them. This doesn't do the scale of the differences proper justice, and people, in general, have a better time understanding the magnitude of difference when there is a visualization, especially comparing sizes between ideas. As a result a new plot has been formed called upset plots.
+
+  I will explain how to read them now. An Upset plot is comprised of two barplots which relate to a center image with balls and lines. The barplot on the "y-axis" of the center image is the total count for how many people play each instrument. If we look at the center image, you can see each row is labeled by an instrument. Each column however has different dots representing each instrument. When a dot is filled that shows an overlap between the two instruments, the amount of those overlaps is what is counted in the "x-axis" barplot above. So one plot gives you the total number of people who play a certain instrument, while the other plot gives you how many people share the same overlap of instruments. I hope this makes, sense, but it will be readily apparent once you see the plots.
+  
+  Anyways the way to read this diagram is as follows:
+The total count of each instrument is in the bottom left corner, you can see that we have over 100 guitarists who answered the survey followed by ~60 keyboard/piano players. Then if you look to the right of that graph you’ll see dots and lines. If two dots are filled that means that the bar above it represents the intersection of individuals who play both those instruments. As more dots are filled that represents a greater intersection. So you can see that there are 25 solo guitarists, while there are 2 people who play all of the instruments in this graph.
+
+As I said, I couldn’t fit in all the data because of the limitations so sorry to all the unique instrument players, but at least you got a shout out in the first graph you chinese flute playing god. Thanks everyone!
+
+
 ```{r}
 #Make Instrument strings look like titles
 colnames(instr_dat) <- str_to_title(colnames(instr_dat))
@@ -590,13 +915,13 @@ for (instru in 1:ncol(instr_dat)) {
 ```
 
 First Upset Plot
-```{r}
+```{r fig.height = 6, fig.width = 10, fig.align = "center"}
 plot_up <- upset(fromList(instrument_list),
                  order.by = "freq",
                  nsets = 6,
                  #point.size = 4,
                  #line.size = 1.8,
-                 #text.scale=c(4, 2, 2, 2, 2, 2),
+                 text.scale=c(2.8, 1.6, 1.8, 1.6, 2, 2),
                  mainbar.y.label = "Instrument Intersections",
                  sets.x.label = "People Per Instrument"
                  )
@@ -605,13 +930,13 @@ plot_up
 ```
 
 Second Instrument plot, it contains more instruments
-```{r  fig.height = 6, fig.width = 10, fig.align = "center"}
+```{r  fig.height = 8, fig.width = 10, fig.align = "center"}
 plot_ups <- upset(fromList(instrument_list),
                   order.by = "freq",
                   nsets = 30,
                   #point.size = 2.8,
                   #line.size = 1,
-                  #text.scale=c(4, 2, 2, 2, 2, 2),
+                 text.scale=c(2.8, 1.7, 1.8, 1.6, 1.5, 2),
                   mainbar.y.label = "Instrument Intersections",
                   sets.x.label = "People Per Instrument"
                   )
@@ -631,9 +956,106 @@ dev.off()
 
 
 ```
-# Favorite Music/Musicians
-## Clean up data
+# Non-musical art
 
+```{r}
+art_dat <- dat %>%  filter(art != "") %>%
+                    select(Timestamp, art) 
+
+art_dat_melt <- art_dat %>%
+  mutate(art = (str_split(art, ","))) %>%
+  unnest(cols = art) %>%
+  mutate(art =(str_trim(art, "both"))) %>%
+  filter(!(art %in% c("Used to","but not anymore", "", "Nope")))
+
+#Check data looks okay
+unique(band_dat_melt$art)
+
+
+art_dat <- (as.data.frame.matrix(table(art_dat_melt$Timestamp, art_dat_melt$art)))
+```
+
+
+Generate general summaries
+```{r}
+#General stats
+sum_art <- as.data.frame(table(art_dat_melt$art),
+                           stringsAsFactors = F) %>%
+              mutate(Var1 = str_to_title(Var1))
+```
+
+Plot of instruments played in 666posting
+```{r}
+ggplot(sum_art, aes(x = reorder(Var1, -Freq), y = Freq, fill = Var1)) +
+  geom_bar(stat= "identity") +
+  labs(title = "Art mediums used in this group",
+       subtitle = paste0("N = ", nrow(art_dat))) +
+  scale_y_continuous(limits = c(0, 75)) +
+  ylab(label = "Count") +
+  xlab(label = "Art medium") + 
+    theme_classic(base_size = 13) +
+ theme(axis.text.x = element_text(angle=85, hjust=1, vjust = 1),
+       legend.position = "None") +
+  geom_text(aes(label=Freq),
+            position=position_dodge(width=0.9),
+            vjust=-0.25)
+
+ggsave("outputs/art_summary.png", width = 8, height = 8)
+```
+
+Upset plots again
+```{r}
+#Make Instrument strings look like titles
+colnames(art_dat) <- str_to_title(colnames(art_dat))
+
+art_hold = 1
+art_list <- list()
+#Probably should change this to a lapply, but we use this loop to generate a list of ids that play a given instrument
+for (art_hold in 1:ncol(art_dat)) {
+   art_list[[colnames(art_dat)[art_hold]]] <- (1:nrow(art_dat))[art_dat[,art_hold] == 1]
+}
+```
+
+First Upset Plot
+```{r fig.height = 6, fig.width = 10, fig.align = "center"}
+art_upset <- upset(fromList(art_list),
+                 order.by = "freq",
+                 nsets = 6,
+                 #point.size = 4,
+                 #line.size = 1.8,
+                 text.scale=c(2.8, 1.6, 1.8, 1.6, 2, 2),
+                 mainbar.y.label = "Art Medium Intersections",
+                 sets.x.label = "People Per Medium"
+                 )
+
+art_upset
+```
+
+# Favorite Music/Musicians
+
+## Word Cloud
+It’s been a bit since I’ve posted a graph, but I’ve been busy as of late. Anyways wamslamwabbam its me the graph man. Here today I decided to make 4 graphs/images. The reason I say graphs/images, is my main image is not a graph, it is a word cloud. You’ve probably seen word clouds around, normally I avoid them as a way to represent data (longer words seem more significant than they should be), but I felt this was an appropriate time to use them. Also if you want to take the survey and haven’t yet, links at the bottom.
+
+Figure 1: A word cloud of everyone's favorite Alex G songs from the survey, colored by what album they’re in, size based on the number of people that selected a given song as their favorite. So as you can see the top two favorite songs of those who answered the survey is Snot and Gnaw, and tbh, I’m SNOT surprised. Ugh, anyways the thing I actually love about this image is, because of how Alex names his songs, there are cool phrases that are generated. Personally I love “Be Kind, Pretend”, it’s just fun sticking his song titles together.
+
+Figure 2:  A barplot of the top 10 favorite Alex G songs, just to ascribe hard numbers to the data, which is the issue with word clouds. 
+
+Figure 3: A barplot of favorite released Alex G albums
+
+Figure 4: A barplot of favorite Alex G Fan compilations, alsof or those of you that don’t listen to his unreleased stuff, you should give it a listen. Check out this post if you wanna get them on spotify: https://www.facebook.com/groups/666posting/permalink/640789416453072/
+
+And I did a quick analysis as well. 
+
+Question: Does a person’s favorite song influence their favorite album?
+
+Results: Favorite song on favorite album of 153 individuals
+True (1) = 55, False (0)  = 98, significant finding based on t.test with expected mean of 0.5
+
+
+Answer: No, actually it is more likely for a person's favorite song to NOT be on their favorite album.
+
+
+### Clean up data
 
 Select out and clean musicians
 ```{r}
@@ -686,12 +1108,13 @@ sec_musician <- sec_musician %>% mutate(color_fan = case_when(
 ```
 
 Word cloud For Favorite musician
-```{r}
+```{r, width = 8, height = 8}
 #Word cloud for markdown
 
 wordcloud(words = fave_musician$Var1, freq = fave_musician$Freq, min.freq = 1,
-                            max.words=200, random.order=FALSE, rot.per=0.35, 
-                            colors=fave_musician$color_fan, ordered.colors = T
+                            max.words=200, random.order=FALSE, rot.per=0.30, 
+                            colors=fave_musician$color_fan, ordered.colors = T,
+          scale=c(5,.666)
                             )
 #Print word cloud
 png("outputs/favorite_musician.png", units="in", width=5, height=5, res=300)
@@ -702,13 +1125,16 @@ wordcloud(words = fave_musician$Var1, freq = fave_musician$Freq, min.freq = 1,
 dev.off()
 ```
 
+If they have more than one fan, the name is in orange. 
+
 Word cloud For Second Favorite musician
-```{r}
+```{r, width = 8, height = 8}
 #Word cloud for markdown
 
 wordcloud(words = sec_musician$Var1, freq = sec_musician$Freq, min.freq = 1,
                             max.words=200, random.order=FALSE, rot.per=0.35, 
-                            colors=sec_musician$color_fan, ordered.colors = T
+                            colors=sec_musician$color_fan, ordered.colors = T,
+                            scale=c(5,0.5)
                             )
 #Print word cloud
 png("outputs/second_musician.png", units="in", width=5, height=5, res=300)
@@ -750,12 +1176,13 @@ genre_table <- genre_table %>% mutate(color_fan = case_when(
 ```
 
 Word cloud For Favorite Genre
-```{r}
+```{r, width = 12, height = 12}
 #Word cloud for markdown
 
 wordcloud(words = genre_table$Var1, freq = genre_table$Freq, min.freq = 1,
                             max.words=200, random.order=FALSE, rot.per=0.30, 
-                            colors=genre_table$color_fan, ordered.colors = T
+                            colors=genre_table$color_fan, ordered.colors = T, 
+                             scale=c(4,1)
                             )
 #Print word cloud
 png("outputs/favorite_genre.png", units="in", width=5, height=5, res=300)
@@ -764,6 +1191,50 @@ wordcloud(words = genre_table$Var1, freq = genre_table$Freq, min.freq = 1,
                             colors=genre_table$color_fan, ordered.colors = T
                             )
 dev.off()
+```
+
+# How did you find Alex G?
+
+First we gotta do some MASSIVE data cleaning, I really should not of left this open for people to put whatever they want, look at all the unique comments, as of writing there is 37. So we gotta fine a way to generalize these. That said, some are very interesting
+
+```{r}
+unique(dat$discover_method)
+#I'm trying to avoid making all lower than upper
+websites <- c("umblr", "ound", ".com","iki", "vine", "acebook", "FB", "blog", "chan", "You", "eddit", "etflix")
+online_personality <- c("witter", "artist ZI", "ouTuber")
+friends <- c("other", "Crush", "clerk")
+radio <- "adio"
+journalism <- c("itchfork", "ress", "review")
+live_music <- c("estival", "oncert", "oured", "show")
+compilations_lab <- c("ompilation", "label")
+
+dat_disc <- mutate(dat, discover_method = case_when(
+  str_detect(discover_method, paste(websites, collapse = "|")) ~ "Other Website",
+  str_detect(discover_method, paste(online_personality, collapse = "|")) ~ "Online Personality",
+  str_detect(discover_method, paste(journalism, collapse = "|")) ~ "Journalism",
+  str_detect(discover_method, paste(friends, collapse = "|")) ~ "Through a friend",
+  str_detect(discover_method, paste(live_music, collapse = "|")) ~ "Live Music",
+  str_detect(discover_method, paste(radio, collapse = "|")) ~ "Radio",
+  str_detect(discover_method, paste(compilations_lab, collapse = "|")) ~ "Compilations/Label",
+  T ~ discover_method
+)) %>% filter(!discover_method %in% c("", "i really canâ€™t remember ")) %>%
+  select(Timestamp, discover_method)
+
+
+unique(dat_disc$discover_method)
+```
+
+Making the plot now simplified
+```{r}
+
+ggplot(dat_disc, aes(x = discover_method)) +
+  geom_bar()  +
+  coord_flip() +
+  xlab("How did you discover Alex G") +
+geom_text(stat='count', aes(label=..count..), nudge_y = 1.8) +
+  labs(title = "How did we discover Alex G?",
+       subtitle = paste("N =", nrow(dat_disc)))
+
 ```
 
 
@@ -794,7 +1265,7 @@ ggplot(songs_dat, aes(x = forcats::fct_infreq(favorite_album)),
                  "yellow3"
                 )
             ) +
-    theme_grey(base_size = 14)  +
+    theme_classic(base_size = 14)  + 
    theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
@@ -808,7 +1279,7 @@ Favorite Unreleased Album/Compilation
 ```{r}
 ggplot(songs_dat, aes(x = forcats::fct_infreq(unreleased_album))) +
   geom_bar(aes(fill = forcats::fct_infreq(unreleased_album))) +
-  theme_grey(base_size = 14)  +
+  theme_classic(base_size = 14)  +
    theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
@@ -888,7 +1359,7 @@ ggplot(top_ten_songs, aes(x = reorder(Var1, -Freq), Freq)) +
     title = "Top 10 Favorite Alex G Songs",
     subtitle = paste("Total N =", sum(songs_clean$Freq), "; In graph N =", sum(top_ten_songs$Freq))
   ) + ylab("count") +
-  theme_grey(base_size = 14)  +
+  theme_classic(base_size = 14)  +
   theme(axis.title.x=element_blank(),
                            axis.text.x = element_text(angle = 90, hjust = 0))
 ggsave("outputs/top_10_songs.png", height = 7, width = 7)
@@ -942,6 +1413,11 @@ wdth <- 4.5
 
 
 ## Myers Briggs
+
+Myer-Briggs is the zeitgeist when it comes to personality tests. For more information on them check out this website: https://www.16personalities.com/free-personality-test . While there are sixteen personalities, they are not evenly distributed in the population according to data from the official MBTI types, some make over 10% of the populations others closer to 2%. These types can also be broken down further into their more discrete types based on the letters, Extrovert vs Introvert (E v I) for example. I have two figures showing both of these distributions in the general population.
+The group, compared to the general population, well, they look NOTHING alike. While the population data is relatively outdated *cough cough hasn’t been updated since 2002* , our distribution is not close to it at all. A good portion of our members come from the rarer types, and specifically, 18% of participating members are the rarest type, INFJ, which makes up ~2% of the normal population. Crazy. This of course, carries over to the discrete types as well, the most stark difference is the Intuitives considerably outnumber the Sensors in this group (I don’t know what that means, but if you want to explain it in the comments feel free to), which is the opposite in the general population. It’s wacky folks.
+
+
 
 Not really sure what the best question to ask here is besides the distribution and how the distribution differs from the normal world. Data pulled from [here](https://www.myersbriggs.org/my-mbti-personality-type/my-mbti-results/how-frequent-is-my-type.htm)
 ```{r}
@@ -1028,7 +1504,7 @@ ggplot(mb_df,
   xlab("Myer-Briggs Type") +
   labs(title = "Population Myer-Briggs Types",
        subtitle = "N Unknown, from studies between 1972-2002 (pls update website)") +
-
+  theme_classic()
 
 ggsave(filename = "outputs/myer-brigg-gen-pop.png", width = hght, height = wdth)
 
@@ -1047,7 +1523,8 @@ ggplot(letter_df, aes(x = category, y = `percent type`, fill = type)) +
                                                           "Judging", "Percieving"
                                                           )) +
   labs(title = "Population Myer-Briggs Single Letter Types",
-       subtitle = "N Unknown, from studies between 1972-2002")
+       subtitle = "N Unknown, from studies between 1972-2002") +
+  theme_classic()
 
 ggsave(filename = "outputs/myer-brigg-lett-gen-pop.png", width = hght, height = wdth)
 ```
@@ -1114,11 +1591,11 @@ Run the Chi-square analysis against general population probabilities
 
 ##Running the chi-square 
 
-mbti_dat$mbtis == mb_df$mbtis
+#mbti_dat$mbtis == mb_df$mbtis
 
 mbti_dat <- mbti_dat[match(mb_df$mbtis, mbti_dat$mbtis),]
 
-mbti_dat$mbtis == mb_df$mbtis
+#mbti_dat$mbtis == mb_df$mbtis
 
 mbti_chisq <- chisq.test(mbti_dat$count, p = mb_df$mbti_percent, simulate.p.value = T)
 
@@ -1154,6 +1631,7 @@ ggplot(mbti_dat,
   geom_col(color = "black") +
   xlab("Myers–Briggs Type") +
   ylab("Count")  +
+  theme_classic() +
   labs(title = "666posting Myer-Briggs Types",
        subtitle = paste0("N = ",
                          sum(mbti_dat$count),
@@ -1180,13 +1658,21 @@ ggplot(letter_df_g, aes(x = category, y = `percent type`, fill = type)) +
                                 "Judging", "Percieving"
                                                           )) +
   labs(title = "Population Myer-Briggs Single Letter Types",
-       subtitle = paste("P-values per letter group in respective order:", paste(pvals_lett, collapse = ' ; ')))
+       subtitle = paste("P-values per letter group in respective order:",
+                        paste(pvals_lett, collapse = ' ; '))) +
+  theme_classic()
+  
 
 ggsave(filename = "outputs/myer-brigg-lett-666.png", width = hght, height = wdth)
 ```
 
 
 ## Birthday/Zodiacs
+
+	Gonna be honest, I am under qualified to say anything about what zodiac signs mean, someone in the comments please link a gold standard explanation of them, because I don’t want to look like an idiot. That said, one thing I do know is these signs break up into the four classic elements, fire, water, air, and earth which are included in my analysis.
+	So to generate the population data I pulled CDC birth records from 2000-2014 as an estimate. There appears to be a relatively uniform distribution of signs, and similarly elements in the general pop. In our group however this distribution doesn’t hold true. Capricorns make up around 3% of our group while Gemini make up ~12%. That said, this is not a significant change in the distribution according to a chi-square analysis. The same is true for elements, the change nears significance, but does not cross the arbitrary (thanks Fisher) 0.05 threshold, though overall there are less Earth and Water signs in this group.
+
+
 
 Pulling public data to make a fair general population example and then preparing it
 ```{r}
@@ -1233,6 +1719,7 @@ ggplot(us_birth_sum, aes(x = sign, y = sign_percent, fill = element)) +
   geom_col(color = "black") +
   scale_fill_manual(values = elem_cols) + 
   scale_y_continuous(labels = scales::percent) +
+  theme_classic() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   ylab("Percent") +
   xlab("Sign") +
@@ -1261,6 +1748,7 @@ ggplot(element_summ, aes(x = element, y = element_percent, fill = element)) +
   geom_col(color = "black") +
   scale_fill_manual(values = elem_cols) + 
   scale_y_continuous(labels = scales::percent) +
+  theme_classic() +
   ylab("Percent") + 
   xlab("Elements") +
   labs(title = "General Population Sign Elements (births 2000-2014)",
@@ -1321,7 +1809,8 @@ Basic Alex G zodiac sign plot
 ggplot(g_Zodiac, aes(x = sign, y = sign_percent, fill = element)) +
   geom_col(color = "black") + 
   scale_fill_manual(values = elem_cols) +
-  scale_y_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) + 
+  theme_classic() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   ylab("Percent") +
   xlab("Sign") +
@@ -1341,6 +1830,7 @@ ggplot(g_element, aes(x = element, y = element_percent, fill = element)) +
   geom_col(color = "black") +
   scale_fill_manual(values = elem_cols) + 
   scale_y_continuous(labels = scales::percent) +
+  theme_classic() +
   ylab("Percent") +
   xlab("Elements") +
   labs(title = "666posting Zodiac Sign Elements",
@@ -1354,6 +1844,10 @@ ggsave(filename = "outputs/horo-elements-666.png", width = hght, height = wdth)
 ```
 
 ## Hogwarts House
+
+
+I’m also not great with Harry Potter info tbh. But this was relatively interesting because there is some insight to be gained.  I pulled the general population data from this article https://time.com/4921918/harry-potter-hogwarts-sorting-hat-quiz/… kinda. I had to eyeball the percentages, because they didn’t actually give them. What’s interesting is that the main difference between the general population and 666posting is that we have more Slytherin. BUT WHAT’S EVEN MORE INTERESTING, is according to the Time’s article, Slytherin have a higher distribution in today's youth, and I’d say that this group leans to the younger side (see previous posts). And so, I’d argue this group doesn’t stray from the normal population distribution when adjusted for age.  But we don’t have enough older people to properly adjust for age, so just take my word for it, K? Great!
+
 
 ~~Data taken from https://drive.google.com/file/d/0B8PCmhQmtcDKLXlzSGtnZ0hKbjQ/view~~
 Data taken from [Time Magazine](https://time.com/4921918/harry-potter-hogwarts-sorting-hat-quiz/), they don't have the actual percents posted, but a much larger sample size.
@@ -1375,7 +1869,8 @@ ggplot(america_house,
   scale_y_continuous(labels = scales::percent) +
   labs(title = "US Hogwarts House Distribution (Time Magazine's Data)",
        subtitle ="N = ~500,000")+
-  xlab("Hogwarts Houses")
+  xlab("Hogwarts Houses") +
+  theme_classic()
 
 ggsave(filename = "outputs/hogwarts-gen-pop.png")
 
@@ -1413,7 +1908,9 @@ ggplot(house_dat,
        subtitle = paste0("N = ",
                          sum(house_dat$count),
                          " ; Chi-Square compared to population p-value = ",
-                         format.pval(house_chisq$p.value, digits = 3)))
+                         format.pval(house_chisq$p.value, digits = 3))) +
+  theme_classic()
+
   ggsave(filename = "outputs/hogwarts-666.png", width = hght, height = wdth)
 
 
@@ -1423,6 +1920,10 @@ This is interesting because if you look at the Time's article as people age Slyt
 
 
 ## Are there correlations betwen types?
+
+
+My last question, and the one I found most interesting is, are personality types related to one another? E.g. are certain MBTI types enriched in a given zodiac sign? Long story short, kinda, kinda not. I made a bunch of Heatmap Tables using an R package called Z-table and calculated Chi-squares and while there were a few hits I assure you none would stand up to any multiple testing correction, so I don’t have any larger statement to say here. I feel like we are underpowered in participants to test this hypothesis as not everyone answered all three survey questions, and even if we did we still might need a larger N.
+
 
 Using Ztables from this [link](https://cran.r-project.org/web/packages/ztable/vignettes/heatmapTable.html)
 
@@ -1552,13 +2053,7 @@ pval_digits <- 3
 
 
 
-auto_ztable <- function(df, col1, col2, title, simul_p = F, pval_digits = 3, marg = 0) {
-  temp_tab <- table(df[[col1]], df[[col2]])
-  temp_ztab <- ztable(temp_tab)
-  chi_result <- chisq.test(df[[col1]], df[[col2]], simulate.p.value = simul_p)
-  temp_ztab %>% makeHeatmap(margin = marg) %>%
-  print(caption = paste0(title," ; Chi-Sqare p-value of ", format.pval(chi_result$p.value, digits = pval_digits)))
-}
+
 
 # #Sign IE
 # IE_sign_tab <- table(letter_dat$IE, letter_dat$sign)
@@ -1716,7 +2211,6 @@ auto_ztable(letter_dat_hp,
 
 Step one, per usual, is cleaning up the data for our specific purposes, one of the main changes is shortening of names and adding a fun variable about alcohol consumption. 
 ```{r}
-options(ztable.type = "viewer")
 
 dat_habits <- dat %>%
           select(id, age, gender, weed_use, alc_use, concerts, country, state) %>%
@@ -1800,6 +2294,7 @@ ggplot(alc_count, aes(x=alc_use, y = n, fill=alc_use)) +
   geom_col(color="black", ) +
   coord_flip() +
   scale_fill_viridis_d(option = "A", direction = -1)  +
+  theme_classic() +
   theme(legend.position = "none") +
   geom_text(aes(label = n), nudge_y = 3, size=4) +
   labs(title = "Alcohol Usage in 666posting",
@@ -1813,7 +2308,8 @@ ggsave("outputs/alcohol_usage_barplot.png")
 ggplot(weed_count, aes(x=weed_use, y = n, fill=weed_use)) +
   geom_col(color="black", ) +
   coord_flip() +
-  scale_fill_viridis_d(direction = -1)  +
+  scale_fill_viridis_d(direction = -1) +
+  theme_classic() +
   theme(legend.position = "none") +
   geom_text(aes(label = n), nudge_y = 3, size=4) +
   labs(title = "Weed Usage in 666posting",
@@ -1846,6 +2342,7 @@ Now let us see if there are any interesting distributions with age
 ggplot(dat_drugs, aes(x=age, fill=alc_use)) +
   geom_histogram(breaks=seq(15, 45, by=1), color="black") +
   scale_fill_viridis_d(option = "A", direction = -1) +
+  theme_classic() +
   labs(title = "Alcohol Usage Histogram in 666posting",
        subtitle = paste("N =", sum(alc_count$n)),
        fill = "Alcohol Usage")
@@ -1857,6 +2354,7 @@ This is an interesting way to view the distribution, but to see differences ther
 ggplot(dat_drugs, aes(y=age, x= alc_use, fill=alc_use)) +
   geom_boxplot() +
   stat_n_text(size = 3) +
+  theme_classic() +
   scale_fill_viridis_d(option = "A", direction = -1) +
   coord_flip() +
   labs(title = "Alcohol Usage in 666posting",
@@ -1891,7 +2389,8 @@ ggplot(dat_drugs, aes(x=age, fill=`Drinks in the USA`)) +
   labs(title = "Woah, that's illegal buddies!",
        subtitle = paste0("I'm reporting all ",
                          sum(dat_drugs$underage_drinking == "Yes"),
-                         " of you to the police! /s"))
+                         " of you to the police! /s")) +
+  theme_classic()
 
 ggsave("outputs/underage_drinking.png")
 ```
@@ -1907,13 +2406,16 @@ ggplot(dat_drugs, aes(x=age, fill=weed_use)) +
   scale_fill_viridis_d(direction = -1) +
   labs(title = "Weed Usage in 666posting",
        subtitle = paste("N =", sum(weed_count$n)),
-       fill = "Weed Usage")
+       fill = "Weed Usage") +
+  theme_classic()
 ggsave("outputs/weed_usage_histogram.png")
 
 ```
 
 Mutate dat drugs to add weed data in
-```{r}
+
+## Fix this table
+```{r results='asis'}
 
 map <- match(dat_drugs$country, world_weed$country)
 
@@ -1984,7 +2486,8 @@ ggplot(dat_drugs, aes(y=age, x= weed_use, fill=weed_use)) +
   labs(title = "Weed Usage in 666posting",
         subtitle = paste("N =", sum(weed_count$n)),
        fill = "Weed Usage") +
-  xlab("Weed Usage") 
+  xlab("Weed Usage")  +
+  theme_classic()
 ggsave("outputs/weed_usage_boxplot.png")
 ```
 
@@ -2024,7 +2527,8 @@ alex_g_conc_dat <- dat %>% select(Timestamp, alex_g_concerts, state, living_area
 Making a histogram showing the general results. As you can see there are some outliers, but I have theories on why these outliers exist. 
 ```{r}
 ggplot(alex_g_conc_dat, aes(x = alex_g_concerts)) +
-           geom_bar(color="black") 
+           geom_bar(color="black")  +
+  theme_classic()
 ```
 
 My theory is they live near Philly, and by using the state data I've collected I can determine that two of the largest outliers indeed do live near Philly (defined by living in Pennsylvania, New Jersey or Delaware). That said, the individual who has seen Alex 40 times lives in Missouri.
@@ -2042,7 +2546,8 @@ living near Philly?",
  subtitle = paste0("N = ", nrow(alex_g_conc_dat))
   ) +
   xlab("How many Alex G concerts have you seen?") +
-  ylab("Count")
+  ylab("Count") +
+  theme_classic()
 
 
 ggsave(filename = "outputs/alex_g_conc_philly.png", width = hght, height = wdth)
@@ -2054,7 +2559,8 @@ alex_g_conc_dat$living_area <- factor(alex_g_conc_dat$living_area,
                                       names(sort(table(alex_g_conc_dat$living_area),
                                                  decreasing= F)))
 ggplot(alex_g_conc_dat, aes(x = alex_g_concerts, fill = living_area)) +
-           geom_bar(color="black")  
+           geom_bar(color="black") +
+  theme_classic()
 ```
 ```{r}
 ggplot(alex_g_conc_dat, aes(y = alex_g_concerts, x = living_area, fill = living_area)) +
@@ -2070,6 +2576,7 @@ ggplot(no_out_conc, aes(y = alex_g_concerts, x = living_area, fill = living_area
   coord_flip() +
   scale_fill_brewer(palette = "Set1") +
   stat_n_text(size = 3)  +
+  theme_classic() +
   theme(legend.position = "none") +
   labs(
     title = "Does seeing Alex G concerts depend on
@@ -2080,6 +2587,8 @@ how close you are to a city?",
   ylab("Number of Alex G Concerts")
 ggsave(filename = "outputs/alex_g_where_live.png", width = hght, height = wdth)
 ```
+
+#Fix colors
 
 Check distribution with concert activity
 ```{r}
@@ -2100,7 +2609,8 @@ depending on your concert habits",
     subtitle = paste0("N = ", nrow(no_out_conc))
   ) +
   xlab("Concert Habits") +
-  ylab("Number of Alex G Concerts")
+  ylab("Number of Alex G Concerts") +
+  theme_classic()
 ggsave(filename = "outputs/alex_g_conc_hab.png", width = hght, height = wdth)
 ```
 
@@ -2131,9 +2641,11 @@ So it appears that the biggest determinant of seeing Alex G concerts is if you l
 
 ```{r}
 ggplot(no_out_conc, aes(y = alex_g_concerts, x = `Lives Near Philly?`, fill = `Lives Near Philly?`)) +
-   geom_violin() +
+   geom_violin() + 
+  geom_jitter(weight = .25, height = 0.2) +
   coord_flip() +
-  scale_fill_brewer(palette = "Dark2") +
+  scale_fill_brewer(palette = "Dark2") + 
+  theme_classic() +
   theme(legend.position = "none") +
   stat_n_text(size = 3) +
   labs(
@@ -2192,65 +2704,33 @@ avg_band <- sort(table(dat$in_band),decreasing=TRUE)[1:3]
 ```
 
 
+# Special Thanks!
 
-```{r echo=F}
-#####UNUSED CODE
+## Modmin Team of 666posting
+In order Facebook decided
+  + Ignacy R.
+  + Isabelle J.
+  + Abby C.
+  + Armando M.
+  + Cody G.
+  + Ashtyn K.
+  + Marley M.
+  + Kara B.
 
-
-# ####################
-# world_2 <-as.data.frame(world)
-# 
-# new_map <- joinCountryData2Map(world_2, joinCode = "ISO2", nameJoinColumn = "iso_a2", resolution = "high")
-# new_map_poly <- fortify(new_map)
-# new_map_poly <- merge(new_map_poly, new_map@data, by.x="id", by.y="ADMIN", all.x=T)
-# new_map_poly <- new_map_poly %>% arrange(id, order)
-
-# 
-# ###Higher res world
-# new_map_poly <- fortify(worldmap)
-# new_map_poly <- merge(new_map_poly, new_map@data, by.x="id", by.y="ADMIN", all.x=T)
-# #new_map_poly <- new_map_poly %>% arrange(id, order)
-
-# ###Unreleased word cloud
-# unreleased <- songs_dat %>% filter(unreleased_album != "I don't listen to them.") 
-# unreleased_tally <- data.frame(table(unreleased$unreleased_album), stringsAsFactors = F)
-# 
-# songs_dat <- songs_dat %>%
-#   mutate(unreleased_album = ifelse(unreleased_album %in% "I don't listen to them.", "Don't listen", unreleased_album))
-# 
-# not_listen_tally <- data.frame(table(songs_dat$unreleased_album), stringsAsFactors = F)
-# 
-# set.seed(1234)
-# wordcloud(words = not_listen_tally$Var1, freq = not_listen_tally$Freq, min.freq = 1,
-#           max.words=200, random.order=FALSE, rot.per=0.35, 
-#           colors=brewer.pal(8, "Dark2"))
+Special shoutout to Isabelle for allowing and promoting the survey.
 
 
-
-# #############
-# pol_count <- as.data.frame(table(political_dat$left_right, political_dat$lib_auth))
-# colnames(pol_count)[1:2] <- c("left_right", "lib_auth")
-# pol_count$left_right <-factor(pol_count$left_right, levels = c("0","1", "2", "3", "4", "5", "6", "7", "8", "9","10"))
-# #pol_count$lib_auth <- as.integer(as.character(pol_count$lib_auth))
-# 
-# ggplot(pol_count) +
-#           geom_point(aes(x = left_right, y = lib_auth, size= Freq)) +
-#           #  
-#             geom_rect(aes(xmin = '5', xmax= '10',ymin = '0', ymax='5'), fill = "yellow", alpha = 0.005) +
-#              geom_rect(aes(xmin = '0', xmax= '5',ymin = '0', ymax='5'), fill = "green", alpha = 0.005) +
-#              geom_rect(aes(xmin = '5', xmax= '10',ymin = '5', ymax='10'), fill = "blue", alpha = 0.005) +
-#             geom_rect(aes(xmin = "0", xmax= "5",ymin = "5", ymax="10"), fill = "red", alpha = 0.005) + 
-#            
-#            #Adding median and mean
-#           # geom_point(aes(x=med_LR, y=med_LA), colour="white", shape = 9, size =2) +
-#            #geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
-#           labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(political_dat))) + 
-#    ylab("libertarian to authoritarian") +
-#                xlab("left to right") +
-#     
-#               coord_fixed() #+ theme_void()
-```
-
+## Other thanks in order of commenting on the original post
+ + Zion H.: Inspiring the initial graph and indirectly the survey
+ + Miguel Z.: Making the first prelimary visualizations
+ + Alex J.: Favorite movie and book genres questions
+ + Rivers F.: Consistent support throughout the process
+ + Andrew W.: Consistent support as well
+ + Fabiana O.: Suggested questions on race and queerness questions
+ + Hillary N.: Suggested astrological signs questions
+ + Luke D.: Suggested political stance questions
+ + Gwendylan T.: Suggested weed usage and Meyer-Briggs type questions
+ + Abigail C.: For testing the survey and giving improvements
 
 # [Things to Do](https://sandy.bandcamp.com/track/things-to-do)
 
