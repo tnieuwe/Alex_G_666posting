@@ -8,6 +8,22 @@ output:
     toc_depth: 1
 ---
 
+```{r, echo=FALSE}
+dat <- read.csv("inputs/alex_g_stats_8_1.csv", stringsAsFactors = F)
+```
+
+
+## Preface
+I don't know under what context you might be looking at this html, but hello I'm Tim. I'm writing this preface so that no matter where you're coming from I can explain waht you're about to see.
+
+### What is this?
+  This is a data analysis I completed on some survey data I collected from a Facebook group known as (Sandy) Alex G 666posting. For those of you that don't know, Alex G is a prolific indie artist who has been putting out music since at least 2010. His popularity has only continued to grow with each album release, but what makes him such an interesting musician is, including his leaked unreleased tracks, Alex has 200+ songs, which to me is impressive.
+  I joined the group back in Jan of 2019 as I got into Alex's unreleased discography and have come to really enjoy the community that exists there. One day an individual, Zion, asked how old they were when they started listening to Alex G and how old they were now. I asked if it was okay, collected that data, and made a figure for the group showing the distribution of ages and other ones as well. I then asked if it was okay to make a survey for the group to analyze more data, I got the okay, specifically from Isabelle, and began working. Many individuals helped with the survey as you can see in the bottom, but the result was `r ncol(dat)` columns of data from `r nrow(dat)` individuals. Some questions Alex G related, some not. But I hope you find something interesting in this little project I made. I've been working on it on and off in my free time since... April I think? Either way its a labor of love to give back to the great community I found online. The group is full of cool people and I'm glad to be a part of it (I also think this project helped me become a mod so that was nice).
+  
+### Disclaimer
+  At the time of me writing this 666posting is at the cusp of reaching 3,000 members. That's great, but we need to talk about sample size, because that means we only have ~`r nrow(dat)/3000*100`% of the group accounted for. Not only that, but as this is an optional survey, one must be aware of the type of people who would take the time to fill out said survey. This is not an unbiased slice of the group, but I do like to think this includes the core group of active individuals (idk I didn't ask for names). So with that in mind, let's get into the analysis.
+
+
 ## Libraries used
 
 + `tidyverse`: Used for general exploratory analysis, primarily used dplyr within it
@@ -47,7 +63,7 @@ options(ztable.type = "html")
 set.seed(123)
 ```
 
-# Loading the data
+## Loading the data and prepping functions
 ```{r}
 dat <- read.csv("inputs/alex_g_stats_8_1.csv", stringsAsFactors = F)
 
@@ -80,18 +96,20 @@ dat <- dat %>% mutate(
   gender = factor(gender, hi_low_fact(gender, decrease = F)),
   transgender = factor(transgender, levels = c("No", "Yes", "Prefer not to answer")),
   polyamorous = ifelse(polyamorous == "Prefer not to say", "Prefer not to answer", polyamorous),
-  polyamorous = factor(polyamorous, levels = c("No", "Yes", "Prefer not to answer"))
+  polyamorous = factor(polyamorous, levels = c("No", "Yes", "Prefer not to answer")),
+  generation = ifelse(generation == "", "Prefer not to say", generation)
 )
 ```
 
 
-  So the first demographics we'll take a quick peak at is at age a race. First we'll look at age at a histogram, and get used to it, we're going to be looking at age a lot in these plots. But overall age is right skewed, with only one real outlier at around 42. Alex G is about 26-27 at the time of me writing this and has been writing music since his early teenage years, so the demographics of teens and 20-somethings is unsurprising.
+  So the first demographics we'll take a quick peak at is at age and race. First we'll look at age at a histogram colored on "what generation do you identify with". Get used to the age varaible, as it is one of our few numerical values, so I'm going to be plotting it a lot. Anyways, overall age is right skewed, with only one real outlier at `r max(dat$age)`. Alex G is about 26-27 at the time of me writing this and has been writing music since his early teenage years, so the demographics of teens and 20-somethings is unsurprising.
+  
   As a straight white dude (who we will see is the average Alex G listener), I can't really speak to why or why not Alex is popular or not popular with the other demographics, and frankly I'm not sure it is my place to speculate. As a result for race, gender, trans identity, and polyamory I will let you draw your own conclusions. I just don't feel I as an individual should be speaking didactically about such a subject.
+  
 ```{r, fig.width=10, fig.height=8}
 #Age
-age_plot <- ggplot(dat, aes(age)) +
-  geom_histogram(breaks=seq(15, 45, by=1),
-                 fill = "white", color = "black")+
+age_plot <- ggplot(dat, aes(age, fill = generation)) +
+  geom_histogram(breaks=seq(15, 45, by=1), color = "black")+
   ylab("Count") +
   xlab("Age") +
   scale_x_continuous(breaks = round(seq(min(dat$age), max(dat$age), by = 5)/5) * 5)
@@ -1192,10 +1210,20 @@ wordcloud(words = genre_table$Var1, freq = genre_table$Freq, min.freq = 1,
                             )
 dev.off()
 ```
+## How do you listen to music?
+
+I'm making the table here, but combining it with the figure below, it doesn't need its own section.. 
+
+```{r}
+music_summary <- t(as.matrix(table(dat$music_method)))
+music_summary <- t(as.matrix(music_summary[,-1]))
+music_summ_table <- ggtexttable(music_summary)
+```
+
 
 # How did you find Alex G?
 
-First we gotta do some MASSIVE data cleaning, I really should not of left this open for people to put whatever they want, look at all the unique comments, as of writing there is 37. So we gotta fine a way to generalize these. That said, some are very interesting
+First we gotta do some MASSIVE data cleaning, I really should not have left this open for people to put whatever they want, look at all the unique comments, as of writing there is 37. So we gotta fine a way to generalize these. That said, some are very interesting
 
 ```{r}
 unique(dat$discover_method)
@@ -1224,17 +1252,22 @@ dat_disc <- mutate(dat, discover_method = case_when(
 unique(dat_disc$discover_method)
 ```
 
-Making the plot now simplified
+Making the plot now simplified including a table of how we listen to our music
 ```{r}
 
-ggplot(dat_disc, aes(x = discover_method)) +
+discover_g <- ggplot(dat_disc, aes(x = discover_method)) +
   geom_bar()  +
   coord_flip() +
   xlab("How did you discover Alex G") +
 geom_text(stat='count', aes(label=..count..), nudge_y = 1.8) +
   labs(title = "How did we discover Alex G?",
-       subtitle = paste("N =", nrow(dat_disc)))
+       subtitle = paste("N =", nrow(dat_disc))) +
+  theme_classic()
 
+grob_mus <- ggarrange(discover_g, music_summ_table, nrow = 2, heights = c(1, .3))
+
+
+annotate_figure(grob_mus, bottom = "How we listen to music")
 ```
 
 
@@ -1242,15 +1275,25 @@ geom_text(stat='count', aes(label=..count..), nudge_y = 1.8) +
 # Alex G Music 
 
 ## Favorite Album
+
  Prepare data
 ```{r}
-##Filter down to Albums and songs to make an object usable in the next two chuncks
-songs_dat <- dat%>% select(Timestamp, favorite_song, favorite_album, unreleased_album)
+##Filter down to albums, songs, and music videos to make an object usable in the next couple chunks
+songs_dat <- dat %>%
+  select(Timestamp,
+         favorite_song,
+         favorite_album,
+         unreleased_album,
+         music_vid) %>% 
+  mutate(music_vid = str_to_title(music_vid),
+         music_vid = ifelse(str_detect(music_vid, "Poison"), "Poison Root", music_vid))
+  
+
 ```
 
 Favorite Album Plot
 ```{r}
-ggplot(songs_dat, aes(x = forcats::fct_infreq(favorite_album)),
+album_plot <- ggplot(songs_dat, aes(x = forcats::fct_infreq(favorite_album)),
       fill = forcats::fct_infreq(favorite_album)) +
       geom_bar(aes(fill = forcats::fct_infreq(favorite_album))) +
       scale_fill_manual(
@@ -1271,13 +1314,17 @@ ggplot(songs_dat, aes(x = forcats::fct_infreq(favorite_album)),
         axis.ticks.x=element_blank(),
         legend.title = element_blank()) +
     labs(title = "Favorite Alex G Album",
-         subtitle = paste0("N = ",nrow(songs_dat)))
+         subtitle = paste0("N = ",nrow(songs_dat))) +
+    geom_text(stat='count', aes(label=..count..), nudge_y = 2.5)
+
+album_plot
+
 ggsave("outputs/favorite_album.png", height = 7, width = 7)
 ```
 
 Favorite Unreleased Album/Compilation
 ```{r}
-ggplot(songs_dat, aes(x = forcats::fct_infreq(unreleased_album))) +
+fan_comp_plot <- ggplot(songs_dat, aes(x = forcats::fct_infreq(unreleased_album))) +
   geom_bar(aes(fill = forcats::fct_infreq(unreleased_album))) +
   theme_classic(base_size = 14)  +
    theme(axis.title.x=element_blank(),
@@ -1285,11 +1332,33 @@ ggplot(songs_dat, aes(x = forcats::fct_infreq(unreleased_album))) +
         axis.ticks.x=element_blank(),
         legend.title = element_blank()) +
     labs(title = "Favorite Alex G Fan Compilation",
-         subtitle = paste0("N = ",nrow(songs_dat)))
+         subtitle = paste0("N = ",nrow(songs_dat))) +
+    geom_text(stat='count', aes(label=..count..), nudge_y = 2.5)
+
+fan_comp_plot
 
 #Save it
 ggsave("outputs/favorite_fancomp.png", height = 7, width = 7)
 ```
+
+Favorite Music Video
+```{r}
+music_vid_plot <- ggplot(songs_dat, aes(x = forcats::fct_infreq(music_vid))) +
+  geom_bar(aes(fill = forcats::fct_infreq(music_vid))) +
+  theme_classic(base_size = 14)  +
+   theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.title = element_blank()) +
+    labs(title = "Favorite Alex G Music Video",
+         subtitle = paste0("N = ",nrow(songs_dat))) +
+    geom_text(stat='count', aes(label=..count..), nudge_y = 2.5)
+
+music_vid_plot
+#Save it
+ggsave("outputs/favorite_music_vid.png", height = 7, width = 7)
+```
+
 
 Prepare song data for plotting
 ```{r}
@@ -1397,6 +1466,7 @@ favorite_song_chi
 
 #
 ```
+
 It is more likely that you will not have your favorite song in your favorite album
 
 # Personality Questions
@@ -1919,11 +1989,12 @@ This is interesting because if you look at the Time's article as people age Slyt
 
 
 
-## Are there correlations betwen types?
+## Are there correlations between types?
 
 
 My last question, and the one I found most interesting is, are personality types related to one another? E.g. are certain MBTI types enriched in a given zodiac sign? Long story short, kinda, kinda not. I made a bunch of Heatmap Tables using an R package called Z-table and calculated Chi-squares and while there were a few hits I assure you none would stand up to any multiple testing correction, so I don’t have any larger statement to say here. I feel like we are underpowered in participants to test this hypothesis as not everyone answered all three survey questions, and even if we did we still might need a larger N.
 
+*note*: I'm going to not echo these as the code is repetetive. 
 
 Using Ztables from this [link](https://cran.r-project.org/web/packages/ztable/vignettes/heatmapTable.html)
 
@@ -1953,7 +2024,7 @@ sign_z %>% makeHeatmap() %>%
 ```
 
 Ztable Element vs MBTI
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 #Element
 element_tab <- table(hor_mbt_dat$element, hor_mbt_dat$mbti)
 element_z <- ztable(element_tab)
@@ -1967,7 +2038,7 @@ element_z %>% makeHeatmap() %>%
 
 Ztable for Zodiac and Houses
 Remove names that repeat above (This hasn't been done)
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 hor_hp_dat <- pers_dat %>% filter(!(hp_house %in% c("", "Prefer not to answer", "I don't know")),
                                    !(sign %in% c("", "Prefer not to answer", "I don't know"))) %>%
                 mutate(element = case_when(
@@ -1990,7 +2061,7 @@ sign_z %>% makeHeatmap() %>%
 ```
 
 Ztable for element and house
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 #Element
 element_tab <- table(hor_hp_dat$hp_house, hor_hp_dat$element)
 element_z <- ztable(element_tab)
@@ -2002,7 +2073,7 @@ element_z %>% makeHeatmap() %>%
 ```
 
 MBTI vs Houses
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 mbti_house_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
                                    !(hp_house %in% c("", "Prefer not to answer", "I don't know"))) 
 
@@ -2070,7 +2141,7 @@ pval_digits <- 3
 
 
 Sign and IE
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 #Sign IE
 
 auto_ztable(letter_dat,
@@ -2081,7 +2152,7 @@ auto_ztable(letter_dat,
 ```
 
 Sign and SN
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 
 #Sign SN
 auto_ztable(letter_dat,
@@ -2092,17 +2163,18 @@ auto_ztable(letter_dat,
 ```
 
 Sign and FT
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 #Sign FT
 auto_ztable(letter_dat,
             "FT",
             "sign",
             "Heatmap Table oF Zodiac Signs and Intro vs Extra",
             simul_p = T)
+
 ```
 
 Sign and JP
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 #Sign JP
 auto_ztable(letter_dat,
             "JP",
@@ -2116,7 +2188,7 @@ auto_ztable(letter_dat,
 ## MBTI letters vs Zodiac Elements
 
 Element EI
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 
 auto_ztable(letter_dat,
             "IE",
@@ -2126,7 +2198,7 @@ auto_ztable(letter_dat,
 ```
 
 Element SN
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 auto_ztable(letter_dat,
             "SN",
             "element",
@@ -2135,7 +2207,7 @@ auto_ztable(letter_dat,
 ```
 
 Element FT
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 
 auto_ztable(letter_dat,
             "FT",
@@ -2146,7 +2218,7 @@ auto_ztable(letter_dat,
 
 
 Element JP
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 
 auto_ztable(letter_dat,
             "JP",
@@ -2159,7 +2231,7 @@ auto_ztable(letter_dat,
 ## Hogwarts MBTI Letter Analysis
 
 Prepare data
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 letter_dat_hp <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I don't know")),
                     !(hp_house %in% c("", "Prefer not to answer", "I don't know"))) %>%
               mutate(IE = ifelse(str_detect(mbti, "I"), "I", "E"),
@@ -2169,7 +2241,7 @@ letter_dat_hp <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "
 ```
 
 House IE
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 auto_ztable(letter_dat_hp,
             "IE",
             "hp_house",
@@ -2178,7 +2250,7 @@ auto_ztable(letter_dat_hp,
 ```
 
 House SN
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 
 auto_ztable(letter_dat_hp,
             "SN",
@@ -2188,7 +2260,7 @@ auto_ztable(letter_dat_hp,
 ```
 
 House FT
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 
 auto_ztable(letter_dat_hp,
             "FT",
@@ -2199,7 +2271,7 @@ auto_ztable(letter_dat_hp,
 ```
 
 House JP
-```{r results='asis'}
+```{r results='asis', echo=FALSE}
 auto_ztable(letter_dat_hp,
           "JP",
           "hp_house",
@@ -2511,7 +2583,8 @@ ggplot(dat_habits, aes(x=concerts, fill = concerts)) +
   geom_bar(color = "black") + coord_flip() +
   labs(title = "How often do you go to concerts?",
        subtitle = paste("N = ", nrow(dat_habits)))  +
-  scale_fill_brewer(palette = "Dark2")
+  scale_fill_brewer(palette = "Dark2") +
+  theme_classic()
 ```
 # Alex G concerts
 
@@ -2657,6 +2730,62 @@ base on living near Philly",
   ylab("Number of Alex G Concerts")
 ```
 
+## College data
+
+```{r}
+college_dat <- dat %>% mutate(id = row_number()) %>%
+                    select(id, col_major) 
+
+college_dat_melt <- college_dat %>%
+  mutate(col_major = (str_split(col_major, ","))) %>%
+  unnest(cols = col_major) %>%
+  mutate(col_major =(str_trim(col_major, "both"))) %>%
+  filter(!(col_major %in% c("Used to","but not anymore", "", "Nope")))
+
+#Check data looks okay
+unique(band_dat_melt$col_major)
+
+#Make dataframe giving a 1 or 0 to each person based on if they play the col_major or not, 1 is TRUE and 0 is false
+college_df <- (as.data.frame.matrix(table(college_dat_melt$id, college_dat_melt$col_major)))
+```
+
+
+
+```{r}
+#Make Instrument strings look like titles
+colnames(college_df) <- str_to_title(colnames(college_df))
+
+degree = 1
+degree_list <- list()
+#Probably should change this to a lapply, but we use this loop to generate a list of ids that play a given instrument
+for (degree in 1:ncol(college_df)) {
+   degree_list[[colnames(college_df)[degree]]] <- (1:nrow(college_df))[college_df[,degree] == 1]
+}
+```
+
+
+```{r fig.height = 8, fig.width = 10, fig.align = "center"}
+plot_degree <- upset(fromList(degree_list),
+                 order.by = "freq",
+                 nsets =20, 
+                 #point.size = 4,
+                 #line.size = 1.8,
+                 text.scale=c(2.8, 1.6, 1.8, 1.6, 1.3, 2),
+                 mainbar.y.label = "Major Intersections",
+                 sets.x.label = "People Per Major"
+                 )
+
+plot_degree
+
+two_degrees <- sum(rowSums(college_df) == 2)
+three_degrees <- sum(rowSums(college_df) == 3)
+four_degrees <- sum(rowSums(college_df) == 4)
+
+```
+
+We have `r two_degrees` people with 2 majors, `r three_degrees` people with three majors, and `r four_degrees` with four majors.
+
+
 
 # The most average Alex G person
 ```{r}
@@ -2699,23 +2828,41 @@ avg_music_source <- names(sort(table(dat$music_method),decreasing=TRUE)[1:3])
 avg_instrument <- (sum_instr %>% arrange(desc(Freq)))[1,1]
 #They are not in a band
 avg_band <- sort(table(dat$in_band),decreasing=TRUE)[1:3]
+#Favorite musician
+avg_musician <- names(sort(table(musician_dat$favorite_musician),decreasing=TRUE)[1])
+#Second fave musician
+second_musician <- names(sort(table(musician_dat$sec_musician),decreasing=TRUE)[1])
+#Non Alex musician
+second_2_musician <- names(sort(table(musician_dat$sec_musician),decreasing=TRUE)[2])
 ####NEED TO DO ART
-#
+avg_art <- (sum_art %>% arrange(desc(Freq)))[1,1]
+##How often they go to concerts
+avg_concert_go <- names(sort(table(dat$concerts),decreasing=TRUE)[1])
+# Weed
+avg_weed <- names(sort(table(dat$weed_use),decreasing=TRUE)[1])
+#Alcohol 
+avg_alcohol <- names(sort(table(dat$alc_use),decreasing=TRUE)[1])
+
+#tolower()
 ```
 
+So around `r mean(mdy_hm(dat$Timestamp))` a `r avg_race` `r avg_orientation` `r avg_gender` who is `r avg_age` years old decided to fill out the survey. They live in `r avg_country`, specifically in `r avg_state` and when asked if they prefer multiple partners they generally say `r avg_poly`. Their favorite musician is`r avg_musician`, when you ask them their second favorite musician they'll emphasize how much they like `r second_musician`, before balking and saying `r second_2_musician`. They have a lot of opinions about `r avg_musician`, their favorite song is `r avg_fave_song`, their favorite music video is `r avg_music_vid`, and their favorite album is `r avg_fave_album`. That said, they when asked about what their favorite fan compilation is they reply, `r avg_unreleased`, which is probably because they listen to most of their music through `r avg_music_source` which is somewhat difficult to get non-official tracks on.
+
+Nevertheless they're still a big `r avg_musician` fan, they started listening to him when they were `r avg_start_listen` years old, and have been to `r avg_alex_conc` so far. When ask what they like to do in their spare time they have a couple hobbies. They like to play the `r avg_instrument`, but when asked if they're in a band, they'd say `r tolower(avg_band)`. They also use `r tolower(avg_art)` to express themselves, and when it comes to concerts they go `r tolower(avg_concert_go)`. When it comes to weed they would say "`r avg_weed`" and with alcohol they'd say they'd drink "`r avg_alcohol`".
 
 # Special Thanks!
 
 ## Modmin Team of 666posting
-In order Facebook decided
-  + Ignacy R.
-  + Isabelle J.
-  + Abby C.
-  + Armando M.
-  + Cody G.
-  + Ashtyn K.
-  + Marley M.
-  + Kara B.
+In order Facebook decided:
+
+ + Ignacy R.
+ + Isabelle J.
+ + Abby C.
+ + Armando M.
+ + Cody G.
+ + Ashtyn K.
+ + Marley M.
+ + Kara B.
 
 Special shoutout to Isabelle for allowing and promoting the survey.
 
@@ -2726,13 +2873,13 @@ Special shoutout to Isabelle for allowing and promoting the survey.
  + Alex J.: Favorite movie and book genres questions
  + Rivers F.: Consistent support throughout the process
  + Andrew W.: Consistent support as well
- + Fabiana O.: Suggested questions on race and queerness questions
+ + Fabiana O.: Suggested questions on race and queerness 
  + Hillary N.: Suggested astrological signs questions
  + Luke D.: Suggested political stance questions
  + Gwendylan T.: Suggested weed usage and Meyer-Briggs type questions
  + Abigail C.: For testing the survey and giving improvements
 
-# [Things to Do](https://sandy.bandcamp.com/track/things-to-do)
+## [Things to Do](https://sandy.bandcamp.com/track/things-to-do)
 
   - Turn repetitive code into functions for example in the personality block
   - Add Alex G Habits
