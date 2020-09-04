@@ -18,7 +18,8 @@ I don't know under what context you might be looking at this html, but hello I'm
 
 ### What is this?
   This is a data analysis I completed on some survey data I collected from a Facebook group known as (Sandy) Alex G 666posting. For those of you that don't know, Alex G is a prolific indie artist who has been putting out music since at least 2010. His popularity has only continued to grow with each album release, but what makes him such an interesting musician is, including his leaked unreleased tracks, Alex has 200+ songs, which to me is impressive.
-  I joined the group back in Jan of 2019 as I got into Alex's unreleased discography and have come to really enjoy the community that exists there. One day an individual, Zion, asked how old they were when they started listening to Alex G and how old they were now. I asked if it was okay, collected that data, and made a figure for the group showing the distribution of ages and other ones as well. I then asked if it was okay to make a survey for the group to analyze more data, I got the okay, specifically from Isabelle, and began working. Many individuals helped with the survey as you can see in the bottom, but the result was `r ncol(dat)` columns of data from `r nrow(dat)` individuals. Some questions Alex G related, some not. But I hope you find something interesting in this little project I made. I've been working on it on and off in my free time since... April I think? Either way its a labor of love to give back to the great community I found online. The group is full of cool people and I'm glad to be a part of it (I also think this project helped me become a mod so that was nice).
+  
+  I joined the group back in Jan of 2019 as I got into Alex's unreleased discography and have come to really enjoy the community that exists there. One day an individual, Zion, asked how old they were when they started listening to Alex G and how old they were now. I asked if it was okay, collected that data, and made a figure for the group showing the distribution of ages and other ones as well. I then asked if it was okay to make a survey for the group to analyze more data, I got the okay, specifically from Isabelle, and began working. Many individuals helped with the survey as you can see in the bottom, but the result was `r ncol(dat)` columns of data from `r round(nrow(dat), 3)` individuals. Some questions Alex G related, some not. But I hope you find something interesting in this little project I made. I've been working on it on and off in my free time since... April I think? Either way its a labor of love to give back to the great community I found online. The group is full of cool people and I'm glad to be a part of it (I also think this project helped me become a mod so that was nice).
   
 ### Disclaimer
   At the time of me writing this 666posting is at the cusp of reaching 3,000 members. That's great, but we need to talk about sample size, because that means we only have ~`r nrow(dat)/3000*100`% of the group accounted for. Not only that, but as this is an optional survey, one must be aware of the type of people who would take the time to fill out said survey. This is not an unbiased slice of the group, but I do like to think this includes the core group of active individuals (idk I didn't ask for names). So with that in mind, let's get into the analysis.
@@ -112,6 +113,7 @@ age_plot <- ggplot(dat, aes(age, fill = generation)) +
   geom_histogram(breaks=seq(15, 45, by=1), color = "black")+
   ylab("Count") +
   xlab("Age") +
+  theme_classic() +
   scale_x_continuous(breaks = round(seq(min(dat$age), max(dat$age), by = 5)/5) * 5)
 
 age_summary <- round(t(as.matrix(summary(dat$age))), digits = 2)
@@ -128,6 +130,7 @@ race_dat <- dat %>% count(race)
 race_plot <- ggplot(race_dat, aes(race, n)) +
   geom_bar(stat = "identity") +
   coord_flip() +
+  theme_classic() +
   geom_text(aes(label=n), nudge_y = 2.5) +
   ylab("Count") +
   xlab("Race")
@@ -149,6 +152,7 @@ annotate_figure(dem_plot, top = text_grob(
 gender_plot <- ggplot(dat, aes(gender, fill = gender)) +
   geom_bar() +
   coord_flip() +
+  theme_classic() +
   theme(legend.position="bottom") +
   geom_text(stat='count', aes(label=..count..), nudge_y = 2.5)
   
@@ -158,6 +162,7 @@ gender_plot <- ggplot(dat, aes(gender, fill = gender)) +
 trans_dat <- filter(dat, transgender != "") %>% select(age, transgender)
 trans_plot <-  ggplot(trans_dat, aes(transgender)) + geom_bar() +
   coord_flip()+
+  theme_classic() +
   geom_text(stat='count', aes(label=..count..), nudge_y = 4)
 
 #trans_plot
@@ -170,6 +175,7 @@ orientation_totals <- dat %>% group_by(orientation) %>%
 orientation_plot <-  ggplot(dat, aes(orientation, fill = gender)) +
   geom_bar(position = "dodge") +
   coord_flip() +
+  theme_classic() +
   theme(legend.position="bottom")+
   geom_text(stat='count',
             aes(label=..count..),
@@ -186,6 +192,7 @@ poly_plot <-  ggplot(dat, aes(polyamorous, fill = gender)) +
   geom_bar(position = "Dodge") +
   coord_flip() +
   theme(legend.position = "none") +
+  theme_classic() +
   geom_text(stat='count', aes(label=..count..), position = position_dodge(width = 1), hjust = -.08)
  #   geom_text(aes(polyamorous, n, label = n, fill = NULL), data = poly_totals, nudge_y = 4)
 
@@ -204,9 +211,12 @@ annotate_figure(gpt_plot, top = text_grob(
 
 ```
 
+# The plot that started it all
+This is a plot I had inspired this project, how? Quick story time:
 
-#plot
-I should see if it is possible for me to clean up this histogram
+Zion, a memeber of 666posting asked individuals "What age were you when you discovered Alex G and what age are you now?". Everyone started answering the question and I found it interesting. Eventually it had over 200+ individuals and I came up with an idea on making two overlapping histograms of people ages of learning about Alex G and their current age. I asked for permission and then I began the first analysis of 666posting. As you'll see I didn't stop there with that data since I thought of other things to do with it, but this eventually led to me asking if I could run a survey which leads to this whole R markdown. So really Zion inspired me to do this, so if you're reading this, thanks dude!
+
+One of the data points I make sure to make is the year learned people learned about Alex G, using the fact this survey was done in 2020 as a reference. This will be used later
 ```{r}
 ##Two histograms
 
@@ -256,7 +266,7 @@ ggsave("start_age_current.png", width = 9, height = 7)
 
 ```
 
-One of the other plots I found interesting in my analysis that set this off was looking at the growth of Alex G's fanbase through his career. However, unlike my initial making of this plot based on people just commenting on a facebook post, this data is a little... odd. 
+Another plot I made, using the aformentioned "year learning of Alex G" data I extrapolated is a diagram of his growht. However, unlike my initial making of this plot based on people just commenting on a Facebook post, this data is a little... odd. 
 ```{r}
 ##Second histogram
 fact_order <- as.character(sort(unique(dat$year_learned)))
@@ -309,8 +319,9 @@ So below is the original figure.
 
  (FIGURE)
  
- And compared to this figure our new one is definitely different. First of all we we have much more of a normal distribution besides the person... who first heard Alex G in '07. Frankly I'm a little dubious and would be interested in hearing that story. The individual did not identifty which state they live in, so I though my worries would be assuaged by hearing they lived in PA, but alas, I have no idea. The other interesting aspect is our first non '07 fan comes in around 2011, after Race, an arguably seminal Alex G album. I would frankly be expecting a larger boost with Race, and the previous plot I made did have individuals listening around the time of Race, admittedly few, but more than none.
- Also compared to the previous plot we have a lot more 2018-202 fans, but I think that's primarily because the original data was pulled from late March/early April 2020, and this current survey has been rolling open the entire year, so that in not unsuspected. But on the topic of the actual data, the data is for the most part normal, which is more indicative of the sample we're pulling from as it should just continue increasing with each album most likely. However it is interesting that 2015 and the release of Beach Music is his largest jump in popularity, as it is also the same year he signed with Domino Records.
+ And compared to this figure our new one is definitely different. First of all we we have much more of a normal distribution besides the person... who first heard Alex G in '07. Frankly I'm a little dubious and would be interested in hearing that story. The individual did not identify which state they live in, so I thought my worries would be assuaged by hearing they lived in PA, but alas, I have no idea. The other interesting aspect is our first non '07 fan comes in around 2011, after Race, an arguably seminal Alex G album. I would frankly be expecting a larger boost with Race, and the previous plot I made did have individuals listening around the time of Race, admittedly few, but more than none. It is important to note Alex G was making music with his band the Skin Cells during the early years as well, but that history is more murky.
+ 
+ Also compared to the previous plot we have a lot more 2018-20 fans, but I think that's primarily because the original data was pulled from late March/early April 2020, and this current survey has been rolling open the entire year, so that is not unexpected But on the topic of the actual data, the data is for the most part normal, which is more indicative of the sample we're pulling from, as I presume should just continue increasing with each album as his fame has only grown. Maybe there is a critical limit of indie fans however that he might've reached, who knows! It is interesting that 2015 and the release of Beach Music is his largest jump in popularity, as it is also the same year he signed with Domino Records who probably helped promote his work to a wider audience.
 
 ### How long have we been listening to Alex G?
 
@@ -334,7 +345,7 @@ It's the previous plot inverted, what can I say.
 
 ### Cumulative Distribution Plot of Fan Growth
 
-I just like cumulative distribution plots, its all the same data.
+I just like cumulative distribution plots, its all the same data. If you don't know how cumulative distribution plots work, basically the line shows over the years the growth of Alex's fanbase as if counting up to the total, so you can see his percentage gain each year to his current 100% of the fanbase.
 ```{r}
 
 ggplot(dat, aes(x=year_learned)) + stat_ecdf() + scale_x_continuous(breaks=seq(2009,2020,2))+
@@ -373,7 +384,7 @@ ggsave("alex_g_fanbase_growth.png", width = 9, height = 7)
 
 # Make a map of the world
 
- So Alex G, for those not in the know, lives in Philly, however like most succesful artists people want to hear him elsewhere and he tours pretty regularly. So I thought it would be intersting to see where Alex G fans are all over the world!
+ So Alex G, for those not in the know, lives in Philly. But, like most successful artists, people want to see him perform in other cities and he tours pretty regularly. So I thought it would be interesting to see where Alex G fans are all over the world!
 
 
 Preparing and loading data
@@ -418,9 +429,9 @@ A simple plot of the whole world colored on fans per 100,000 individuals in each
 ggplot() + 
   coord_map(xlim = c(-180, 180), ylim = c(-60, 75))  +
   geom_polygon(data = worldmap_poly, aes(long, lat, group = group, fill = fans_per),size = 0.3) +
-
-geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=1.5)   + 
+  geom_text(data=subset(worldmap@data, !is.na(SOVEREIGNT)), aes(x=LON, y=LAT,label=fans), size=1.5) + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) + 
+  theme_void() +
   labs(fill = "Fans per
 100,000 indv")
 ```
@@ -519,7 +530,7 @@ ggsave("outputs/europe_current.png", height = 8, width = 7)
 
 ```
 
-So with all that said, the only interesting thing I could think of to compare this data to is what countries does Alex G most frequently tour in so... tada, I took this from [setlist.fm](https://www.setlist.fm/stats/concert-map/sandy-alex-g-13d8c919.html), they actually have interesting concert statistics so I suggest checking them out. I actually had a project where I was gonna scrape their data and make an average Alex G setlist for each year and generate a naive bayes model/shiny app allowing people to put in their perfect setlist and return the probability of that concert happening. But they already did the first thing, and I ended up doing this entire analysis instead of the naive bayes thing, that's life. Right, TADA:
+So with all that said, the only interesting thing I could think of to compare this data to is what countries does Alex G most frequently tour in so... tada, I took this from [setlist.fm](https://www.setlist.fm/stats/concert-map/sandy-alex-g-13d8c919.html), they actually have interesting concert statistics so I suggest checking them out. I actually had a project where I was gonna scrape their data and make an average Alex G setlist for each year and generate a naive Bayes model/shiny app allowing people to put in their perfect setlist and return the probability of that concert happening. But they already did the first thing, and I ended up doing this entire analysis instead of the naive Bayes thing, that's life. Right, TADA:
 
 ![Alex G Concerts Around the World](inputs/alex_g_concerts_world.png)
 
@@ -566,7 +577,7 @@ Ireland had 2 concerts and no fans which is why you can't see it :(
 
 So now let us look at the Alex G Fans around the US. 
 
-I used the below vignette to do this
+I used the below vignette to do guide this section
 https://cran.r-project.org/web/packages/usmap/vignettes/mapping.html
 
 Preparing data
@@ -603,7 +614,7 @@ us_states_3 <- left_join(us_states_2, census) %>% mutate(count = ifelse(is.na(co
                                                          adjust = round((count/X2019 * 100000), digits = 3))
 ```
 
-Reading in other census data, not sure what the difference between them here is, gotta figure that out.
+This data I'm gonna use to center text in the states, it's basically each states central longitude and latitude.
 ```{r}
 center_state <- read.csv(file = "inputs/statelatlong_2.csv", stringsAsFactors = F) %>% rename(region = name, lat_center = latitude, long_center = longitude) %>%
   mutate(region = tolower(region))
@@ -625,7 +636,8 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
     geom_text(aes(long_center, lat_center, label = count), size = 3.2)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
-  labs(title = "Alex G Fans in the USA",fill = "Fans per
+  theme_void() +
+  labs(title = "          Alex G Fans in the USA",fill = "Fans per
 100,000 indv")
 ggsave("outputs/all_us.png", height = 6, width = 8)
 ```
@@ -637,7 +649,8 @@ p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-80, -65), ylim = c(38,48)) +
     geom_text(aes(long_center, lat_center, label = count), size = 3.3)  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
-  labs(title = "Alex G Fans in the North East",fill = "Fans per 
+  theme_void() +
+  labs(title = "         Alex G Fans in the North East",fill = "Fans per 
 100,000 indv")
 ggsave("outputs/NE_us.png", height = 8, width = 8)
 ```
@@ -648,8 +661,9 @@ ggsave("outputs/NE_us.png", height = 8, width = 8)
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-110, -65), ylim = c(25,40)) +
     geom_text(aes(long_center, lat_center, label = count), size = 3.3)  + 
-  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
-  labs(title = "Alex G Fans in the South",fill = "Fans per 
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
+  theme_void() +
+  labs(title = "    Alex G Fans in the South",fill = "Fans per 
 100,000 indv")
 ggsave("outputs/south_us.png", height = 8, width = 12)
 ```
@@ -659,20 +673,22 @@ ggsave("outputs/south_us.png", height = 8, width = 12)
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-114, -80), ylim = c(32,49)) +
     geom_text(aes(long_center, lat_center, label = count))  + 
-  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered"))+
-  labs(title = "Alex G Fans in the Mid West",fill = "Fans per
+  scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
+  theme_void() +
+  labs(title = "      Alex G Fans in the Mid West",fill = "Fans per
 100,000 indv")
 ggsave("outputs/midwest_us.png", height = 8, width = 9)
 ```
 ## Plotting the West
-```{r, fig.height = 9, fig.width = 6, fig.align = "center"}
+```{r, fig.height = 7, fig.width = 5, fig.align = "center"}
 #The west
 p + geom_polygon(color = "gray90", size = 0.1) +
     coord_map(xlim = c(-125, -110), ylim = c(30,49)) +
     geom_text(aes(long_center, lat_center, label = count))  + 
   scale_fill_gradientn(colours = c("cyan3", "gold", "orangered")) +
-  labs(title = "Alex G Fans in the West",fill = "Fans per
-100,000 indv") + theme_grey(base_size = 14)
+  theme_void() +
+  labs(title = "      Alex G Fans in the West",fill = "Fans per
+100,000 indv")
 ggsave("outputs/west_us.png", height = 9, width = 7)
 
 
@@ -720,17 +736,18 @@ I'm not sure what statistical test fits here, but its at least interesting to se
 
 # 666posting Political Compasss (spice alert)
 
+So one of the first graphs I generated with the survey, because I thought it would be a fun one to do, is looking at the political leanings in the group. While politics has a lot more depth than can be represented by my figure, I think having two axis, left to right and libertarian to authoritarian, allows a fair amount of depth in itself. The question was phrased as follows:
 
-The first graph is a scatterplot of the political information you gave, shapes are based on the gender identity of the individuals who participated. Some plots are off the compass, that’s because of the jitter I placed on the data to prevent too many points from overlapping. I also marked the median and mean political identity. 
+"Where do you stand on the political compass? This website will calculate it, but you can do it by personal feel as well by looking at the image! https://www.politicalcompass.org/ (center at 5 and round if you get a score from the website, site ~10 minutes)"
 
-The second graph is another scatterplot, but using the non-jittered values and instead using the size of the points to indicate how many individuals identify with said political identity. 
+With the below image as a guide, the image isn't completely accurate if you ask me, but from a quick google search it does a good enough job. 
 
-I have also added the image I used in the survey for the political compass.
+![Political Compass](inputs/politcal_compass.jpg)
 
-I am not surprised by these results, based on the general demographics of those who answered the survey. Also Alex G is a supporter of Bernie Sanders so I assume he would most likely fall in the general area most people did.
+The reason that I said this is spicy is because, let's be honest, we live in an incredibly politically charged time. And when I posted this, I can understand people not being comfortable with individuals in the group having, uh, "fascist leanings" so it caused a bit of a row (Never a good look when your post has more comments than likes). That said, I still think the data is pretty interesting so let's look at it.
 
-
-Preparing the data
+### Preparing the data
+Cleaning the dataset and getting medians and means for each leaning
 ```{r}
 
 #I remove one fill in the blank because... yeah
@@ -745,67 +762,9 @@ mean_LR <- mean(political_dat$left_right)
 mean_LA <- mean(political_dat$lib_auth)
 ```
 
-First political compass using gender as a variable, I could probably make this a base plot and use the base to change the other ones.
+As the data is technically a non-continuous discrete ordinal value as I asked for answers in integers this is technically one of the better ways to represent the data. The size of the circle represents the number of individuals who selected said option. We will later have more readable examples of this data later on in case you're interested in exact numbers. 
+
 ```{r}
-ggplot(political_dat) +
-           geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.005) +
-           geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.005) +
-           geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.005) +
-           geom_rect(aes(xmin = 0, xmax= 5,ymin = 5, ymax=10), fill = "red", alpha = 0.005) + 
-          geom_jitter(aes(x = left_right, y = lib_auth, shape = gender), width =.5, height =.5, alpha = .5, ) +
-          #Adding median and mean
-          geom_point(aes(x=med_LR, y=med_LA), colour="blue", shape = 9, size =2) +
-          geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
-          #Add the dotplot annotation
-          geom_point(aes(x=8, y=3), colour="blue", shape = 9, size =3) +
-          geom_point(aes(x=8, y=1.5), colour="red", shape = 9, size =3) +
-  #Add annotations to the compass
-          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(political_dat))) + 
-   ylab("libertarian to authoritarian") +
-               xlab("left to right") +
-              coord_fixed() + annotate("text", x = c(2.5, 2.5, 7.5, 7.5),
-                                       y = c(10.5, -.5, 10.5, -.5),
-                                       label = c("Auth Left", "Lib Left", "Auth Right", "Lib Right"), size =5) +
-                                annotate("text", x = c(8, 8),
-                                       y = c(2, 3.5),
-                                       label = c("Mean", "Median"), size =4) + 
-                                       theme_void(base_size = 14)
-ggsave("outputs/political_compass_gender.png")
-```
-
-Political compass with age as a variable, I had to remove the individual over 40 because that threw the scale off.
-```{r}
-
-
-
-#make age normalized because of skewing
-political_dat_age <- political_dat %>% filter(age < 40)
-
-#Age
-ggplot(political_dat_age) +
-           
-           geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.005) +
-           geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.005) +
-           geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.005) +
-           geom_rect(aes(xmin = 0, xmax= 5,ymin = 5, ymax=10), fill = "red", alpha = 0.005) + 
-          geom_jitter(aes(x = left_right, y = lib_auth, color = age), width =.5, height =.5 ) +
-          #Adding median and mean
-          geom_point(aes(x=med_LR, y=med_LA), colour="blue", shape = 9, size =2) +
-          geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
-          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(political_dat))) + 
-   ylab("libertarian to authoritarian") +
-               xlab("left to right") +
-              coord_fixed() + annotate("text", x = c(2.5, 2.5, 7.5, 7.5),
-                                       y = c(10.5, -.5, 10.5, -.5),
-                                       label = c("Auth Left", "Lib Left", "Auth Right", "Lib Right"), size =5) + 
-                                       scale_colour_gradient(low = "black", high = "white", na.value = NA) +
-                                       theme_void()
-
-```
-
-Gender compass again, but without the jitter, instead using the size of the points to determine density. 
-```{r}
-#Second version change the size of points based on how many points there are there
 political_dat_2 <- rbind(political_dat, c(9, 8))
 
 pol_count <- as.data.frame(table(political_dat_2$left_right, political_dat_2$lib_auth))
@@ -851,9 +810,156 @@ ggsave("outputs/political_compass_exact.png")
 
 ```
 
+
+Second political compass scatterplot with a jitter and the shape of the points relating to gender. In case you're wondering why some points are off of the figure that is due to the jitter, I apologize for that. 
+```{r}
+ggplot(political_dat) +
+           geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.005) +
+           geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.005) +
+           geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.005) +
+           geom_rect(aes(xmin = 0, xmax= 5,ymin = 5, ymax=10), fill = "red", alpha = 0.005) + 
+          geom_jitter(aes(x = left_right, y = lib_auth, shape = gender), width =.5, height =.5, alpha = .5, ) +
+          #Adding median and mean
+          geom_point(aes(x=med_LR, y=med_LA), colour="blue", shape = 9, size =2) +
+          geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
+          #Add the dotplot annotation
+          geom_point(aes(x=8, y=3), colour="blue", shape = 9, size =3) +
+          geom_point(aes(x=8, y=1.5), colour="red", shape = 9, size =3) +
+  #Add annotations to the compass
+          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(political_dat))) + 
+   ylab("libertarian to authoritarian") +
+               xlab("left to right") +
+              coord_fixed() + annotate("text", x = c(2.5, 2.5, 7.5, 7.5),
+                                       y = c(10.5, -.5, 10.5, -.5),
+                                       label = c("Auth Left", "Lib Left", "Auth Right", "Lib Right"), size =5) +
+                                annotate("text", x = c(8, 8),
+                                       y = c(2, 3.5),
+                                       label = c("Mean", "Median"), size =4) + 
+                                       theme_void(base_size = 14)
+ggsave("outputs/political_compass_gender.png")
+```
+
+The same scatterplot as above, but this time the dots are colored on the age of the individuals. I had to remove the individual over 40 because that threw the scale off even when I used a log scale, so apolgoies to them.
+
+```{r}
+
+
+
+#make age normalized because of skewing
+political_dat_age <- political_dat %>% filter(age < 40)
+
+#Age
+ggplot(political_dat_age) +
+           
+           geom_rect(aes(xmin = 5, xmax= 10,ymin = 0, ymax=5), fill = "yellow", alpha = 0.005) +
+           geom_rect(aes(xmin = 0, xmax= 5,ymin = 0, ymax=5), fill = "green", alpha = 0.005) +
+           geom_rect(aes(xmin = 5, xmax= 10,ymin = 5, ymax=10), fill = "blue", alpha = 0.005) +
+           geom_rect(aes(xmin = 0, xmax= 5,ymin = 5, ymax=10), fill = "red", alpha = 0.005) + 
+          geom_jitter(aes(x = left_right, y = lib_auth, color = age), width =.5, height =.5 ) +
+          #Adding median and mean
+          geom_point(aes(x=med_LR, y=med_LA), colour="blue", shape = 9, size =2) +
+          geom_point(aes(x=mean_LR, y=mean_LA), colour="red", shape = 9, size =2) +
+          labs(title = "666posting Political Compass", subtitle = paste0("N = ", nrow(political_dat))) + 
+   ylab("libertarian to authoritarian") +
+               xlab("left to right") +
+              coord_fixed() + annotate("text", x = c(2.5, 2.5, 7.5, 7.5),
+                                       y = c(10.5, -.5, 10.5, -.5),
+                                       label = c("Auth Left", "Lib Left", "Auth Right", "Lib Right"), size =5) + 
+                                       scale_colour_gradient(low = "black", high = "white", na.value = NA) +
+                                       theme_void()
+
+```
+Let us see if we can break this data up into the different quadrants, including wiggle room in the middle for centrists. Again its a scale of 0-10, so I'm gonna have 4-6 as centrist. 
+
+```{r}
+political_dat <- political_dat %>% mutate(quadrant = case_when(
+  left_right <= 3 & lib_auth <= 3 ~ "Libertarian Left",
+  left_right <= 3 & lib_auth >= 7 ~ "Authoritarian Left",
+  left_right >= 7 & lib_auth <= 3 ~ "Libertarian Right",
+  left_right >= 7 & lib_auth >= 7 ~ "Authoritarian Right",
+  left_right >= 4 & left_right <= 6 & lib_auth >= 4 & lib_auth <= 6 ~ "Centrist",
+  left_right >= 4 & left_right <= 6 & lib_auth <= 3 ~ "Libertarian Center",
+  left_right >= 4 & left_right <= 6 & lib_auth >= 7 ~ "Authoritarian Center",
+  lib_auth >= 4 & lib_auth <= 6 & left_right >= 7 ~ "Center Right",
+  lib_auth >= 4 & lib_auth <= 6 & left_right <= 3 ~ "Center Left"
+), quadrant = factor(quadrant, levels = c("Libertarian Left",
+                                          "Authoritarian Left",
+                                          "Center Left",
+                                          "Libertarian Center",
+                                          "Centrist",
+                                          "Authoritarian Center",
+                                          "Libertarian Right",
+                                          "Center Right",
+                                          "Authoritarian Right"
+                                          )))
+
+
+ggplot(political_dat, aes(quadrant, age, fill = quadrant)) +
+   geom_boxplot() +
+  scale_fill_brewer(palette = "Set1") +
+  stat_n_text(size = 3)  +
+  theme_classic() +
+  theme(legend.position = "none") +
+  labs(
+    title = "Quadrants compared to Age",
+    subtitle = paste0("N = ", nrow(political_dat))
+  ) +
+  xlab("Quadrant") +
+  ylab("Age") + coord_flip()
+
+
+```
+
+While this plot is interesting, I don't think there is a good way to test these groups because some of them have very few individuals, however there is another way we can look at this.
+
+```{r}
+ggplot(political_dat, aes(x =  factor(left_right, 0:10), y = age, fill = factor(left_right, 0:10) )) +
+  geom_boxplot() +
+  scale_fill_brewer(palette = "Set1") +
+  stat_n_text(size = 3)  +
+  theme_classic() +
+  theme(legend.position = "none") +
+  labs(
+    title = "Left to Right compared to Age",
+    subtitle = paste0("N = ", nrow(political_dat))
+  ) +
+  xlab("Left to Right (0-10)") +
+  ylab("Age") + coord_flip()
+
+tidy(lm(age ~ left_right, data = political_dat))
+
+```
+
+Well that's not significant, how about being libertarian or authoritarian? 
+
+
+```{r}
+ggplot(political_dat, aes(x =  factor(lib_auth, 0:10), y = age, fill = factor(lib_auth, 0:10) )) +
+  geom_boxplot() +
+  scale_fill_brewer(palette = "Set1") +
+  stat_n_text(size = 3)  +
+  theme_classic() +
+  theme(legend.position = "none") +
+  labs(
+    title = "Lib to Auth compared to Age",
+    subtitle = paste0("N = ", nrow(political_dat))
+  ) +
+  xlab("Lib to Auth (0-10)") +
+  ylab("Age") + coord_flip()
+
+tidy(lm(age ~ lib_auth, data = political_dat))
+
+```
+
+Well I guess I can say, specifically in this 666posting, your age doesn't seem to influence your political leanings. Sorry that wasn't interesting, but again there are some groupings with very few samples so that didn't help either and I didn't remove the outliers. 
+
+
+
 # Musicians in 666posting
 
-Prepare the data and make a melted version of the datarframe
+Another questions asked is if you play instruments or not, and if so which ones?
+
+Prepare the data and make a melted version of the dataframe
 ```{r}
 band_dat <- dat %>% mutate(id = row_number(), 
                            instruments = gsub("Music Software \\(eg. Ableton, FL studio\\)",
@@ -910,7 +1016,7 @@ ggsave("outputs/instrument_summary.png", width = 8, height = 8)
 
 ## Prepare data to be Upset plots instead of venn diagrams.
 
-Okay here I'm about to go on a visualization tirade. So I'm sure you're used to venn diagrams, but have probably not hear of Upset plots. So venn diagrams are the classic way to represent count crossover between multiple groups, but when groups are large this generally reduces to circles with numbers inside of them. This doesn't do the scale of the differences proper justice, and people, in general, have a better time understanding the magnitude of difference when there is a visualization, especially comparing sizes between ideas. As a result a new plot has been formed called upset plots.
+ Okay here I'm about to go on a visualization tirade. So I'm sure you're used to venn diagrams, but have probably not heard of Upset plots. So venn diagrams are the classic way to represent count crossover between multiple groups, but when groups are large this generally reduces to circles with numbers inside of them. This doesn't do the scale of the differences proper justice, and people, in general, have a better time understanding the magnitude of difference when there is a visualization, especially comparing sizes between ideas. As a result a new plot has been formed called upset plots.
 
   I will explain how to read them now. An Upset plot is comprised of two barplots which relate to a center image with balls and lines. The barplot on the "y-axis" of the center image is the total count for how many people play each instrument. If we look at the center image, you can see each row is labeled by an instrument. Each column however has different dots representing each instrument. When a dot is filled that shows an overlap between the two instruments, the amount of those overlaps is what is counted in the "x-axis" barplot above. So one plot gives you the total number of people who play a certain instrument, while the other plot gives you how many people share the same overlap of instruments. I hope this makes, sense, but it will be readily apparent once you see the plots.
   
@@ -962,7 +1068,7 @@ plot_ups <- upset(fromList(instrument_list),
 plot_ups
 ```
 
-Save them via graphical device
+Save them via graphical device, aka I'm printing them out to a file
 ```{r}
 png("outputs/instrument_plot.png", width = 800, height = 800)
 plot_ups
@@ -974,7 +1080,29 @@ dev.off()
 
 
 ```
+## How many musicians are in a band?
+
+One last quick question about our instrumentalists, are you in a band?
+
+```{r}
+band_yn <- band_dat_melt %>% select(id, in_band) %>% unique()
+
+
+ggplot(band_yn, aes(in_band)) +
+  geom_bar() + theme_classic() +
+  ylab("Count of individuals") +
+  xlab("Are you in a band?") +
+  labs(title = "Are 666posting musicians in a band?",
+      subtitle = paste("N = ", nrow(band_yn)))
+  
+
+```
+Frankly I expected "No" to be the dominant answer, but I am surprised with how good a fight "Yes" put up. Maybe that's my personal bias of knowing more musicians who aren't in bands, I don't know.
+
+
 # Non-musical art
+
+This is basically the same analysis as above, but this time we're looking at the rest of the world of The Arts! 
 
 ```{r}
 art_dat <- dat %>%  filter(art != "") %>%
@@ -1002,7 +1130,7 @@ sum_art <- as.data.frame(table(art_dat_melt$art),
               mutate(Var1 = str_to_title(Var1))
 ```
 
-Plot of instruments played in 666posting
+Plot of art mediums in 666posting
 ```{r}
 ggplot(sum_art, aes(x = reorder(Var1, -Freq), y = Freq, fill = Var1)) +
   geom_bar(stat= "identity") +
@@ -1034,7 +1162,8 @@ for (art_hold in 1:ncol(art_dat)) {
 }
 ```
 
-First Upset Plot
+First Art Upset Plot
+
 ```{r fig.height = 6, fig.width = 10, fig.align = "center"}
 art_upset <- upset(fromList(art_list),
                  order.by = "freq",
@@ -1227,7 +1356,7 @@ First we gotta do some MASSIVE data cleaning, I really should not have left this
 
 ```{r}
 unique(dat$discover_method)
-#I'm trying to avoid making all lower than upper
+#I'm trying to avoid making all lower and then upper
 websites <- c("umblr", "ound", ".com","iki", "vine", "acebook", "FB", "blog", "chan", "You", "eddit", "etflix")
 online_personality <- c("witter", "artist ZI", "ouTuber")
 friends <- c("other", "Crush", "clerk")
@@ -1273,6 +1402,8 @@ annotate_figure(grob_mus, bottom = "How we listen to music")
 
 
 # Alex G Music 
+
+ Now we're getting into that good Alex G data, favorite albums, favorite songs, and more!
 
 ## Favorite Album
 
@@ -2742,6 +2873,12 @@ college_dat_melt <- college_dat %>%
   mutate(col_major =(str_trim(col_major, "both"))) %>%
   filter(!(col_major %in% c("Used to","but not anymore", "", "Nope")))
 
+
+#General stats
+sum_major <- as.data.frame(table(college_dat_melt$col_major),
+                           stringsAsFactors = F) %>%
+              mutate(Var1 = str_to_title(Var1))
+
 #Check data looks okay
 unique(band_dat_melt$col_major)
 
@@ -2790,70 +2927,98 @@ We have `r two_degrees` people with 2 majors, `r three_degrees` people with thre
 # The most average Alex G person
 ```{r}
 library(lubridate)
+# x = dat$country
+# rank = 1
+# to_low = T
+ranked_top <- function(x, rank = 1, to_low = T){
+  temp <- names(sort(table(x),decreasing=TRUE)[rank])
+  if (to_low == T) {
+    temp <- tolower(temp)
+  }
+  return(temp)
+  } 
+
 #When the average person filled out the survey
-mean(mdy_hm(dat$Timestamp))
+#mean(mdy_hm(dat$Timestamp))
 #Average age
-avg_age <- mean(dat$age)
-#They live in the US
-avg_country <- names(sort(table(dat$country),decreasing=TRUE)[1])
-#In California
-avg_state <- names(sort(table(dat$state),decreasing=TRUE)[3])
-# They are white
-avg_race <- names(sort(table(dat$race),decreasing=TRUE)[1])
+avg_age <- median(dat$age)
+#Country
+avg_country <- ranked_top(dat$country,to_low = F)
+#State
+avg_state <- ranked_top(dat$state, to_low = F, rank = 3)
+#Race
+avg_race <- ranked_top(dat$race)
 #They are male
-avg_gender <- names(sort(table(dat$gender),decreasing=TRUE)[1])
+avg_gender <- ranked_top(dat$gender)
 #They are cis
-avg_identity <- names(sort(table(dat$transgender),decreasing=TRUE)[1])
+avg_identity <- ranked_top(dat$transgender)
 #They are straight
-avg_orientation <- names(sort(table(dat$orientation),decreasing=TRUE)[1])
+avg_orientation <- ranked_top(dat$orientation)
 #They are monogomous
-avg_poly <- names(sort(table(dat$polyamorous),decreasing=TRUE)[1])
+avg_poly <- ranked_top(dat$polyamorous)
 #They started listening to alex G at the age of 19
 avg_start_listen <- median(dat$first_age)
 #They've been to 2 Alex G concerts
 avg_alex_conc <- median(dat$alex_g_concerts, na.rm = T)
 # They found Alex G through a friend
-avg_discovery <- names(sort(table(dat$discover_method),decreasing=TRUE)[1])
+avg_discovery <- ranked_top(dat$discover_method)
 #Their favorite song is Snot
-avg_fave_song <- names(sort(table(dat$favorite_son),decreasing=TRUE)[1:3])
+avg_fave_song <- ranked_top(dat$favorite_song, to_low = FALSE)
 #Their favorite album is Trick
-avg_fave_album <- names(sort(table(dat$favorite_album),decreasing=TRUE)[1])
+avg_fave_album <- ranked_top(dat$favorite_album)
 #They don't listen to Alex G's unreleased albums
-avg_unreleased <- names(sort(table(dat$unreleased_album),decreasing=TRUE)[1])
+avg_unreleased <- ranked_top(dat$unreleased_album)
 #They like the gretel music video
-avg_music_vid <- names(sort(table(dat$music_vid),decreasing=TRUE)[1])
+avg_music_vid <- ranked_top(dat$music_vid)
 #They listen to music via spotify
-avg_music_source <- names(sort(table(dat$music_method),decreasing=TRUE)[1:3])
+avg_music_source <- ranked_top(dat$music_method)
 #They probably play guitar
 avg_instrument <- (sum_instr %>% arrange(desc(Freq)))[1,1]
 #They are not in a band
-avg_band <- sort(table(dat$in_band),decreasing=TRUE)[1:3]
+avg_band <- ranked_top(dat$in_band)
 #Favorite musician
-avg_musician <- names(sort(table(musician_dat$favorite_musician),decreasing=TRUE)[1])
+avg_musician <- ranked_top(musician_dat$favorite_musician, to_low = FALSE)
 #Second fave musician
-second_musician <- names(sort(table(musician_dat$sec_musician),decreasing=TRUE)[1])
+second_musician <- ranked_top(musician_dat$sec_musician, rank = 2, to_low = FALSE)
 #Non Alex musician
-second_2_musician <- names(sort(table(musician_dat$sec_musician),decreasing=TRUE)[2])
+second_2_musician <- ranked_top(musician_dat$sec_musician)
 ####NEED TO DO ART
 avg_art <- (sum_art %>% arrange(desc(Freq)))[1,1]
+#Major
+avg_major <- (sum_major %>% arrange(desc(Freq)))[1,1]
 ##How often they go to concerts
-avg_concert_go <- names(sort(table(dat$concerts),decreasing=TRUE)[1])
+avg_concert_go <- ranked_top(dat$concerts)
 # Weed
-avg_weed <- names(sort(table(dat$weed_use),decreasing=TRUE)[1])
+avg_weed <- ranked_top(dat$weed_use)
 #Alcohol 
-avg_alcohol <- names(sort(table(dat$alc_use),decreasing=TRUE)[1])
+avg_alcohol <- ranked_top(dat$alc_use)
+#Living area
+avg_living <- ranked_top(dat$living_area)
+#authoritarian_lib
+med_lib_auth <- median(dat$lib_auth, na.rm = T)
+#Left right
+med_left_right <- median(dat$left_right, na.rm = T)
+#MBTI
+med_meyers <- ranked_top(dat$mbti, to_low = F)
+#Harry potter
+med_harry <- ranked_top(dat$hp_house)
+#Astro-sign
+med_sign <- ranked_top(dat$sign, to_low = F)
 
-#tolower()
+
+colnames(dat)
 ```
 
-So around `r mean(mdy_hm(dat$Timestamp))` a `r avg_race` `r avg_orientation` `r avg_gender` who is `r avg_age` years old decided to fill out the survey. They live in `r avg_country`, specifically in `r avg_state` and when asked if they prefer multiple partners they generally say `r avg_poly`. Their favorite musician is`r avg_musician`, when you ask them their second favorite musician they'll emphasize how much they like `r second_musician`, before balking and saying `r second_2_musician`. They have a lot of opinions about `r avg_musician`, their favorite song is `r avg_fave_song`, their favorite music video is `r avg_music_vid`, and their favorite album is `r avg_fave_album`. That said, they when asked about what their favorite fan compilation is they reply, `r avg_unreleased`, which is probably because they listen to most of their music through `r avg_music_source` which is somewhat difficult to get non-official tracks on.
+  So around `r mean(mdy_hm(dat$Timestamp))` a `r avg_race` `r avg_orientation` `r avg_gender` who is `r avg_age` years old decided to fill out the survey. They live in `r avg_country`, specifically in `r avg_state` and when asked if they prefer multiple roamtic partners they generally say `r avg_poly`. Their favorite musician is `r avg_musician`, when you ask them their second favorite musician they'll emphasize how much they like `r second_musician`, before balking and saying `r second_2_musician`. They have a lot of opinions about `r avg_musician`, their favorite song is `r avg_fave_song`, their favorite music video is `r avg_music_vid`, and their favorite album is `r avg_fave_album`. That said, they when asked about what their favorite fan compilation is they reply, `r avg_unreleased`, which is probably because they listen to most of their music through `r avg_music_source` which is somewhat difficult to get non-official tracks on. Their favorite song is definitely `r avg_fave_song`
 
-Nevertheless they're still a big `r avg_musician` fan, they started listening to him when they were `r avg_start_listen` years old, and have been to `r avg_alex_conc` so far. When ask what they like to do in their spare time they have a couple hobbies. They like to play the `r avg_instrument`, but when asked if they're in a band, they'd say `r tolower(avg_band)`. They also use `r tolower(avg_art)` to express themselves, and when it comes to concerts they go `r tolower(avg_concert_go)`. When it comes to weed they would say "`r avg_weed`" and with alcohol they'd say they'd drink "`r avg_alcohol`".
+  Nevertheless they're still a big `r avg_musician` fan, they started listening to him when they were `r avg_start_listen` years old, and have been to `r avg_alex_conc` so far. When ask what they like to do in their spare time they have a couple hobbies. They like to play the `r avg_instrument`, but when asked if they're in a band, they'd say `r tolower(avg_band)`. They also use `r tolower(avg_art)` to express themselves, and when it comes to concerts they go `r tolower(avg_concert_go)`. They are studying/have studied the `r avg_major` and live `r avg_living`. When it comes to weed they would say "`r avg_weed`" and with alcohol they'd say they'd drink "`r avg_alcohol`".
+  
+  When it comes to their political leanings, on the scale of 1 to 10 from left politics to right, and from libertarian to authoritarian, they fall around `r med_left_right` and `r med_lib_auth` respectively. Their personality, if you asked them arbritarily their MBTI, astrological sign, and Harry Potter House they would also tell you, respectively, `r med_meyers`, `r med_sign`, and "`r med_harry`". They find all of these questions you're asking them kinda weird, almost like this format that I decided to explain the most average Alex G fan didn't pan out the way I wanted, but they know everyone is just trying their best. 
 
 # Special Thanks!
 
 ## Modmin Team of 666posting
-In order Facebook decided:
+In the order Facebook decided:
 
  + Ignacy R.
  + Isabelle J.
@@ -2877,7 +3042,11 @@ Special shoutout to Isabelle for allowing and promoting the survey.
  + Hillary N.: Suggested astrological signs questions
  + Luke D.: Suggested political stance questions
  + Gwendylan T.: Suggested weed usage and Meyer-Briggs type questions
- + Abigail C.: For testing the survey and giving improvements
+ + Abigail C.: For testing the survey and giving constructrive critques
+
+## One special thanks
+
+Graham aka Grumpus for talking to me about Alex G back when I knew diddly squat. Thank you for introducing me to one of my favorite artists of all time. 
 
 ## [Things to Do](https://sandy.bandcamp.com/track/things-to-do)
 
