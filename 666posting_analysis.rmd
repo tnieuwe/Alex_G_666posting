@@ -87,7 +87,7 @@ to_zcore <- function(x){
 
 ```
 
-# Demographics questions
+# Demographics Analysis
 
 Data clean for demographics
 ```{r}
@@ -211,7 +211,7 @@ annotate_figure(gpt_plot, top = text_grob(
 
 ```
 
-# The plot that started it all
+# The Original Plot
 This is a plot I had inspired this project, how? Quick story time:
 
 Zion, a memeber of 666posting asked individuals "What age were you when you discovered Alex G and what age are you now?". Everyone started answering the question and I found it interesting. Eventually it had over 200+ individuals and I came up with an idea on making two overlapping histograms of people ages of learning about Alex G and their current age. I asked for permission and then I began the first analysis of 666posting. As you'll see I didn't stop there with that data since I thought of other things to do with it, but this eventually led to me asking if I could run a survey which leads to this whole R markdown. So really Zion inspired me to do this, so if you're reading this, thanks dude!
@@ -382,7 +382,7 @@ ggsave("alex_g_fanbase_growth.png", width = 9, height = 7)
 
 ```
 
-# Make a map of the world
+# Alex G Fans Across the World
 
  So Alex G, for those not in the know, lives in Philly. But, like most successful artists, people want to see him perform in other cities and he tours pretty regularly. So I thought it would be interesting to see where Alex G fans are all over the world!
 
@@ -573,7 +573,7 @@ ggplot(joined_country_concerts, aes(y = concerts,
 
 Ireland had 2 concerts and no fans which is why you can't see it :(
 
-# Map of Alex G Fans in the United States
+# Alex G fans in the United States
 
 So now let us look at the Alex G Fans around the US. 
 
@@ -693,7 +693,7 @@ ggsave("outputs/west_us.png", height = 9, width = 7)
 
 
 ```
-So the analysis I decided to do here was where is Alex's fan base the largest (when controlling for population size) in the United States. I pulled this region data from [kaggle](https://www.kaggle.com/omer2040/usa-states-to-region) and will use it to test our hypothesis. "Our hypothesis?" you say? Yes obviously it is the [East Coast which has the most representation, if its not all hope will be lost](https://www.youtube.com/watch?v=VgRYMNiePus). 
+So the analysis I decided to do here was where is Alex's fan base the largest (when controlling for population size) in the United States. I pulled this region data from [kaggle](https://www.kaggle.com/omer2040/usa-states-to-region) and will use it to test our hypothesis. "Our hypothesis?" you say? Yes obviously it is the [East Coast which has the most representation, if its not, all hope will be lost](https://www.youtube.com/watch?v=VgRYMNiePus). 
 
 (P.S. I've learned of the state.region data in R, but womp womp here we R, let's just go with it)
 
@@ -734,7 +734,8 @@ ggplot(summarised_region, aes(Region, adjusted_fans, fill = Region)) +
 
 I'm not sure what statistical test fits here, but its at least interesting to see. I feel like I need to use a chi-square, but adjusted for population size, so if anyone knows a correct method for that please tell me.
 
-# 666posting Political Compasss (spice alert)
+# 666posting Political Compass
+### Spice Alert
 
 So one of the first graphs I generated with the survey, because I thought it would be a fun one to do, is looking at the political leanings in the group. While politics has a lot more depth than can be represented by my figure, I think having two axis, left to right and libertarian to authoritarian, allows a fair amount of depth in itself. The question was phrased as follows:
 
@@ -742,7 +743,7 @@ So one of the first graphs I generated with the survey, because I thought it wou
 
 With the below image as a guide, the image isn't completely accurate if you ask me, but from a quick google search it does a good enough job. 
 
-![Political Compass](inputs/politcal_compass.jpg)
+![](inputs/politcal_compass.jpg)
 
 The reason that I said this is spicy is because, let's be honest, we live in an incredibly politically charged time. And when I posted this, I can understand people not being comfortable with individuals in the group having, uh, "fascist leanings" so it caused a bit of a row (Never a good look when your post has more comments than likes). That said, I still think the data is pretty interesting so let's look at it.
 
@@ -869,6 +870,7 @@ ggplot(political_dat_age) +
                                        theme_void()
 
 ```
+
 Let us see if we can break this data up into the different quadrants, including wiggle room in the middle for centrists. Again its a scale of 0-10, so I'm gonna have 4-6 as centrist. 
 
 ```{r}
@@ -951,7 +953,7 @@ tidy(lm(age ~ lib_auth, data = political_dat))
 
 ```
 
-Well I guess I can say, specifically in this 666posting, your age doesn't seem to influence your political leanings. Sorry that wasn't interesting, but again there are some groupings with very few samples so that didn't help either and I didn't remove the outliers. 
+Well I guess I can say, specifically in this 666posting cohort, your age doesn't seem to influence your political leanings. Sorry that wasn't interesting, but again there are some groupings with very few samples so that didn't help either and I didn't remove the outliers. 
 
 
 
@@ -959,7 +961,7 @@ Well I guess I can say, specifically in this 666posting, your age doesn't seem t
 
 Another questions asked is if you play instruments or not, and if so which ones?
 
-Prepare the data and make a melted version of the dataframe
+Preparing the data and make a melted version of the dataframe
 ```{r}
 band_dat <- dat %>% mutate(id = row_number(), 
                            instruments = gsub("Music Software \\(eg. Ableton, FL studio\\)",
@@ -1014,7 +1016,7 @@ ggplot(sum_instr, aes(x = reorder(Var1, -Freq), y = Freq, fill = Var1)) +
 ggsave("outputs/instrument_summary.png", width = 8, height = 8)
 ```
 
-## Prepare data to be Upset plots instead of venn diagrams.
+## Prepare data to be Upset plots instead of venn diagrams
 
  Okay here I'm about to go on a visualization tirade. So I'm sure you're used to venn diagrams, but have probably not heard of Upset plots. So venn diagrams are the classic way to represent count crossover between multiple groups, but when groups are large this generally reduces to circles with numbers inside of them. This doesn't do the scale of the differences proper justice, and people, in general, have a better time understanding the magnitude of difference when there is a visualization, especially comparing sizes between ideas. As a result a new plot has been formed called upset plots.
 
@@ -1097,7 +1099,7 @@ ggplot(band_yn, aes(in_band)) +
   
 
 ```
-Frankly I expected "No" to be the dominant answer, but I am surprised with how good a fight "Yes" put up. Maybe that's my personal bias of knowing more musicians who aren't in bands, I don't know.
+Frankly I expected "No" to be the dominant answer, but I am surprised with how good a fight "Yes" put up. Maybe that's my personal bias of knowing more musicians who aren't in bands.
 
 
 # Non-musical art
@@ -1180,29 +1182,14 @@ art_upset
 
 # Favorite Music/Musicians
 
-## Word Cloud
-It’s been a bit since I’ve posted a graph, but I’ve been busy as of late. Anyways wamslamwabbam its me the graph man. Here today I decided to make 4 graphs/images. The reason I say graphs/images, is my main image is not a graph, it is a word cloud. You’ve probably seen word clouds around, normally I avoid them as a way to represent data (longer words seem more significant than they should be), but I felt this was an appropriate time to use them. Also if you want to take the survey and haven’t yet, links at the bottom.
+### Word Clouds
 
-Figure 1: A word cloud of everyone's favorite Alex G songs from the survey, colored by what album they’re in, size based on the number of people that selected a given song as their favorite. So as you can see the top two favorite songs of those who answered the survey is Snot and Gnaw, and tbh, I’m SNOT surprised. Ugh, anyways the thing I actually love about this image is, because of how Alex names his songs, there are cool phrases that are generated. Personally I love “Be Kind, Pretend”, it’s just fun sticking his song titles together.
-
-Figure 2:  A barplot of the top 10 favorite Alex G songs, just to ascribe hard numbers to the data, which is the issue with word clouds. 
-
-Figure 3: A barplot of favorite released Alex G albums
-
-Figure 4: A barplot of favorite Alex G Fan compilations, alsof or those of you that don’t listen to his unreleased stuff, you should give it a listen. Check out this post if you wanna get them on spotify: https://www.facebook.com/groups/666posting/permalink/640789416453072/
-
-And I did a quick analysis as well. 
-
-Question: Does a person’s favorite song influence their favorite album?
-
-Results: Favorite song on favorite album of 153 individuals
-True (1) = 55, False (0)  = 98, significant finding based on t.test with expected mean of 0.5
+So... word clouds. Technically speaking word clouds are never a good way to represent data in a meaningful way. While the size of the letters increase one can still be tricked into thinking, in this case, long band names have more votes, which isn't true. As a result you'll see that I ended up coloring the data a little bit to help clarify this visual discrepancy. 
 
 
-Answer: No, actually it is more likely for a person's favorite song to NOT be on their favorite album.
 
 
-### Clean up data
+### Clean up data for musicians
 
 Select out and clean musicians
 ```{r}
@@ -1254,7 +1241,7 @@ sec_musician <- sec_musician %>% mutate(color_fan = case_when(
 
 ```
 
-Word cloud For Favorite musician
+### Word cloud For Favorite musician
 ```{r, width = 8, height = 8}
 #Word cloud for markdown
 
@@ -1274,7 +1261,7 @@ dev.off()
 
 If they have more than one fan, the name is in orange. 
 
-Word cloud For Second Favorite musician
+### Word cloud For Second Favorite musician
 ```{r, width = 8, height = 8}
 #Word cloud for markdown
 
@@ -1356,6 +1343,11 @@ First we gotta do some MASSIVE data cleaning, I really should not have left this
 
 ```{r}
 unique(dat$discover_method)
+```
+
+### Cleaning the data so its presentable
+
+```{r}
 #I'm trying to avoid making all lower and then upper
 websites <- c("umblr", "ound", ".com","iki", "vine", "acebook", "FB", "blog", "chan", "You", "eddit", "etflix")
 online_personality <- c("witter", "artist ZI", "ouTuber")
@@ -1405,9 +1397,9 @@ annotate_figure(grob_mus, bottom = "How we listen to music")
 
  Now we're getting into that good Alex G data, favorite albums, favorite songs, and more!
 
-## Favorite Album
+### Favorite Album
 
- Prepare data
+Prepare data
 ```{r}
 ##Filter down to albums, songs, and music videos to make an object usable in the next couple chunks
 songs_dat <- dat %>%
@@ -1422,7 +1414,9 @@ songs_dat <- dat %>%
 
 ```
 
-Favorite Album Plot
+#### Favorite Album Plot
+
+A barplot of favorite released Alex G albums
 ```{r}
 album_plot <- ggplot(songs_dat, aes(x = forcats::fct_infreq(favorite_album)),
       fill = forcats::fct_infreq(favorite_album)) +
@@ -1453,7 +1447,10 @@ album_plot
 ggsave("outputs/favorite_album.png", height = 7, width = 7)
 ```
 
-Favorite Unreleased Album/Compilation
+#### Favorite Unreleased Album/Compilation
+
+A barplot of favorite Alex G Fan compilations, also for those of you that don’t listen to his unreleased stuff, you should give it a listen. 
+
 ```{r}
 fan_comp_plot <- ggplot(songs_dat, aes(x = forcats::fct_infreq(unreleased_album))) +
   geom_bar(aes(fill = forcats::fct_infreq(unreleased_album))) +
@@ -1471,8 +1468,10 @@ fan_comp_plot
 #Save it
 ggsave("outputs/favorite_fancomp.png", height = 7, width = 7)
 ```
+Overall it seems that people don't listen to them, but as I said I suggest it. The winner of them is by a large margin [Monsterhead](https://www.youtube.com/watch?v=AyccAi3pkNA&ab_channel=pushedback), which makes sense to me. Out of all his compilations I feel it is the most stacked with well known unreleased tracks (Nintendo 64, Uh, Written in Blood, etc.)
 
-Favorite Music Video
+#### Favorite Music Video
+
 ```{r}
 music_vid_plot <- ggplot(songs_dat, aes(x = forcats::fct_infreq(music_vid))) +
   geom_bar(aes(fill = forcats::fct_infreq(music_vid))) +
@@ -1489,6 +1488,8 @@ music_vid_plot
 #Save it
 ggsave("outputs/favorite_music_vid.png", height = 7, width = 7)
 ```
+
+[I mean, Gretel's video is really good](https://www.youtube.com/watch?v=HcO-NPtj5BI&ab_channel=AlexG)
 
 
 Prepare song data for plotting
@@ -1532,9 +1533,10 @@ songs_clean <- songs_only %>%
 
 ```
 
-Word Cloud of Favorite Alex G Songs
+#### Word Cloud of Favorite Alex G Songs
 
-(change to songs clean eventually)
+A word cloud of everyone's favorite Alex G songs from the survey, colored by what album they’re in, size based on the number of people that selected a given song as their favorite. So as you can see the top two favorite songs of those who answered the survey is Snot and Gnaw, and tbh, I’m SNOT surprised. Ugh, anyways the thing I actually love about this image is, because of how Alex names his songs, there are cool phrases that are generated. Personally I love “Be Kind, Pretend”, it’s just fun sticking his song titles together.
+
 ```{r}
 #Word cloud for markdown
 
@@ -1549,7 +1551,8 @@ wordcloud(words = songs_only$Var1, freq = songs_only$Freq, min.freq = 1,
 dev.off()
 ```
 
-Histogram of top songs
+A barplot of the top 10 favorite Alex G songs, just to ascribe hard numbers to the data, which is the issue with word clouds as said before. 
+
 ```{r}
 top_ten_songs <- head(songs_clean, 10)
 
@@ -1564,8 +1567,12 @@ ggplot(top_ten_songs, aes(x = reorder(Var1, -Freq), Freq)) +
                            axis.text.x = element_text(angle = 90, hjust = 0))
 ggsave("outputs/top_10_songs.png", height = 7, width = 7)
 ```
+Looks like [Gnaw](https://www.youtube.com/watch?v=uzDcSZnXF5M&bpctr=1600025109&ab_channel=DavidDeanBurkhart) is our winner!
 
-Analyze
+## An analysis of favorite song vs favorite album
+
+A quick question I wanted to ask is: "Is it more likely that you're favorite song is on your favorite album?" Which is what I did below. I made sure to only includ favorite songs on specific albums as with unreleased material stuff gets dicey. I ran a chi-square, which has the null hypothesis "There should be no correlation between one's favorite song and their favorite album" meaning that the count should be split between "Yes, my favorite song is on my favorite album" and "No, my favorite song is not on my favorite album" and it turns out....
+
 ```{r}
 ### Make chi-square analysis
 songs_dat_test <- songs_dat %>% mutate(favorite_album_csv = case_when(
@@ -1594,11 +1601,9 @@ table(songs_dat_test$fav_song_fav_album)
 favorite_song_chi <- chisq.test(table(songs_dat_test$fav_song_fav_album))
 
 favorite_song_chi
-
-#
 ```
 
-It is more likely that you will not have your favorite song in your favorite album
+It is more likely that you will not have your favorite song in your favorite album, statistically speaking. Frankly if you compare favorite songs to favorite albums I'm just gonna blame Gnaw for this one.
 
 # Personality Questions
 
@@ -1615,9 +1620,10 @@ wdth <- 4.5
 
 ## Myers Briggs
 
-Myer-Briggs is the zeitgeist when it comes to personality tests. For more information on them check out this website: https://www.16personalities.com/free-personality-test . While there are sixteen personalities, they are not evenly distributed in the population according to data from the official MBTI types, some make over 10% of the populations others closer to 2%. These types can also be broken down further into their more discrete types based on the letters, Extrovert vs Introvert (E v I) for example. I have two figures showing both of these distributions in the general population.
-The group, compared to the general population, well, they look NOTHING alike. While the population data is relatively outdated *cough cough hasn’t been updated since 2002* , our distribution is not close to it at all. A good portion of our members come from the rarer types, and specifically, 18% of participating members are the rarest type, INFJ, which makes up ~2% of the normal population. Crazy. This of course, carries over to the discrete types as well, the most stark difference is the Intuitives considerably outnumber the Sensors in this group (I don’t know what that means, but if you want to explain it in the comments feel free to), which is the opposite in the general population. It’s wacky folks.
+Myer-Briggs is the zeitgeist when it comes to personality tests. For more information on them check out this website: https://www.16personalities.com/free-personality-test . While there are sixteen personalities, they are not evenly distributed in the population according to data from the official MBTI types, some make over 10% of the populations others closer to 2%. These types can also be broken down further into their more discrete types based on the letters, Extrovert vs Introvert (E v I) for example. I have two figures below showing both of these distributions in the general population. We will then compare this to the Alex G data.
 
+
+### General Population
 
 
 Not really sure what the best question to ask here is besides the distribution and how the distribution differs from the normal world. Data pulled from [here](https://www.myersbriggs.org/my-mbti-personality-type/my-mbti-results/how-frequent-is-my-type.htm)
@@ -1711,7 +1717,7 @@ ggsave(filename = "outputs/myer-brigg-gen-pop.png", width = hght, height = wdth)
 
 ```
 
-General Population Single Type
+#### Gener population letter types
 ```{r}
 
 letter_df$type <- factor(letter_df$type, c("E", "I", "N", "S", "F", "T", "J", "P"))
@@ -1725,14 +1731,16 @@ ggplot(letter_df, aes(x = category, y = `percent type`, fill = type)) +
                                                           )) +
   labs(title = "Population Myer-Briggs Single Letter Types",
        subtitle = "N Unknown, from studies between 1972-2002") +
-  theme_classic()
+  theme_classic() + scale_y_continuous(labels = scales::percent)
 
 ggsave(filename = "outputs/myer-brigg-lett-gen-pop.png", width = hght, height = wdth)
 ```
 
-Same analysis on Alex G
+### Now the 666posting population
 
-Prepare data
+The group, compared to the general population, well, they look NOTHING alike. While the population data is relatively outdated *cough cough hasn’t been updated since 2002* , our distribution is not close to it at all. A good portion of our members come from the rarer types, and specifically, 18% of participating members are the rarest type, INFJ, which makes up ~2% of the normal population. Crazy. This of course, carries over to the discrete types as well, the most stark difference is the Intuitives considerably outnumber the Sensors in this group (I don’t know what that means, but if you want to explain it in the comments feel free to), which is the opposite in the general population. It’s wacky folks.
+
+#### Prepare data
 ```{r}
 ##Alex Data
 
@@ -1757,7 +1765,7 @@ mbti_dat$mbtis <- factor(mbti_dat$mbtis, levels = mb_names)
 
 ```
 
-Single Letter Myer-Briggs Data
+#### Single Letter Myer-Briggs Data
 ```{r}
 mbti_dat <- mbti_dat %>%
   mutate(IE = ifelse(str_detect(mbtis, "I"), "I", "E"),
@@ -1821,7 +1829,7 @@ JP_chisq <- chisq.test(letter_df_g$`count type`[7:8],
 pvals_lett <- format.pval(c(EI_chisq$p.value, NS_chisq$p.value, FT_chisq$p.value, JP_chisq$p.value), 3)
 ```
 
-Plotting for general types
+#### Plotting MBTI Types
 ```{r}
 
 ##Plotting the data
@@ -1844,7 +1852,7 @@ ggsave(filename = "outputs/myer-brigg-666.png", width = hght, height = wdth)
 
 ```
 
-Plotting for single letters
+#### Plotting Single MBTI Letter Types
 ```{r}
 
 
@@ -1861,19 +1869,21 @@ ggplot(letter_df_g, aes(x = category, y = `percent type`, fill = type)) +
   labs(title = "Population Myer-Briggs Single Letter Types",
        subtitle = paste("P-values per letter group in respective order:",
                         paste(pvals_lett, collapse = ' ; '))) +
-  theme_classic()
+  theme_classic() + scale_y_continuous(labels = scales::percent)
   
 
 ggsave(filename = "outputs/myer-brigg-lett-666.png", width = hght, height = wdth)
 ```
-
+*Note: The reason the P-values are the same is because I have the chi-square set to `simulate.pvalues` as the distribution of values throws a warning otherwise*
 
 ## Birthday/Zodiacs
 
-	Gonna be honest, I am under qualified to say anything about what zodiac signs mean, someone in the comments please link a gold standard explanation of them, because I don’t want to look like an idiot. That said, one thing I do know is these signs break up into the four classic elements, fire, water, air, and earth which are included in my analysis.
-	So to generate the population data I pulled CDC birth records from 2000-2014 as an estimate. There appears to be a relatively uniform distribution of signs, and similarly elements in the general pop. In our group however this distribution doesn’t hold true. Capricorns make up around 3% of our group while Gemini make up ~12%. That said, this is not a significant change in the distribution according to a chi-square analysis. The same is true for elements, the change nears significance, but does not cross the arbitrary (thanks Fisher) 0.05 threshold, though overall there are less Earth and Water signs in this group.
+	Gonna be honest, I am under qualified to say anything about what zodiac signs mean, so I'm going to leave these results up to your interpretation. That said, one thing I do know is these signs break up into the four classic elements, fire, water, air, and earth which are included in my analysis.
+	
+	
+	So to generate the population data I pulled CDC birth records from 2000-2014 as an estimate. There appears to be a relatively uniform distribution of signs, and similarly elements in the general population. 
 
-
+### General Population
 
 Pulling public data to make a fair general population example and then preparing it
 ```{r}
@@ -1952,6 +1962,7 @@ ggplot(element_summ, aes(x = element, y = element_percent, fill = element)) +
   theme_classic() +
   ylab("Percent") + 
   xlab("Elements") +
+   theme(legend.position = "None") +
   labs(title = "General Population Sign Elements (births 2000-2014)",
        subtitle = paste0("N = ",
                          format(sum(element_summ$count),
@@ -1962,7 +1973,10 @@ ggsave(filename = "outputs/horo-elements-gen-pop.png", width = hght, height = wd
 ```
 
 
-Preparing the Alex G data for the analysis above
+## Preparing the Alex G data for the analysis above
+
+In our group however this afformentioned balanced distribution doesn’t hold true. Capricorns make up around 3% of our group while Gemini make up ~12%. That said, this is not a significant change in the distribution according to a chi-square analysis. The same is true for elements, the change nears significance, but does not cross the arbitrary (thanks Fisher) 0.05 threshold, though overall there are less Earth and Water signs in this group.
+
 ```{r}
 #####Now for the Alex G group -----
 #Make Zodiac table
@@ -1996,15 +2010,18 @@ Chi-square analysis against normal population probabilities
 g_Zodiac$sign == us_birth_sum$sign
 
 sign_chisq <- chisq.test(g_Zodiac$count, p = us_birth_sum$sign_percent)
+sign_chisq
 #Not sig according to probabilities 
 
 #Elements
-g_element$element == element_summ$element
+#g_element$element == element_summ$element
 
 element_chisq <- chisq.test(g_element$count, p = element_summ$element_percent)
+element_chisq
 ```
 
 Basic Alex G zodiac sign plot
+
 ```{r}
 #Alex G Zodiac plot
 ggplot(g_Zodiac, aes(x = sign, y = sign_percent, fill = element)) +
@@ -2025,6 +2042,7 @@ ggsave(filename = "outputs/horo-signs-666.png", width = hght, height = wdth)
 ```
 
 Plotting the zodiac elements of the Alex G data
+
 ```{r}
 #Alex G element plot
 ggplot(g_element, aes(x = element, y = element_percent, fill = element)) +
@@ -2034,6 +2052,7 @@ ggplot(g_element, aes(x = element, y = element_percent, fill = element)) +
   theme_classic() +
   ylab("Percent") +
   xlab("Elements") +
+  theme(legend.position = "None") +
   labs(title = "666posting Zodiac Sign Elements",
        subtitle = paste0("N = ",
                          sum(g_element$count),
@@ -2047,7 +2066,9 @@ ggsave(filename = "outputs/horo-elements-666.png", width = hght, height = wdth)
 ## Hogwarts House
 
 
-I’m also not great with Harry Potter info tbh. But this was relatively interesting because there is some insight to be gained.  I pulled the general population data from this article https://time.com/4921918/harry-potter-hogwarts-sorting-hat-quiz/… kinda. I had to eyeball the percentages, because they didn’t actually give them. What’s interesting is that the main difference between the general population and 666posting is that we have more Slytherin. BUT WHAT’S EVEN MORE INTERESTING, is according to the Time’s article, Slytherin have a higher distribution in today's youth, and I’d say that this group leans to the younger side (see previous posts). And so, I’d argue this group doesn’t stray from the normal population distribution when adjusted for age.  But we don’t have enough older people to properly adjust for age, so just take my word for it, K? Great!
+### General Population
+
+I’m also not great with Harry Potter info to be frank But this was relatively interesting because there is some insight to be gained. I had to eyeball the general population percentages from the article below, because they didn’t actually give the true numbers What’s interesting is that the main difference between the general population and 666posting is that we have more Slytherin. What makes this even more interesting, is according to the Time’s article, Slytherin make a large proportion of the younger population, and I’d say that this group leans to the younger side (see previous above ages). And so, I’d argue this cohort doesn’t stray from the normal population distribution when adjusted for age.  But we don’t have enough older people to properly adjust for age, so just take my word for it, K? Great!
 
 
 ~~Data taken from https://drive.google.com/file/d/0B8PCmhQmtcDKLXlzSGtnZ0hKbjQ/view~~
@@ -2061,7 +2082,7 @@ house_colors <- c("firebrick", "goldenrod3", "dodgerblue4", "darkgreen")
 america_house <- data.frame(house, house_percent, stringsAsFactors = F) 
 ```
 
-Replot the Times Data
+Re-plot the Times Data
 ```{r}
 ggplot(america_house,
        aes(x = house, y = house_percent, fill = house)) +
@@ -2071,14 +2092,18 @@ ggplot(america_house,
   labs(title = "US Hogwarts House Distribution (Time Magazine's Data)",
        subtitle ="N = ~500,000")+
   xlab("Hogwarts Houses") +
-  theme_classic()
+  theme_classic() +
+   theme(legend.position = "None") 
 
 ggsave(filename = "outputs/hogwarts-gen-pop.png")
 
 
 ```
 
-Preparing and cleaning Alex G data
+### Preparing and cleaning Alex G data
+
+Now we have general population prepare 666posting data
+
 ```{r}
 #Should turn this into a function by this point
 house_dat <- as.data.frame(table(pers_dat$hp_house), stringsAsFactors = F) %>%
@@ -2110,22 +2135,20 @@ ggplot(house_dat,
                          sum(house_dat$count),
                          " ; Chi-Square compared to population p-value = ",
                          format.pval(house_chisq$p.value, digits = 3))) +
-  theme_classic()
+  theme_classic() +
+   theme(legend.position = "None") 
 
   ggsave(filename = "outputs/hogwarts-666.png", width = hght, height = wdth)
 
 
 ```
-This is interesting because if you look at the Time's article as people age Slytherin decreases and so I'd argue that because we have such a larger population of younger individuals is why Slytherin is so high. Which I'd further argue to say this WOULDN'T be significant if adjusted for age, but idk how to do that currently.
-
-
 
 ## Are there correlations between types?
 
 
 My last question, and the one I found most interesting is, are personality types related to one another? E.g. are certain MBTI types enriched in a given zodiac sign? Long story short, kinda, kinda not. I made a bunch of Heatmap Tables using an R package called Z-table and calculated Chi-squares and while there were a few hits I assure you none would stand up to any multiple testing correction, so I don’t have any larger statement to say here. I feel like we are underpowered in participants to test this hypothesis as not everyone answered all three survey questions, and even if we did we still might need a larger N.
 
-*note*: I'm going to not echo these as the code is repetetive. 
+*note*: I'm going to not echo these as the code is repetitive. 
 
 Using Ztables from this [link](https://cran.r-project.org/web/packages/ztable/vignettes/heatmapTable.html)
 
@@ -2154,7 +2177,7 @@ sign_z %>% makeHeatmap() %>%
   print(caption = paste0("Heatmap Table of Zodiac Signs and Myer-Briggs Types; Chi-Sqare p-value of ", format.pval(chi_sign_mbti$p.value, digits = 3)))
 ```
 
-Ztable Element vs MBTI
+Ztable Zodiac Elements vs MBTI
 ```{r results='asis', echo=FALSE}
 #Element
 element_tab <- table(hor_mbt_dat$element, hor_mbt_dat$mbti)
@@ -2167,8 +2190,8 @@ element_z %>% makeHeatmap() %>%
 
 ```
 
-Ztable for Zodiac and Houses
-Remove names that repeat above (This hasn't been done)
+Ztable for Zodiac Signs and HP Houses
+
 ```{r results='asis', echo=FALSE}
 hor_hp_dat <- pers_dat %>% filter(!(hp_house %in% c("", "Prefer not to answer", "I don't know")),
                                    !(sign %in% c("", "Prefer not to answer", "I don't know"))) %>%
@@ -2191,7 +2214,7 @@ sign_z %>% makeHeatmap() %>%
   print(caption = paste0("Heatmap Table of Zodiac Signs and Hogwarts Houses; Chi-Sqare p-value of ", format.pval(chi_sign_hp_house$p.value, digits = 3)))
 ```
 
-Ztable for element and house
+Ztable for Zodiac Elements and HP Houses
 ```{r results='asis', echo=FALSE}
 #Element
 element_tab <- table(hor_hp_dat$hp_house, hor_hp_dat$element)
@@ -2241,33 +2264,6 @@ letter_dat <- pers_dat %>% filter(!(mbti %in% c("", "Prefer not to answer", "I d
                   sign %in% c("Cancer", "Scorpio", "Pisces") ~ "Water"
                   )
                 )
-```
-
-
-Making sign table function
-```{r}
-
-col1 <- "FT"
-col2 <- "sign"
-title <- "Heatmap Table of Zodiac Signs and Intro vs Extra"
-simul_p <- F
-pval_digits <- 3
-
-
-
-
-
-# #Sign IE
-# IE_sign_tab <- table(letter_dat$IE, letter_dat$sign)
-# 
-# IE_sign_z <- ztable(IE_sign_tab)
-# 
-# chi_sign_IE <- chisq.test(letter_dat$IE, letter_dat$sign, simulate.p.value = T)
-# 
-# #No way to format this nicely
-# IE_sign_z %>% makeHeatmap() %>%
-#   print(caption = paste0("Heatmap Table of Zodiac Signs and Intro vs Extra; Chi-Sqare p-value of ", format.pval(chi_sign_IE$p.value, digits = 3)))
-
 ```
 
 
@@ -2410,7 +2406,8 @@ auto_ztable(letter_dat_hp,
           simul_p = T)
   
 ```
-#Habits
+
+# Habits
 
 Step one, per usual, is cleaning up the data for our specific purposes, one of the main changes is shortening of names and adding a fun variable about alcohol consumption. 
 ```{r}
@@ -2487,7 +2484,8 @@ state_weed <- mutate(state_weed, weed_laws = case_when(
 
 
 
-Alcohol and weed barplots:
+### Alcohol and weed barplots
+
 ```{r}
 
 alc_count <- dat_drugs %>% count(alc_use)
@@ -2526,6 +2524,7 @@ ggsave("outputs/weed_usage_barplot.png")
 ```
 
 Now lets look at that Z table
+
 ```{r results='asis'}
 
 auto_ztable(dat_drugs,
@@ -2539,6 +2538,7 @@ So it appears, according the the Chi-Square that our data might be trending towa
 
 
 Now let us see if there are any interesting distributions with age
+
 ```{r}
 #Make a histogram of ages and habits
 #dat_drugs$alc_use <- factor(dat_drugs$alc_use, names(sort(table(dat_drugs$alc_use), decreasing= F)))
@@ -2552,7 +2552,8 @@ ggplot(dat_drugs, aes(x=age, fill=alc_use)) +
 ggsave("outputs/alcohol_histogram.png")
 ```
 
-This is an interesting way to view the distribution, but to see differences there are better plots:
+Above is an interesting way to view the distribution, but to see differences there are better plots such as the box-plot below:
+
 ```{r}
 ggplot(dat_drugs, aes(y=age, x= alc_use, fill=alc_use)) +
   geom_boxplot() +
@@ -2568,6 +2569,7 @@ ggsave("outputs/alcohol_boxplot.png")
 ```
 
 These distributions don't seem that different from one another. As a test I'll run a linear model to see if these drinking groups are a good predictor of age. That said, I'm not really going to check any assumptions (don't do this), I will remove the one older individual because they are an outlier, but I don't expect there to be a difference.
+
 ```{r}
 no_out_drugs <- dat_drugs %>% filter(age <= 38) %>%
   mutate(center_age = age - mean(age))
@@ -2581,7 +2583,7 @@ summary(lm_alc)
 Nothing significant, but social drinking trends towards younger individuals which is interesting. 
 
 
-And now I'm going to reveal all the filthy filthy law breakers in this group (I'm being sarcastic, but I think its an interesting question)
+And now I'm going to reveal all the filthy filthy law breakers in this group, I'm talking *under-age drinking*. (I'm being sarcastic, but I think its an interesting question)
 ```{r}
 #Alcohol based on country
 dat_drugs$alc_use <- factor(dat_drugs$alc_use, names(sort(table(dat_drugs$alc_use), decreasing= F)))
@@ -2599,6 +2601,7 @@ ggsave("outputs/underage_drinking.png")
 ```
 Disgusting...
 
+### Weed usage plots
 
 Alright on to the completely legal topic of weed usage
 ```{r}
@@ -2615,52 +2618,40 @@ ggsave("outputs/weed_usage_histogram.png")
 
 ```
 
-Mutate dat drugs to add weed data in
+Again the better way to view the data
 
-## Fix this table
-```{r results='asis'}
+```{r}
+ggplot(dat_drugs, aes(y=age, x= weed_use, fill=weed_use)) +
+  geom_boxplot() +
+  stat_n_text(size = 3) +
+  scale_fill_viridis_d(direction = -1) +
+  coord_flip() +
+  labs(title = "Weed Usage in 666posting",
+        subtitle = paste("N =", sum(weed_count$n)),
+       fill = "Weed Usage") +
+  xlab("Weed Usage")  +
+  theme_classic()
+ggsave("outputs/weed_usage_boxplot.png")
+```
+Let us test if there is a significant difference between age and weed use.
 
-map <- match(dat_drugs$country, world_weed$country)
+```{r}
+no_out_drugs %>%
+  group_by(weed_use)%>%
+  get_summary_stats(age, type = "mean_sd")
 
-dat_drugs$weed_laws <- world_weed$weed_laws[map]
-
-map <- match(dat_drugs$state, state_weed$state)
-
-ind <- dat_drugs$country %in% "United States"
-
-dat_drugs$weed_laws[ind] <- (state_weed$weed_laws[map])[ind]
-
-dat_drugs <- mutate(dat_drugs, weed_laws = case_when(
-  state == "District of Columbia" ~ "recreational",
-  state == "" ~ "medical/complicated",
-  TRUE ~ weed_laws
-))
-
-
-dat_drugs$weed_laws <- factor(dat_drugs$weed_laws,
-                              c("not legal",
-                                "medical/complicated",
-                                "medical",
-                                "decriminalized/complicated",
-                                "recreational"))
-
-dat_drugs <- mutate(dat_drugs, `General Weed Use` = ifelse(
-    weed_use == "I have never smoked weed" | weed_use == "I don't smoke weed anymore",
-    "Doesn't actively smoke weed",
-    "Actively smokes weed"
-  ))
-
-
-auto_ztable(dat_drugs,
-          "weed_laws",
-          "General Weed Use",
-          "Heatmap Table of Weed Usage and Laws",
-          simul_p = T)
-
-
+lm_weed <- lm(center_age ~ weed_use, data = no_out_drugs)
+summary(lm_weed)
 ```
 
-Colored Z table
+ Weed usage interestingly shows older people in this group tend to consume weed more than their younger counterparts. I feel this is somewhat driven by outliers, but “once a week” weed usage, with no outliers, was also significant. Part of me wonders how much of this has to do with financial situation/living situation. Perhaps older individuals smoke more because they have both the financial ability and space (free from those who might look down on it) to do so. I'm not sure, it would've been pretty weird if I asked “what is your yearly income?” and “Do you live with an authority figure?”.
+
+
+## Add world and US weed laws
+
+
+### Table of usage compared to laws
+
 ```{r results='asis'}
 drug_table <- table(dat_drugs$weed_laws, dat_drugs$`General Weed Use`)
 
@@ -2679,34 +2670,7 @@ z %>%
 ```
 
 
-Same question above with weed:
-```{r}
-ggplot(dat_drugs, aes(y=age, x= weed_use, fill=weed_use)) +
-  geom_boxplot() +
-  stat_n_text(size = 3) +
-  scale_fill_viridis_d(direction = -1) +
-  coord_flip() +
-  labs(title = "Weed Usage in 666posting",
-        subtitle = paste("N =", sum(weed_count$n)),
-       fill = "Weed Usage") +
-  xlab("Weed Usage")  +
-  theme_classic()
-ggsave("outputs/weed_usage_boxplot.png")
-```
-
-```{r}
-no_out_drugs %>%
-  group_by(weed_use)%>%
-  get_summary_stats(age, type = "mean_sd")
-
-lm_weed <- lm(center_age ~ weed_use, data = no_out_drugs)
-summary(lm_weed)
-```
-
-
-
-
-# Concerts
+# Concerts, General and Alex G Specific
 
 ## In general
 ```{r}
@@ -2717,7 +2681,7 @@ ggplot(dat_habits, aes(x=concerts, fill = concerts)) +
   scale_fill_brewer(palette = "Dark2") +
   theme_classic()
 ```
-# Alex G concerts
+## Alex G concerts
 
 Preparing the data
 ```{r}
@@ -2738,6 +2702,7 @@ ggplot(alex_g_conc_dat, aes(x = alex_g_concerts)) +
 My theory is they live near Philly, and by using the state data I've collected I can determine that two of the largest outliers indeed do live near Philly (defined by living in Pennsylvania, New Jersey or Delaware). That said, the individual who has seen Alex 40 times lives in Missouri.
 
 Fun fact: According to (setlist.fm)[https://www.setlist.fm/search?query=artist:%28%28Sandy%29+Alex+G%29+date:%5B2020-01-01+TO+2020-12-31%5D] Alex has played 284 concerts
+
 ```{r}
 ggplot(alex_g_conc_dat, aes(x = alex_g_concerts, fill = `Lives Near Philly?`)) +
   geom_bar(color="black") +
@@ -2758,6 +2723,7 @@ ggsave(filename = "outputs/alex_g_conc_philly.png", width = hght, height = wdth)
 ```
 
 But another theory I had is that maybe living near cities in general will increase the probability of an individual going to more concerts
+
 ```{r}
 alex_g_conc_dat$living_area <- factor(alex_g_conc_dat$living_area,
                                       names(sort(table(alex_g_conc_dat$living_area),
@@ -2827,7 +2793,9 @@ conc_lm <- lm(formula = alex_g_concerts ~ living_area + `Lives Near Philly?` + c
 sum_conc_lm <- summary(conc_lm)
 sum_conc_lm$coefficients
 ```
+
 It seems that the best predictor in this case is living near Philly! But that's not an honest analysis, because this result is likely driven by outliers, so we're going to toss them. 
+
 ```{r}
   ## Without the outliers
 
@@ -2839,6 +2807,7 @@ sum_conc_lm <- summary(conc_lm)
 sum_conc_lm$coefficients
 
 ```
+
 And so the significance of living near Philly is gone when you remove the two individual skewing the data. 
 
 So it appears that the biggest determinant of seeing Alex G concerts is if you live near Philly, which makes sense as, before Alex was touring most of his shows were in that area (and people could've included Skin Cells concerts as Alex G concerts). That said, if you remove the outliers, in the dataset, living near Philly is no longer a strong predictor on how many Alex G concerts you've seen, instead living in a city trends towards significance.
@@ -2861,8 +2830,11 @@ base on living near Philly",
   ylab("Number of Alex G Concerts")
 ```
 
-## College data
+# College/Major Analysis
 
+Another question we asked is what *type* of college major did people have, or if they even decided to attend college which we look at below.
+
+Data cleaning, similar to art and musician data. 
 ```{r}
 college_dat <- dat %>% mutate(id = row_number()) %>%
                     select(id, col_major) 
@@ -2901,6 +2873,8 @@ for (degree in 1:ncol(college_df)) {
 ```
 
 
+Upset plot for different majors to see what double majors we have
+
 ```{r fig.height = 8, fig.width = 10, fig.align = "center"}
 plot_degree <- upset(fromList(degree_list),
                  order.by = "freq",
@@ -2923,8 +2897,8 @@ four_degrees <- sum(rowSums(college_df) == 4)
 We have `r two_degrees` people with 2 majors, `r three_degrees` people with three majors, and `r four_degrees` with four majors.
 
 
-
 # The most average Alex G person
+
 ```{r}
 library(lubridate)
 # x = dat$country
@@ -3050,5 +3024,4 @@ Graham aka Grumpus for talking to me about Alex G back when I knew diddly squat.
 
 ## [Things to Do](https://sandy.bandcamp.com/track/things-to-do)
 
-  - Turn repetitive code into functions for example in the personality block
-  - Add Alex G Habits
+  - Nothing I guess
