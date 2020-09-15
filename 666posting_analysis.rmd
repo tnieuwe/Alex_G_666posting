@@ -14,15 +14,15 @@ dat <- read.csv("inputs/alex_g_stats_8_1.csv", stringsAsFactors = F)
 
 
 ## Preface
-I don't know under what context you might be looking at this html, but hello I'm Tim. I'm writing this preface so that no matter where you're coming from I can explain waht you're about to see.
+I don't know under what context you might be looking at this html, but hello I'm Tim. I'm writing this preface so that no matter where you're coming from I can explain what you're about to see.
 
 ### What is this?
   This is a data analysis I completed on some survey data I collected from a Facebook group known as (Sandy) Alex G 666posting. For those of you that don't know, Alex G is a prolific indie artist who has been putting out music since at least 2010. His popularity has only continued to grow with each album release, but what makes him such an interesting musician is, including his leaked unreleased tracks, Alex has 200+ songs, which to me is impressive.
   
-  I joined the group back in Jan of 2019 as I got into Alex's unreleased discography and have come to really enjoy the community that exists there. One day an individual, Zion, asked how old they were when they started listening to Alex G and how old they were now. I asked if it was okay, collected that data, and made a figure for the group showing the distribution of ages and other ones as well. I then asked if it was okay to make a survey for the group to analyze more data, I got the okay, specifically from Isabelle, and began working. Many individuals helped with the survey as you can see in the bottom, but the result was `r ncol(dat)` columns of data from `r round(nrow(dat), 3)` individuals. Some questions Alex G related, some not. But I hope you find something interesting in this little project I made. I've been working on it on and off in my free time since... April I think? Either way its a labor of love to give back to the great community I found online. The group is full of cool people and I'm glad to be a part of it (I also think this project helped me become a mod so that was nice).
+  I joined the group back in Jan of 2019 as I got into Alex's unreleased discography and have come to really enjoy the community that exists there. One day an individual, Zion, asked how old they were when they started listening to Alex G and how old they were now. I asked if it was okay, collected that data, and made a figure for the group showing the distribution of ages and other ones as well. I then asked if it was okay to make a survey for the group to analyze more data, I got the okay, specifically from Isabelle, and began working. Many individuals helped with the survey as you can see in the bottom, but the result was `r ncol(dat)` columns of data from `r round(nrow(dat), 3)` individuals. Some questions Alex G related, some not. But I hope you find something interesting in this little project I made. I've been working on it on and off in my free time since... April I think? Either way, its a labor of love to give back to the great community I found online. The group is full of cool people and I'm glad to be a part of it (I also think this project helped me become a mod so that was nice).
   
 ### Disclaimer
-  At the time of me writing this 666posting is at the cusp of reaching 3,000 members. That's great, but we need to talk about sample size, because that means we only have ~`r nrow(dat)/3000*100`% of the group accounted for. Not only that, but as this is an optional survey, one must be aware of the type of people who would take the time to fill out said survey. This is not an unbiased slice of the group, but I do like to think this includes the core group of active individuals (idk I didn't ask for names). So with that in mind, let's get into the analysis.
+  At the time of me writing this 666posting is at the cusp of reaching 3,000 members. That's great, but we need to talk about sample size because that means we only have ~`r nrow(dat)/3000*100`% of the group accounted for. Not only that but as this is an optional survey, one must be aware of the type of people who would take the time to fill out the said survey. This is not an unbiased slice of the group, but I do like to think this includes the core group of active individuals. So with that in mind, let's get into the analysis.
 
 
 ## Libraries used
@@ -30,17 +30,18 @@ I don't know under what context you might be looking at this html, but hello I'm
 + `tidyverse`: Used for general exploratory analysis, primarily used dplyr within it
 + `ztablel`: Used to make various tables
 + `UpSetR`: Used to make Upset plots
-+ `wordcloud`: Used to make wordclouds (surprise!)
++ `wordcloud`: Used to make word clouds (surprise!)
 + `rworldmap`: The map of the world!
 + `mapproj`: The map of... US?
 + `maps`: More maps... I gotta clean this up
-+ `viridis`: Used for colorblind friendly palletes
++ `viridis`: Used for colorblind-friendly palette
 + `rstatix`: Ummmm
 + `EnvStats`: Used to get the N on ggplots for groupings
 + `ggpubr`: Arranging the plots
 
 ### Seed
-`set.seed(123)` This was just to keep consistency of the wordcloud
+`set.seed(123)` This was just to keep the consistency of the word clouds
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -103,9 +104,9 @@ dat <- dat %>% mutate(
 ```
 
 
-  So the first demographics we'll take a quick peak at is at age and race. First we'll look at age at a histogram colored on "what generation do you identify with". Get used to the age varaible, as it is one of our few numerical values, so I'm going to be plotting it a lot. Anyways, overall age is right skewed, with only one real outlier at `r max(dat$age)`. Alex G is about 26-27 at the time of me writing this and has been writing music since his early teenage years, so the demographics of teens and 20-somethings is unsurprising.
+  So the first demographics we'll take a quick peek at is at age and race. First, we'll look at age at a histogram colored on "what generation do you identify with". Get used to the age variable, as it is one of our few numerical values, so I'm going to be plotting it a lot. Anyways, overall age is right-skewed, with only one real outlier at `r max(dat$age)`. Alex G is about 26-27 at the time of me writing this and has been writing music since his early teenage years, so the demographics of teens and 20-somethings is unsurprising.
   
-  As a straight white dude (who we will see is the average Alex G listener), I can't really speak to why or why not Alex is popular or not popular with the other demographics, and frankly I'm not sure it is my place to speculate. As a result for race, gender, trans identity, and polyamory I will let you draw your own conclusions. I just don't feel I as an individual should be speaking didactically about such a subject.
+  As a straight white dude (who we will see is the average Alex G listener), I can't really speak to why or why not Alex is popular or not popular with the other demographics, and frankly I'm not sure it is my place to speculate. As a result, for race, gender, trans identity, and polyamory I will let you draw your own conclusions. I just don't feel I as an individual should be speaking didactically about such a subject.
   
 ```{r, fig.width=10, fig.height=8}
 #Age
@@ -212,11 +213,12 @@ annotate_figure(gpt_plot, top = text_grob(
 ```
 
 # The Original Plot
-This is a plot I had inspired this project, how? Quick story time:
+This is a plot I had inspired this project, how? Quick storytime:
 
-Zion, a memeber of 666posting asked individuals "What age were you when you discovered Alex G and what age are you now?". Everyone started answering the question and I found it interesting. Eventually it had over 200+ individuals and I came up with an idea on making two overlapping histograms of people ages of learning about Alex G and their current age. I asked for permission and then I began the first analysis of 666posting. As you'll see I didn't stop there with that data since I thought of other things to do with it, but this eventually led to me asking if I could run a survey which leads to this whole R markdown. So really Zion inspired me to do this, so if you're reading this, thanks dude!
+Zion, a member of 666posting asked individuals "What age were you when you discovered Alex G and what age are you now?". Everyone started answering the question and I found it interesting. Eventually, it had over 200+ individuals and I came up with an idea on making two overlapping histograms of people ages of learning about Alex G and their current age. I asked for permission and then I began the first analysis of 666posting. As you'll see I didn't stop there with that data since I thought of other things to do with it, but this eventually led to me asking if I could run a survey which leads to this whole R markdown. So really Zion inspired me to do this, so if you're reading this, thanks dude!
 
 One of the data points I make sure to make is the year learned people learned about Alex G, using the fact this survey was done in 2020 as a reference. This will be used later
+
 ```{r}
 ##Two histograms
 
@@ -266,7 +268,7 @@ ggsave("start_age_current.png", width = 9, height = 7)
 
 ```
 
-Another plot I made, using the aformentioned "year learning of Alex G" data I extrapolated is a diagram of his growht. However, unlike my initial making of this plot based on people just commenting on a Facebook post, this data is a little... odd. 
+Another plot I made, using the aforementioned "year learning of Alex G" data I extrapolated is a diagram of his growth. However, unlike my initial making of this plot based on people just commenting on a Facebook post, this data is a little... odd. 
 ```{r}
 ##Second histogram
 fact_order <- as.character(sort(unique(dat$year_learned)))
@@ -317,11 +319,12 @@ ggsave("year_start_listening.png", width = 9, height = 7)
 ```
 So below is the original figure.
 
- (FIGURE)
+![](inputs/original_plot.jpg)
  
- And compared to this figure our new one is definitely different. First of all we we have much more of a normal distribution besides the person... who first heard Alex G in '07. Frankly I'm a little dubious and would be interested in hearing that story. The individual did not identify which state they live in, so I thought my worries would be assuaged by hearing they lived in PA, but alas, I have no idea. The other interesting aspect is our first non '07 fan comes in around 2011, after Race, an arguably seminal Alex G album. I would frankly be expecting a larger boost with Race, and the previous plot I made did have individuals listening around the time of Race, admittedly few, but more than none. It is important to note Alex G was making music with his band the Skin Cells during the early years as well, but that history is more murky.
+ And compared to this figure our new one is definitely different. First of all, we have much more of a normal distribution besides the person... who first heard Alex G in '07. Frankly, I'm a little dubious and would be interested in hearing that story. The individual did not identify which state they live in, so I thought my worries would be assuaged by hearing they lived in PA, but alas, I have no idea. The other interesting aspect is our first non '07 fan comes in around 2011, after Race, an arguably seminal Alex G album. I would frankly be expecting a larger boost with Race, and the previous plot I made did have individuals listening around the time of Race, admittedly few, but more than none. It is important to note Alex G was making music with his band the Skin Cells during the early years as well, but that history is murkier.
  
  Also compared to the previous plot we have a lot more 2018-20 fans, but I think that's primarily because the original data was pulled from late March/early April 2020, and this current survey has been rolling open the entire year, so that is not unexpected But on the topic of the actual data, the data is for the most part normal, which is more indicative of the sample we're pulling from, as I presume should just continue increasing with each album as his fame has only grown. Maybe there is a critical limit of indie fans however that he might've reached, who knows! It is interesting that 2015 and the release of Beach Music is his largest jump in popularity, as it is also the same year he signed with Domino Records who probably helped promote his work to a wider audience.
+
 
 ### How long have we been listening to Alex G?
 
@@ -345,7 +348,8 @@ It's the previous plot inverted, what can I say.
 
 ### Cumulative Distribution Plot of Fan Growth
 
-I just like cumulative distribution plots, its all the same data. If you don't know how cumulative distribution plots work, basically the line shows over the years the growth of Alex's fanbase as if counting up to the total, so you can see his percentage gain each year to his current 100% of the fanbase.
+I just like cumulative distribution plots, it’s all the same data. If you don't know how cumulative distribution plots work, basically the line shows over the years the growth of Alex's fanbase as if counting up to the total, so you can see his percentage gain each year to his current 100% of the fanbase.
+
 ```{r}
 
 ggplot(dat, aes(x=year_learned)) + stat_ecdf() + scale_x_continuous(breaks=seq(2009,2020,2))+
@@ -534,7 +538,7 @@ So with all that said, the only interesting thing I could think of to compare th
 
 ![Alex G Concerts Around the World](inputs/alex_g_concerts_world.png)
 
-So I put that data into the following csv file I load  in. And I want to see if the amount of fans correlate with how many concerts Alex has in that country. But you can see when I gave this data a quick look.
+So I put that data into the following csv file I load in. And I want to see if the number of fans correlate with how many concerts Alex has in that country. But you can see when I first saw the data....
 ```{r}
 concerts_world <- read.csv("inputs/countries_concerts.csv", fileEncoding = "UTF-8-BOM")
 
@@ -614,7 +618,7 @@ us_states_3 <- left_join(us_states_2, census) %>% mutate(count = ifelse(is.na(co
                                                          adjust = round((count/X2019 * 100000), digits = 3))
 ```
 
-This data I'm gonna use to center text in the states, it's basically each states central longitude and latitude.
+This data I'm gonna use to center text in the states, it's basically each state’s central longitude and latitude.
 ```{r}
 center_state <- read.csv(file = "inputs/statelatlong_2.csv", stringsAsFactors = F) %>% rename(region = name, lat_center = latitude, long_center = longitude) %>%
   mutate(region = tolower(region))
@@ -693,15 +697,16 @@ ggsave("outputs/west_us.png", height = 9, width = 7)
 
 
 ```
-So the analysis I decided to do here was where is Alex's fan base the largest (when controlling for population size) in the United States. I pulled this region data from [kaggle](https://www.kaggle.com/omer2040/usa-states-to-region) and will use it to test our hypothesis. "Our hypothesis?" you say? Yes obviously it is the [East Coast which has the most representation, if its not, all hope will be lost](https://www.youtube.com/watch?v=VgRYMNiePus). 
+So the analysis I decided to do here was where is Alex's fan base the largest (when controlling for population size) in the United States. I pulled this region data from [kaggle](https://www.kaggle.com/omer2040/usa-states-to-region) and will use it to test our hypothesis. "Our hypothesis?" you say? Yes, obviously it is the [East Coast which has the most representation, if it’s not, all hope will be lost](https://www.youtube.com/watch?v=VgRYMNiePus). 
 
 (P.S. I've learned of the state.region data in R, but womp womp here we R, let's just go with it)
+
 
 ```{r}
 state_region <- read.csv("inputs/states.csv", stringsAsFactors = FALSE)
 
 us_state_region <- us_states_3 %>%
-  select(State = region, count, adjusted_fans = adjust, State.Code = state) %>%
+  select(State = region, count, adjusted_fans = adjust, State.Code = state, pop = X2019) %>%
   mutate(State = str_to_title(State)) %>% unique()
 
 us_state_region <- left_join(us_state_region, state_region) %>%
@@ -718,7 +723,8 @@ us_state_region <- left_join(us_state_region, state_region) %>%
 ```{r}
 summarised_region <- us_state_region %>%
   group_by(Region) %>%
-  summarise(adjusted_fans = sum(adjusted_fans))
+  summarise(adjusted_fans = sum(adjusted_fans), fans = sum(count), pop = sum(pop)) %>%
+  mutate(proportion = fans/pop)
 
 
 
@@ -730,22 +736,24 @@ ggplot(summarised_region, aes(Region, adjusted_fans, fill = Region)) +
   ylab("Adjusted Fans") +
   theme_classic()
 
+prop.test(x = summarised_region$fans, n = summarised_region$pop)
 ```
 
-I'm not sure what statistical test fits here, but its at least interesting to see. I feel like I need to use a chi-square, but adjusted for population size, so if anyone knows a correct method for that please tell me.
+Well there doesn't seem to be a clear winner... I'll just tell myself if we included Southern East Coast states it would've won.
 
 # 666posting Political Compass
 ### Spice Alert
 
-So one of the first graphs I generated with the survey, because I thought it would be a fun one to do, is looking at the political leanings in the group. While politics has a lot more depth than can be represented by my figure, I think having two axis, left to right and libertarian to authoritarian, allows a fair amount of depth in itself. The question was phrased as follows:
+So one of the first graphs I generated with the survey because I thought it would be a fun one to do, is looking at the political leanings in the group. While politics has a lot more depth than can be represented by my figure, I think having two axis, left to right and libertarian to authoritarian, allows a fair amount of depth in itself. The question was phrased as follows:
 
 "Where do you stand on the political compass? This website will calculate it, but you can do it by personal feel as well by looking at the image! https://www.politicalcompass.org/ (center at 5 and round if you get a score from the website, site ~10 minutes)"
 
-With the below image as a guide, the image isn't completely accurate if you ask me, but from a quick google search it does a good enough job. 
+With the below image as a guide, the image isn't completely accurate if you ask me, but from a quick google search, it does a good enough job. 
+
 
 ![](inputs/politcal_compass.jpg)
 
-The reason that I said this is spicy is because, let's be honest, we live in an incredibly politically charged time. And when I posted this, I can understand people not being comfortable with individuals in the group having, uh, "fascist leanings" so it caused a bit of a row (Never a good look when your post has more comments than likes). That said, I still think the data is pretty interesting so let's look at it.
+The reason that I said this is spicy is because, let's be honest, we live in an incredibly politically charged time. And when I posted this, I completely understood people not being comfortable with individuals in the group having, uh, "strong fascist leanings" so it caused a bit of a row (Never a good look when your post has more comments than likes). That said, I still think the data is pretty interesting so let's look at it.
 
 ### Preparing the data
 Cleaning the dataset and getting medians and means for each leaning
@@ -840,7 +848,7 @@ ggplot(political_dat) +
 ggsave("outputs/political_compass_gender.png")
 ```
 
-The same scatterplot as above, but this time the dots are colored on the age of the individuals. I had to remove the individual over 40 because that threw the scale off even when I used a log scale, so apolgoies to them.
+The same scatterplot as above, but this time the dots are colored on the age of the individuals. I had to remove the individual over 40 because that threw the scale off even when I used a log scale, so my apologies to them.
 
 ```{r}
 
@@ -953,15 +961,16 @@ tidy(lm(age ~ lib_auth, data = political_dat))
 
 ```
 
-Well I guess I can say, specifically in this 666posting cohort, your age doesn't seem to influence your political leanings. Sorry that wasn't interesting, but again there are some groupings with very few samples so that didn't help either and I didn't remove the outliers. 
+Well, I guess I can say, specifically in this 666posting cohort, your age doesn't seem to influence your political leanings. Sorry, that wasn't interesting, but again there are some groupings with very few samples so that didn't help either and I didn't remove the outliers. 
 
 
 
 # Musicians in 666posting
 
-Another questions asked is if you play instruments or not, and if so which ones?
+Another question asked is if you play instruments or not, and if so which ones?
 
 Preparing the data and make a melted version of the dataframe
+
 ```{r}
 band_dat <- dat %>% mutate(id = row_number(), 
                            instruments = gsub("Music Software \\(eg. Ableton, FL studio\\)",
@@ -1018,14 +1027,14 @@ ggsave("outputs/instrument_summary.png", width = 8, height = 8)
 
 ## Prepare data to be Upset plots instead of venn diagrams
 
- Okay here I'm about to go on a visualization tirade. So I'm sure you're used to venn diagrams, but have probably not heard of Upset plots. So venn diagrams are the classic way to represent count crossover between multiple groups, but when groups are large this generally reduces to circles with numbers inside of them. This doesn't do the scale of the differences proper justice, and people, in general, have a better time understanding the magnitude of difference when there is a visualization, especially comparing sizes between ideas. As a result a new plot has been formed called upset plots.
+ Okay, here I'm about to go on a visualization tirade. So I'm sure you're used to Venn diagrams, but have probably not heard of Upset plots. So Venn diagrams are the classic way to represent count crossover between multiple groups, but when groups are large this generally reduces to circles with numbers inside of them. This doesn't do the scale of the differences proper justice, and people, in general, have a better time understanding the magnitude of difference when there is a visualization, especially comparing sizes between ideas. As a result, a new plot has been formed called upset plots.
 
-  I will explain how to read them now. An Upset plot is comprised of two barplots which relate to a center image with balls and lines. The barplot on the "y-axis" of the center image is the total count for how many people play each instrument. If we look at the center image, you can see each row is labeled by an instrument. Each column however has different dots representing each instrument. When a dot is filled that shows an overlap between the two instruments, the amount of those overlaps is what is counted in the "x-axis" barplot above. So one plot gives you the total number of people who play a certain instrument, while the other plot gives you how many people share the same overlap of instruments. I hope this makes, sense, but it will be readily apparent once you see the plots.
+  I will explain how to read them now. An Upset plot is comprised of two bar plots that relate to the central image with balls and lines. The barplot on the "y-axis" of the center image is the total count for how many people play each instrument. If we look at the center image, you can see each row is labeled by an instrument. Each column however has different dots representing each instrument. When a dot is filled that shows an overlap between the two instruments, the amount of those overlaps is what is counted in the "x-axis" barplot above. So one plot gives you the total number of people who play a certain instrument, while the other plot gives you how many people share the same overlap of instruments. I hope this makes, sense, but it will be readily apparent once you see the plots.
   
   Anyways the way to read this diagram is as follows:
 The total count of each instrument is in the bottom left corner, you can see that we have over 100 guitarists who answered the survey followed by ~60 keyboard/piano players. Then if you look to the right of that graph you’ll see dots and lines. If two dots are filled that means that the bar above it represents the intersection of individuals who play both those instruments. As more dots are filled that represents a greater intersection. So you can see that there are 25 solo guitarists, while there are 2 people who play all of the instruments in this graph.
 
-As I said, I couldn’t fit in all the data because of the limitations so sorry to all the unique instrument players, but at least you got a shout out in the first graph you chinese flute playing god. Thanks everyone!
+As I said, I couldn’t fit in all the data because of the limitations so sorry to all the unique instrument players, but at least you got a shout out in the first graph you Chinese flute-playing god.
 
 
 ```{r}
@@ -1099,12 +1108,13 @@ ggplot(band_yn, aes(in_band)) +
   
 
 ```
-Frankly I expected "No" to be the dominant answer, but I am surprised with how good a fight "Yes" put up. Maybe that's my personal bias of knowing more musicians who aren't in bands.
+Frankly, I expected "No" to be the dominant answer, but I am surprised by how good a fight "Yes" put up. Maybe that's my personal bias of knowing more musicians who aren't in bands.
 
 
 # Non-musical art
 
 This is basically the same analysis as above, but this time we're looking at the rest of the world of The Arts! 
+
 
 ```{r}
 art_dat <- dat %>%  filter(art != "") %>%
@@ -1184,7 +1194,7 @@ art_upset
 
 ### Word Clouds
 
-So... word clouds. Technically speaking word clouds are never a good way to represent data in a meaningful way. While the size of the letters increase one can still be tricked into thinking, in this case, long band names have more votes, which isn't true. As a result you'll see that I ended up coloring the data a little bit to help clarify this visual discrepancy. 
+So... word clouds. Technically speaking word clouds are never a good way to represent data in a meaningful way. While the size of the letters increases one can still be tricked into thinking, in this case, long band names have more votes, which isn't true. As a result, you'll see that I ended up coloring the data a little bit to help clarify this visual discrepancy. 
 
 
 
@@ -1328,7 +1338,7 @@ dev.off()
 ```
 ## How do you listen to music?
 
-I'm making the table here, but combining it with the figure below, it doesn't need its own section.. 
+I'm making the table here, but combining it with the figure below, it doesn't need its own section. 
 
 ```{r}
 music_summary <- t(as.matrix(table(dat$music_method)))
@@ -1339,7 +1349,7 @@ music_summ_table <- ggtexttable(music_summary)
 
 # How did you find Alex G?
 
-First we gotta do some MASSIVE data cleaning, I really should not have left this open for people to put whatever they want, look at all the unique comments, as of writing there is 37. So we gotta fine a way to generalize these. That said, some are very interesting
+First, we gotta do some MASSIVE data cleaning, I really should not have left this open for people to put whatever they want, look at all the unique comments, as of writing there is 37. So we gotta find a way to generalize these. That said, some are very interesting.
 
 ```{r}
 unique(dat$discover_method)
@@ -1468,7 +1478,7 @@ fan_comp_plot
 #Save it
 ggsave("outputs/favorite_fancomp.png", height = 7, width = 7)
 ```
-Overall it seems that people don't listen to them, but as I said I suggest it. The winner of them is by a large margin [Monsterhead](https://www.youtube.com/watch?v=AyccAi3pkNA&ab_channel=pushedback), which makes sense to me. Out of all his compilations I feel it is the most stacked with well known unreleased tracks (Nintendo 64, Uh, Written in Blood, etc.)
+Overall it seems that people don't listen to them, but as I said I suggest it. The winner of them is by a large margin [Monsterhead](https://www.youtube.com/watch?v=AyccAi3pkNA&ab_channel=pushedback), which makes sense to me. Out of all his compilations, I feel it is the most stacked with well known unreleased tracks (Nintendo 64, Uh, Written in Blood, etc.)
 
 #### Favorite Music Video
 
@@ -1551,7 +1561,7 @@ wordcloud(words = songs_only$Var1, freq = songs_only$Freq, min.freq = 1,
 dev.off()
 ```
 
-A barplot of the top 10 favorite Alex G songs, just to ascribe hard numbers to the data, which is the issue with word clouds as said before. 
+A bar plot of the top 10 favorite Alex G songs, just to ascribe hard numbers to the data, which is the issue with word clouds as said before. 
 
 ```{r}
 top_ten_songs <- head(songs_clean, 10)
@@ -1571,7 +1581,7 @@ Looks like [Gnaw](https://www.youtube.com/watch?v=uzDcSZnXF5M&bpctr=1600025109&a
 
 ## An analysis of favorite song vs favorite album
 
-A quick question I wanted to ask is: "Is it more likely that you're favorite song is on your favorite album?" Which is what I did below. I made sure to only includ favorite songs on specific albums as with unreleased material stuff gets dicey. I ran a chi-square, which has the null hypothesis "There should be no correlation between one's favorite song and their favorite album" meaning that the count should be split between "Yes, my favorite song is on my favorite album" and "No, my favorite song is not on my favorite album" and it turns out....
+A quick question I wanted to ask is: "Is it more likely that your favorite song is on your favorite album?" Which is what I did below. I made sure to only include favorite songs on specific albums as with unreleased material stuff gets dicey. I ran a chi-square, which has the null hypothesis "There should be no correlation between one's favorite song and their favorite album" meaning that the count should be split between "Yes, my favorite song is on my favorite album" and "No, my favorite song is not on my favorite album" and it turns out....
 
 ```{r}
 ### Make chi-square analysis
@@ -1620,8 +1630,7 @@ wdth <- 4.5
 
 ## Myers Briggs
 
-Myer-Briggs is the zeitgeist when it comes to personality tests. For more information on them check out this website: https://www.16personalities.com/free-personality-test . While there are sixteen personalities, they are not evenly distributed in the population according to data from the official MBTI types, some make over 10% of the populations others closer to 2%. These types can also be broken down further into their more discrete types based on the letters, Extrovert vs Introvert (E v I) for example. I have two figures below showing both of these distributions in the general population. We will then compare this to the Alex G data.
-
+Myer-Briggs is the zeitgeist when it comes to personality tests. For more information on them check out this website: https://www.16personalities.com/free-personality-test . While there are sixteen personalities, they are not evenly distributed in the population according to data from the official MBTI types, some make over 10% of the population others closer to 2%. These types can also be broken down further into their more discrete types based on the letters, Extrovert vs Introvert (E v I) for example. I have two figures below showing both of these distributions in the general population. We will then compare this to the Alex G data.
 
 ### General Population
 
@@ -1738,7 +1747,8 @@ ggsave(filename = "outputs/myer-brigg-lett-gen-pop.png", width = hght, height = 
 
 ### Now the 666posting population
 
-The group, compared to the general population, well, they look NOTHING alike. While the population data is relatively outdated *cough cough hasn’t been updated since 2002* , our distribution is not close to it at all. A good portion of our members come from the rarer types, and specifically, 18% of participating members are the rarest type, INFJ, which makes up ~2% of the normal population. Crazy. This of course, carries over to the discrete types as well, the most stark difference is the Intuitives considerably outnumber the Sensors in this group (I don’t know what that means, but if you want to explain it in the comments feel free to), which is the opposite in the general population. It’s wacky folks.
+The group, compared to the general population, well, they look NOTHING alike. While the population data is relatively outdated *cough cough hasn’t been updated since 2002* , our distribution is not close to it at all. A good portion of our members come from the rarer types, and specifically, 18% of participating members are the rarest type, INFJ, which makes up ~2% of the normal population. Crazy. This, of course, carries over to the discrete types as well, the starkest difference is the Intuitives considerably outnumber the Sensors in this group (I don’t know what that means, but if you want to explain it in the comments feel free to), which is the opposite in the general population. It’s wacky folks.
+
 
 #### Prepare data
 ```{r}
@@ -1874,7 +1884,7 @@ ggplot(letter_df_g, aes(x = category, y = `percent type`, fill = type)) +
 
 ggsave(filename = "outputs/myer-brigg-lett-666.png", width = hght, height = wdth)
 ```
-*Note: The reason the P-values are the same is because I have the chi-square set to `simulate.pvalues` as the distribution of values throws a warning otherwise*
+*Note: The reason the P-values are the same is that I have the chi-square set to `simulate.pvalues` as the distribution of values throws a warning otherwise*
 
 ## Birthday/Zodiacs
 
@@ -1886,6 +1896,7 @@ ggsave(filename = "outputs/myer-brigg-lett-666.png", width = hght, height = wdth
 ### General Population
 
 Pulling public data to make a fair general population example and then preparing it
+
 ```{r}
 us_birth <- read.csv(
   "https://raw.githubusercontent.com/fivethirtyeight/data/master/births/US_births_2000-2014_SSA.csv")
@@ -1975,7 +1986,7 @@ ggsave(filename = "outputs/horo-elements-gen-pop.png", width = hght, height = wd
 
 ## Preparing the Alex G data for the analysis above
 
-In our group however this afformentioned balanced distribution doesn’t hold true. Capricorns make up around 3% of our group while Gemini make up ~12%. That said, this is not a significant change in the distribution according to a chi-square analysis. The same is true for elements, the change nears significance, but does not cross the arbitrary (thanks Fisher) 0.05 threshold, though overall there are less Earth and Water signs in this group.
+In our group however, this aforementioned balanced distribution doesn’t hold true. Capricorns make up around 3% of our group while Gemini makes up ~12%. That said, this is not a significant change in the distribution according to a chi-square analysis. The same is true for elements, the change nears significance, but does not cross the arbitrary (thanks Fisher) 0.05 threshold, though overall there are less Earth and Water signs in this group.
 
 ```{r}
 #####Now for the Alex G group -----
@@ -2068,11 +2079,12 @@ ggsave(filename = "outputs/horo-elements-666.png", width = hght, height = wdth)
 
 ### General Population
 
-I’m also not great with Harry Potter info to be frank But this was relatively interesting because there is some insight to be gained. I had to eyeball the general population percentages from the article below, because they didn’t actually give the true numbers What’s interesting is that the main difference between the general population and 666posting is that we have more Slytherin. What makes this even more interesting, is according to the Time’s article, Slytherin make a large proportion of the younger population, and I’d say that this group leans to the younger side (see previous above ages). And so, I’d argue this cohort doesn’t stray from the normal population distribution when adjusted for age.  But we don’t have enough older people to properly adjust for age, so just take my word for it, K? Great!
+I’m also not great with Harry Potter info to be frank But this was relatively interesting because there is some insight to be gained. I had to eyeball the general population percentages from the article below because they didn’t actually give the true numbers What’s interesting is that the main difference between the general population and 666posting is that we have more Slytherin. What makes this even more interesting, is according to the Time’s article, Slytherin makes a large proportion of the younger population, and I’d say that this group leans to the younger side (see previous above ages). And so, I’d argue this cohort doesn’t stray from the normal population distribution when adjusted for age.  But we don’t have enough older people to properly adjust for age, so just take my word for it, K? Great!
 
 
 ~~Data taken from https://drive.google.com/file/d/0B8PCmhQmtcDKLXlzSGtnZ0hKbjQ/view~~
 Data taken from [Time Magazine](https://time.com/4921918/harry-potter-hogwarts-sorting-hat-quiz/), they don't have the actual percents posted, but a much larger sample size.
+
 
 ```{r}
 #My best guess from eyeing The Times
@@ -2432,7 +2444,8 @@ dat_habits <- dat %>%
 
 ## Substance Usage
 
-Let us first make a some barplots of both drugs followed by a z-table to see what our distribution of recorded substance usage is. I will also run a Chi-square (because the function already does that) to see if the distribution of usage is unexpected, aka, are weed use and alcohol use random, or are they correlated in some manner. I am also ordering factors to make the tables and following graphs more readable.
+Let us first make some barplots of both drugs followed by a z-table to see what our distribution of recorded substance usage is. I will also run a Chi-square (because the function already does that) to see if the distribution of usage is unexpected, aka, are weed use and alcohol use random, or are they correlated in some manner. I am also ordering factors to make the tables and following graphs more readable.
+
 ```{r}
 
 dat_drugs <- dat_habits  %>% filter(alc_use != "", weed_use != "")
@@ -2534,10 +2547,11 @@ auto_ztable(dat_drugs,
           simul_p = T)
 ```
 
-So it appears, according the the Chi-Square that our data might be trending towards significance, but there is nothing to be concluded here. Overall it appears most people use to smoke weed, but not anymore, and most people seem to drink socially. 
+So it appears, according to the the Chi-Square that our data might be trending towards significance, but there is nothing to be concluded here. Overall it appears most people use to smoke weed, but not anymore, and most people seem to drink socially. 
 
 
 Now let us see if there are any interesting distributions with age
+
 
 ```{r}
 #Make a histogram of ages and habits
@@ -2568,7 +2582,7 @@ ggplot(dat_drugs, aes(y=age, x= alc_use, fill=alc_use)) +
 ggsave("outputs/alcohol_boxplot.png")
 ```
 
-These distributions don't seem that different from one another. As a test I'll run a linear model to see if these drinking groups are a good predictor of age. That said, I'm not really going to check any assumptions (don't do this), I will remove the one older individual because they are an outlier, but I don't expect there to be a difference.
+These distributions don't seem that different from one another. As a test, I'll run a linear model to see if these drinking groups are a good predictor of age. That said, I'm not really going to check any assumptions (don't do this), I will remove the one older individual because they are an outlier, but I don't expect there to be a difference.
 
 ```{r}
 no_out_drugs <- dat_drugs %>% filter(age <= 38) %>%
@@ -2583,7 +2597,7 @@ summary(lm_alc)
 Nothing significant, but social drinking trends towards younger individuals which is interesting. 
 
 
-And now I'm going to reveal all the filthy filthy law breakers in this group, I'm talking *under-age drinking*. (I'm being sarcastic, but I think its an interesting question)
+And now I'm going to reveal all the filthy filthy lawbreakers in this group, I'm talking *under-age drinking*. (I'm being sarcastic, but I think its an interesting question)
 ```{r}
 #Alcohol based on country
 dat_drugs$alc_use <- factor(dat_drugs$alc_use, names(sort(table(dat_drugs$alc_use), decreasing= F)))
@@ -2644,16 +2658,43 @@ lm_weed <- lm(center_age ~ weed_use, data = no_out_drugs)
 summary(lm_weed)
 ```
 
- Weed usage interestingly shows older people in this group tend to consume weed more than their younger counterparts. I feel this is somewhat driven by outliers, but “once a week” weed usage, with no outliers, was also significant. Part of me wonders how much of this has to do with financial situation/living situation. Perhaps older individuals smoke more because they have both the financial ability and space (free from those who might look down on it) to do so. I'm not sure, it would've been pretty weird if I asked “what is your yearly income?” and “Do you live with an authority figure?”.
+ Weed usage interestingly shows older people in this group tend to consume weed more than their younger counterparts. I feel this is somewhat driven by outliers, but “once a week” weed usage, with no outliers, was also significant. Part of me wonders how much of this has to do with the financial situation/living situation. Perhaps older individuals smoke more because they have both the financial ability and space (free from those who might look down on it) to do so. I'm not sure, it would've been pretty weird if I asked “what is your yearly income?” and “Do you live with an authority figure?”.
 
 
-## Add world and US weed laws
+### Add world and US weed laws
+```{r}
+map <- match(dat_drugs$country, world_weed$country)
+dat_drugs$weed_laws <- world_weed$weed_laws[map]
+map <- match(dat_drugs$state, state_weed$state)
+ind <- dat_drugs$country %in% "United States"
+dat_drugs$weed_laws[ind] <- (state_weed$weed_laws[map])[ind]
+dat_drugs <- mutate(dat_drugs, weed_laws = case_when(
+  state == "District of Columbia" ~ "recreational",
+  state == "" ~ "medical/complicated",
+  TRUE ~ weed_laws
+))
+dat_drugs$weed_laws <- factor(dat_drugs$weed_laws,
+                              c("not legal",
+                                "medical/complicated",
+                                "medical",
+                                "decriminalized/complicated",
+                                "recreational"))
+dat_drugs <- mutate(dat_drugs, `General Weed Use` = ifelse(
+    weed_use == "I have never smoked weed" | weed_use == "I don't smoke weed anymore",
+    "Doesn't actively smoke weed",
+    "Actively smokes weed"
+  ))
+
+```
 
 
 ### Table of usage compared to laws
 
 ```{r results='asis'}
-drug_table <- table(dat_drugs$weed_laws, dat_drugs$`General Weed Use`)
+
+
+
+drug_table <- table(dat_drugs$weed_laws, dat_drugs$weed_use)
 
 z <- ztable(drug_table,
             caption = "Weed use to compared to country/state laws",
@@ -2810,7 +2851,8 @@ sum_conc_lm$coefficients
 
 And so the significance of living near Philly is gone when you remove the two individual skewing the data. 
 
-So it appears that the biggest determinant of seeing Alex G concerts is if you live near Philly, which makes sense as, before Alex was touring most of his shows were in that area (and people could've included Skin Cells concerts as Alex G concerts). That said, if you remove the outliers, in the dataset, living near Philly is no longer a strong predictor on how many Alex G concerts you've seen, instead living in a city trends towards significance.
+So it appears that the biggest determinant of seeing Alex G concerts is if you live near Philly, which makes sense as, before Alex was touring most of his shows were in that area (and people could've included Skin Cells concerts as Alex G concerts). That said, if you remove the outliers, in the dataset, living near Philly is no longer a strong predictor on how many Alex G concerts you've seen, instead, living in a city trends towards significance.
+
 
 ```{r}
 ggplot(no_out_conc, aes(y = alex_g_concerts, x = `Lives Near Philly?`, fill = `Lives Near Philly?`)) +
@@ -2983,11 +3025,12 @@ med_sign <- ranked_top(dat$sign, to_low = F)
 colnames(dat)
 ```
 
-  So around `r mean(mdy_hm(dat$Timestamp))` a `r avg_race` `r avg_orientation` `r avg_gender` who is `r avg_age` years old decided to fill out the survey. They live in `r avg_country`, specifically in `r avg_state` and when asked if they prefer multiple roamtic partners they generally say `r avg_poly`. Their favorite musician is `r avg_musician`, when you ask them their second favorite musician they'll emphasize how much they like `r second_musician`, before balking and saying `r second_2_musician`. They have a lot of opinions about `r avg_musician`, their favorite song is `r avg_fave_song`, their favorite music video is `r avg_music_vid`, and their favorite album is `r avg_fave_album`. That said, they when asked about what their favorite fan compilation is they reply, `r avg_unreleased`, which is probably because they listen to most of their music through `r avg_music_source` which is somewhat difficult to get non-official tracks on. Their favorite song is definitely `r avg_fave_song`
+  So around `r mean(mdy_hm(dat$Timestamp))` a `r avg_race` `r avg_orientation` `r avg_gender` who is `r avg_age` years old decided to fill out the survey. They live in `r avg_country`, specifically in `r avg_state` and when asked if they prefer multiple romantic partners they generally say `r avg_poly`. Their favorite musician is `r avg_musician`, when you ask them their second favorite musician they'll emphasize how much they like `r second_musician`, before balking and saying `r second_2_musician`. They have a lot of opinions about `r avg_musician`, their favorite song is `r avg_fave_song`, their favorite music video is `r avg_music_vid`, and their favorite album is `r avg_fave_album`. That said, they when asked about what their favorite fan compilation is they reply, `r avg_unreleased`, which is probably because they listen to most of their music through `r avg_music_source` which is somewhat difficult to get non-official tracks on. Their favorite song is definitely `r avg_fave_song`
 
-  Nevertheless they're still a big `r avg_musician` fan, they started listening to him when they were `r avg_start_listen` years old, and have been to `r avg_alex_conc` so far. When ask what they like to do in their spare time they have a couple hobbies. They like to play the `r avg_instrument`, but when asked if they're in a band, they'd say `r tolower(avg_band)`. They also use `r tolower(avg_art)` to express themselves, and when it comes to concerts they go `r tolower(avg_concert_go)`. They are studying/have studied the `r avg_major` and live `r avg_living`. When it comes to weed they would say "`r avg_weed`" and with alcohol they'd say they'd drink "`r avg_alcohol`".
+  Nevertheless, they're still a big `r avg_musician` fan, they started listening to him when they were `r avg_start_listen` years old, and have been to `r avg_alex_conc` so far. When ask what they like to do in their spare time they have a couple hobbies. They like to play the `r avg_instrument`, but when asked if they're in a band, they'd say `r tolower(avg_band)`. They also use `r tolower(avg_art)` to express themselves, and when it comes to concerts they go `r tolower(avg_concert_go)`. They are studying/have studied the `r avg_major` and live `r avg_living`. When it comes to weed they would say "`r avg_weed`" and with alcohol they'd say they'd drink "`r avg_alcohol`".
   
-  When it comes to their political leanings, on the scale of 1 to 10 from left politics to right, and from libertarian to authoritarian, they fall around `r med_left_right` and `r med_lib_auth` respectively. Their personality, if you asked them arbritarily their MBTI, astrological sign, and Harry Potter House they would also tell you, respectively, `r med_meyers`, `r med_sign`, and "`r med_harry`". They find all of these questions you're asking them kinda weird, almost like this format that I decided to explain the most average Alex G fan didn't pan out the way I wanted, but they know everyone is just trying their best. 
+  When it comes to their political leanings, on the scale of 1 to 10 from left politics to right, and from libertarian to authoritarian, they fall around `r med_left_right` and `r med_lib_auth` respectively. Their personality, if you asked them arbitrarily their MBTI, astrological sign, and Harry Potter House they would also tell you, respectively, `r med_meyers`, `r med_sign`, and "`r med_harry`". They find all of these questions you're asking them kinda weird, almost like this format that I decided to explain the most average Alex G fan didn't pan out the way I wanted, but they know everyone is just trying their best. 
+
 
 # Special Thanks!
 
@@ -3008,7 +3051,7 @@ Special shoutout to Isabelle for allowing and promoting the survey.
 
 ## Other thanks in order of commenting on the original post
  + Zion H.: Inspiring the initial graph and indirectly the survey
- + Miguel Z.: Making the first prelimary visualizations
+ + Miguel Z.: Making the first preliminary visualizations
  + Alex J.: Favorite movie and book genres questions
  + Rivers F.: Consistent support throughout the process
  + Andrew W.: Consistent support as well
@@ -3016,12 +3059,12 @@ Special shoutout to Isabelle for allowing and promoting the survey.
  + Hillary N.: Suggested astrological signs questions
  + Luke D.: Suggested political stance questions
  + Gwendylan T.: Suggested weed usage and Meyer-Briggs type questions
- + Abigail C.: For testing the survey and giving constructrive critques
+ + Abigail C.: For testing the survey and giving constructive critiques
 
 ## One special thanks
 
-Graham aka Grumpus for talking to me about Alex G back when I knew diddly squat. Thank you for introducing me to one of my favorite artists of all time. 
+Graham aka Grumpus for talking to me about Alex G back when I knew diddly squat besides [Mary](https://www.youtube.com/watch?v=FR31HVr2_LU&ab_channel=PanfisWater). Thank you for introducing me to one of my favorite artists of all time. 
 
 ## [Things to Do](https://sandy.bandcamp.com/track/things-to-do)
 
-  - Nothing I guess
+  - Shiny
