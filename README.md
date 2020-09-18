@@ -15,11 +15,11 @@ It is simple a Facebook group for people who are a fan of Alex G where we discus
 + *666posting_analysis.rmd*: The markdown file used to generate the main analysis html.
 + *alex_g_analysis.rmd*: The markdown file I used in the original analysis that spawned this project.
 + *Sandy_Survey*:
- + *app.R*: The Shiny App that I will eventually make for individuals to explore the data on their own.
+   + *app.R*: The Shiny App that I will eventually make for individuals to explore the data on their own.
 + *inputs*:
- + *alex_g_final_release.csv*: The final release of the Alex G data, used in the main analysis.
- + *country_code.csv*: A csv file with information of the various countries primarily used to determine the population of each country.
- + *state_census.csv*: A csv file with modern population estimates of each state.
- + *state_long*: A csv file with data on the longitudinal and latitudnal center of a state. 
+   + *alex_g_final_release.csv*: The final release of the Alex G data, used in the main analysis.
+   + *country_code.csv*: A csv file with information of the various countries primarily used to determine the population of each country.
+   + *state_census.csv*: A csv file with modern population estimates of each state.
+   + *state_long*: A csv file with data on the longitudinal and latitudnal center of a state. 
 + *outputs*:
- + *many files*: I'm not going to go through each one as they're not individually important, but many, not all, of the graphics generated from the analysis are output here. 
+   + *many files*: I'm not going to go through each one as they're not individually important, but many, not all, of the graphics generated from the analysis are output here. 
