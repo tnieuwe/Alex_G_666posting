@@ -5,6 +5,9 @@ date: "4/30/2020"
 output: 
   html_document:
     toc: true
+    toc_float: true
+    collapsed: false
+    smooth_scroll: false
     toc_depth: 1
 ---
 
@@ -38,13 +41,14 @@ I don't know under what context you might be looking at this html, but hello I'm
 + `rstatix`: Ummmm
 + `EnvStats`: Used to get the N on ggplots for groupings
 + `ggpubr`: Arranging the plots
++ `spotifyr`: Getting that spotify data!
 
 ### Seed
 `set.seed(123)` This was just to keep the consistency of the word clouds
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(ztable)
 library(UpSetR)
@@ -60,13 +64,17 @@ library(ggpubr)
 library(gridExtra)
 library(reshape2)
 library(scales)
+library(spotifyr)
+library(parsnip)
 options(ztable.type = "html")
 #For simulated p-values
 set.seed(123)
 ```
 
-## Loading the data and prepping functions
+
 ```{r}
+## Loading the data and prepping functions
+
 dat <- read.csv("inputs/alex_g_stats_8_1.csv", stringsAsFactors = F)
 
 #functions
@@ -319,9 +327,9 @@ ggsave("year_start_listening.png", width = 9, height = 7)
 ```
 So below is the original figure.
 
-![](inputs/original_plot.jpg)
+![](inputs/original_plot_2.jpg)
  
- And compared to this figure our new one is definitely different. First of all, we have much more of a normal distribution besides the person... who first heard Alex G in '07. Frankly, I'm a little dubious and would be interested in hearing that story. The individual did not identify which state they live in, so I thought my worries would be assuaged by hearing they lived in PA, but alas, I have no idea. The other interesting aspect is our first non '07 fan comes in around 2011, after Race, an arguably seminal Alex G album. I would frankly be expecting a larger boost with Race, and the previous plot I made did have individuals listening around the time of Race, admittedly few, but more than none. It is important to note Alex G was making music with his band the Skin Cells during the early years as well, but that history is murkier.
+ And compared to this figure our new one is definitely different. First of all, we have much more of a normal distribution besides the person... who first heard Alex G in '07. Frankly, I'm a little dubious and would be interested in hearing that story. The individual did not identify which state they live in, so I thought my worries would be assuaged by hearing they lived in PA, but alas, I have no idea. The other interesting aspect is our first non '07 fan comes in around 2011, after Race, an arguably seminal Alex G album. I would be expecting a larger boost with Race, and the previous plot I made did have individuals listening around the time of Race, admittedly few, but more than none. It is important to note Alex G was making music with his band the Skin Cells during the early years as well, but that history is murkier.
  
  Also compared to the previous plot we have a lot more 2018-20 fans, but I think that's primarily because the original data was pulled from late March/early April 2020, and this current survey has been rolling open the entire year, so that is not unexpected But on the topic of the actual data, the data is for the most part normal, which is more indicative of the sample we're pulling from, as I presume should just continue increasing with each album as his fame has only grown. Maybe there is a critical limit of indie fans however that he might've reached, who knows! It is interesting that 2015 and the release of Beach Music is his largest jump in popularity, as it is also the same year he signed with Domino Records who probably helped promote his work to a wider audience.
 
@@ -671,6 +679,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
 100,000 indv")
 ggsave("outputs/south_us.png", height = 8, width = 12)
 ```
+
 ## Plotting the Midwest
 ```{r fig.height = 5, fig.width = 7.5, fig.align = "center"}
 #The Mid West
@@ -683,6 +692,7 @@ p + geom_polygon(color = "gray90", size = 0.1) +
 100,000 indv")
 ggsave("outputs/midwest_us.png", height = 8, width = 9)
 ```
+
 ## Plotting the West
 ```{r, fig.height = 7, fig.width = 5, fig.align = "center"}
 #The west
@@ -936,7 +946,7 @@ ggplot(political_dat, aes(x =  factor(left_right, 0:10), y = age, fill = factor(
   xlab("Left to Right (0-10)") +
   ylab("Age") + coord_flip()
 
-tidy(lm(age ~ left_right, data = political_dat))
+broom::tidy(lm(age ~ left_right, data = political_dat))
 
 ```
 
@@ -1108,6 +1118,7 @@ ggplot(band_yn, aes(in_band)) +
   
 
 ```
+
 Frankly, I expected "No" to be the dominant answer, but I am surprised by how good a fight "Yes" put up. Maybe that's my personal bias of knowing more musicians who aren't in bands.
 
 
@@ -1161,8 +1172,10 @@ ggplot(sum_art, aes(x = reorder(Var1, -Freq), y = Freq, fill = Var1)) +
 ggsave("outputs/art_summary.png", width = 8, height = 8)
 ```
 
-Upset plots again
+
 ```{r}
+#Prepare art upset plot
+
 #Make Instrument strings look like titles
 colnames(art_dat) <- str_to_title(colnames(art_dat))
 
@@ -1174,7 +1187,7 @@ for (art_hold in 1:ncol(art_dat)) {
 }
 ```
 
-First Art Upset Plot
+## Art Upset Plot
 
 ```{r fig.height = 6, fig.width = 10, fig.align = "center"}
 art_upset <- upset(fromList(art_list),
@@ -1271,6 +1284,22 @@ dev.off()
 
 If they have more than one fan, the name is in orange. 
 
+
+### Barplot for top 10 musicians except Alex G because he makes the plot look bad
+```{r}
+top_fave <- fave_musician %>% arrange(desc(Freq)) %>% head(11)
+
+top_fave_nog <- top_fave[-1,]
+
+ggplot(top_fave_nog, aes(x = factor(Var1, rev(top_fave_nog$Var1)), y = Freq)) +
+  geom_bar(stat = "identity") + coord_flip() +
+  xlab("Top Favorite Musicians") +
+  ylab("Count") +
+  labs(title ="Top Ten Favorite Non-Alex G Artists") + theme_classic()
+```
+
+Alex has `r top_fave$Freq[1]` fans by the way.
+
 ### Word cloud For Second Favorite musician
 ```{r, width = 8, height = 8}
 #Word cloud for markdown
@@ -1289,6 +1318,22 @@ wordcloud(words = sec_musician$Var1, freq = sec_musician$Freq, min.freq = 1,
 dev.off()
 ```
 
+```{r}
+sec_fave <- sec_musician %>% arrange(desc(Freq)) %>% head(11)
+
+sec_fave_nog <- sec_fave[-1,]
+
+ggplot(sec_fave_nog, aes(x = factor(Var1, rev(sec_fave_nog$Var1)), y = Freq)) +
+  geom_bar(stat = "identity") + coord_flip() +
+  xlab("Top Secibd Favorite Musicians") +
+  ylab("Count") +
+  labs(title ="Top Ten Second Favorite Non-Alex G Artists") + theme_classic()
+```
+
+Alex has `r sec_fave$Freq[1]` individuals who consider him their second favorite artist.
+
+
+### Favorite Genres
 
 Clean up data for favorite Genres
 
@@ -1336,6 +1381,17 @@ wordcloud(words = genre_table$Var1, freq = genre_table$Freq, min.freq = 1,
                             )
 dev.off()
 ```
+### Favorite Genre Barplot
+```{r}
+genre_fave <- genre_table %>% arrange(desc(Freq)) %>% head(10)
+
+ggplot(genre_fave, aes(x = factor(Var1, rev(genre_fave$Var1)), y = Freq)) +
+  geom_bar(stat = "identity") + coord_flip() +
+  xlab("Top genreibd Favorite Musicians") +
+  ylab("Count") +
+  labs(title ="Top Ten genreond Favorite Non-Alex G Artists")  + theme_classic()
+```
+
 ## How do you listen to music?
 
 I'm making the table here, but combining it with the figure below, it doesn't need its own section. 
@@ -1478,6 +1534,7 @@ fan_comp_plot
 #Save it
 ggsave("outputs/favorite_fancomp.png", height = 7, width = 7)
 ```
+
 Overall it seems that people don't listen to them, but as I said I suggest it. The winner of them is by a large margin [Monsterhead](https://www.youtube.com/watch?v=AyccAi3pkNA&ab_channel=pushedback), which makes sense to me. Out of all his compilations, I feel it is the most stacked with well known unreleased tracks (Nintendo 64, Uh, Written in Blood, etc.)
 
 #### Favorite Music Video
@@ -1502,8 +1559,10 @@ ggsave("outputs/favorite_music_vid.png", height = 7, width = 7)
 [I mean, Gretel's video is really good](https://www.youtube.com/watch?v=HcO-NPtj5BI&ab_channel=AlexG)
 
 
-Prepare song data for plotting
+
 ```{r}
+##  Prepare song data for plotting
+
 #Read in songs for albums, A CSV I made.
 album_songs <- read.csv("inputs/alex_g_album_songs.csv", stringsAsFactors = F)
 album_songs <- album_songs %>% mutate_all(str_to_title)
@@ -1577,6 +1636,7 @@ ggplot(top_ten_songs, aes(x = reorder(Var1, -Freq), Freq)) +
                            axis.text.x = element_text(angle = 90, hjust = 0))
 ggsave("outputs/top_10_songs.png", height = 7, width = 7)
 ```
+
 Looks like [Gnaw](https://www.youtube.com/watch?v=uzDcSZnXF5M&bpctr=1600025109&ab_channel=DavidDeanBurkhart) is our winner!
 
 ## An analysis of favorite song vs favorite album
@@ -1614,6 +1674,169 @@ favorite_song_chi
 ```
 
 It is more likely that you will not have your favorite song in your favorite album, statistically speaking. Frankly if you compare favorite songs to favorite albums I'm just gonna blame Gnaw for this one.
+
+
+# The spotifyr package
+I would first like to thank a friend of mine, Stephanie Y., who looked over this markdown for me and suggested this package.
+
+You might be wondering, "what is spotifyr?", and to put it simply, it is an R package that allows me to effectively use Spotify's API to get data about Alex G and his music. While I could do a lot with this data, what I'm most interested in is the different "qualities" that Spotify attributes to various songs. This is done using machine-learning on the songs to determine their "valence" (sad to happy; 0 to 1), danceability (0 to 1), energy (0 to 1), etc. I'm going to make tables showing the overall top and bottom songs for each of these categories, and honestly, I'm dubious a. hell about these. For example, they have a quality known as "liveness" which determine if the song is recorded live or not. The number 1 "liveness" song is Brick and Sugar House - LIVE, is third!  but if you want to know more click [here](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/), its interesting anyways. 
+
+*note:* All scales are from 0-1 except loudness which is decibels. 
+*note 2:* PUT RACE ON SPOTIFY PLEASE
+
+
+
+```{r Set up API}
+spot_cred <- read.csv("inputs/spotifyr_dat.csv", fileEncoding = "UTF-8-BOM")
+
+Sys.setenv(SPOTIFY_CLIENT_ID = spot_cred$client_id)
+Sys.setenv(SPOTIFY_CLIENT_SECRET = spot_cred$shhh)
+access_token <- get_spotify_access_token()
+```
+
+Generating tables with the top 5 and bottom 5 tracks for a select handful of Spotify qualities.
+```{r width = 8, height = 8}
+
+alex_g <- get_artist_audio_features('alex g')
+#Remove duplicate tracks
+alex_g <- alex_g %>% select(-album_id, -track_id, -analysis_url, - available_markets,
+                                   -track_href, -track_preview_url, -track_uri, -external_urls.spotify,
+                                   -album_images) %>% distinct() %>% filter(!str_detect(track_name, "onus"))
+
+top_bot_n <- function(df, col, n = 10){
+  col <- enquo(col)
+  top <- df %>% arrange(desc(!!col)) %>% slice_head(n = n)
+  bot <- df %>% arrange(desc(!!col)) %>% slice_tail(n = n)
+  return(rbind(top,bot))
+}
+energy_tab <- top_bot_n(alex_g, energy, n = 5) %>% select(`Energy Song Name` = track_name,Energy = energy)
+danceability_tab <- top_bot_n(alex_g, danceability, n = 5) %>% select(`Danceability Song Name` = track_name, Danceability = danceability)
+valence_tab <- top_bot_n(alex_g, valence, n = 5) %>% select(`Valence Song Name` = track_name, Valence = valence)
+acousticness_tab <- top_bot_n(alex_g, acousticness, n = 5) %>% select(`Acousticness Song Name` = track_name, Acousticness = acousticness)
+liveness_tab <- top_bot_n(alex_g, liveness, n = 5) %>% select(`Liveness Song Name` = track_name, Liveness = liveness)
+loudness_tab <- top_bot_n(alex_g, loudness, n = 5) %>% select(`Loudness Song Name` = track_name, Loudness = loudness)
+ggtexttable(cbind(energy_tab, valence_tab))
+ggtexttable(cbind(danceability_tab, loudness_tab))
+
+```
+
+Now that you've probably drawn your own opinions about the validity of this data (reminder: these are the top 5 and bottom 5 songs per song quality) let's look over Alex's albums and then we'll see how this intersects with our music.
+
+## Alex G albums as an emotional rollercoaster
+
+Technically not the best way to represent the data but.....
+```{r, fig.width=7, fig.height=7}
+
+##  Add plotting colors
+alb_df <-  data.frame(factor(c("House of Sugar", "Rocket", "Beach Music", "Dsu", "Trick", "Rules")),
+            c("darkorchid4", "red3", "royalblue4", "springgreen4", "deepskyblue1", "black"))
+colnames(alb_df) <- c("album_names", "album_color")
+
+
+alex_g$album_name <- factor(alex_g$album_name, alb_df$album_names)
+
+ggplot(alex_g, aes(x = valence, y= ..scaled.., fill = album_name)) +
+  geom_density() +
+  facet_grid(album_name~.) +
+  scale_fill_manual(values = alb_df$album_color) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  ylab("Scaled Density") +
+  labs(title = "Valence as an emotional rollercoaster for each album")
+
+ggplot(alex_g, aes(x = track_number, y= valence, fill = album_name)) +
+  geom_bar(stat = "identity") +
+  facet_grid(album_name~.) +
+  scale_fill_manual(values = alb_df$album_color) +
+  scale_x_continuous(breaks = 1:16)+
+  theme_classic() +
+  ylab("Valence (0-1)") +
+  xlab("Track Number") +
+  theme(legend.position = "none") +
+  labs(title = "Valence barplot for each Alex G album")
+```
+
+## Hearing loss due to Alex G albums (loudness)
+
+[SHUT UP SHUT UP](https://youtu.be/q0x1kDxq6gQ?t=3718)
+
+*note*: Remember, the value is in decibels, the closer to 0 the louder it is
+
+```{r, fig.width=7, fig.height=7}
+ggplot(alex_g, aes(x = track_number, y= loudness, fill = album_name)) +
+  geom_bar(stat = "identity") +
+  facet_grid(album_name~.) +
+  scale_fill_manual(values = alb_df$album_color) +
+  scale_x_continuous(breaks = 1:16) +
+  theme_classic() +
+  ylab("Loudness (Decibels)") +
+  xlab("Track Number") +
+  theme(legend.position = "none")+
+  labs(title = "Loudness barplot for each Alex G album")
+```
+
+## Energy
+
+```{r, fig.width=7, fig.height=7}
+ggplot(alex_g, aes(x = track_number, y= energy, fill = album_name)) +
+  geom_bar(stat = "identity") +
+  facet_grid(album_name~.) +
+  scale_fill_manual(values = alb_df$album_color) +
+  scale_x_continuous(breaks = 1:16) +
+  theme_classic() +
+  ylab("Energy (0-1)") +
+  xlab("Track Number") +
+  theme(legend.position = "none") +
+  labs(title = "Energy barplot for each Alex G album")
+```
+
+### Danceability
+```{r, fig.width=7, fig.height=7}
+ggplot(alex_g, aes(x = track_number, y= danceability, fill = album_name)) +
+  geom_bar(stat = "identity") +
+  facet_grid(album_name~.) +
+  scale_fill_manual(values = alb_df$album_color) +
+  scale_x_continuous(breaks = 1:16) +
+  theme_classic() +
+  ylab("Danceability (0-1)") +
+  xlab("Track Number") +
+  theme(legend.position = "none") +
+  labs(title = "Danceability barplot for each Alex G album")
+```
+
+## Do Alex G members have a musical preference?
+
+Is there a secret formula to Alex G's top hits? Maybe we can use this data to figure it out! Remember though, this will be excluding non-officially released tracks.
+```{r, fig.width=8, fig.height=5}
+
+
+songs_only <- songs_dat %>% select(Timestamp, track_name = favorite_song) %>% mutate(track_name = case_when(
+  track_name == "Sugar House" ~ "SugarHouse - Live",
+  T ~ track_name
+))
+
+filtered_songs <- left_join(songs_only,alex_g) %>% drop_na() %>% select(track_name, danceability, energy, valence) %>% mutate(source = "Fans")
+filtered_alex_g <- alex_g %>% select(track_name, danceability, energy, valence) %>% mutate(source = "Discography")
+compare_fans <- rbind(filtered_songs, filtered_alex_g)
+melt_fans <- melt(compare_fans)
+
+ggplot(melt_fans, aes(x = value, ..scaled.., fill = source)) + geom_density(alpha = .5) +
+  facet_grid(variable~.) +
+  theme_classic() +
+  labs(title = "Comparing Spotify song qualities of Alex's discography to fan favorite songs",
+       subtitle = paste0("N = ",nrow(filtered_songs)),
+       fill = "Fan favorites or
+total discography") +
+  ylab("Density") +
+  xlab("Value of Quality") 
+
+
+ks.test(filtered_songs$danceability,filtered_alex_g$danceability)
+ks.test(filtered_songs$energy,filtered_alex_g$energy)
+ks.test(filtered_songs$valence,filtered_alex_g$valence)
+```
+
+Well these are interesting distributions. Alex has a *somewhat* normal curve for danceability, but there seems two be a bimodal distribution amongst fan favorite songs. As a result, it does lean more towards danceability preference. With energy people prefer lower energy, with fan preference taking a dip around 0.8. Lastly with valence, which I will remind is basically happiness, there is a low peak around .30 of sad peep with some happy nerds around .75, breaking through the discography distribution. Statistically speaking, using Kolmogorov-Smirnov tests, which tests if there is a similar distribution, we see that there is no significant difference, but that bimodal distribution from danceability trends towards signifigance. 
 
 # Personality Questions
 
@@ -1750,8 +1973,9 @@ ggsave(filename = "outputs/myer-brigg-lett-gen-pop.png", width = hght, height = 
 The group, compared to the general population, well, they look NOTHING alike. While the population data is relatively outdated *cough cough hasn’t been updated since 2002* , our distribution is not close to it at all. A good portion of our members come from the rarer types, and specifically, 18% of participating members are the rarest type, INFJ, which makes up ~2% of the normal population. Crazy. This, of course, carries over to the discrete types as well, the starkest difference is the Intuitives considerably outnumber the Sensors in this group (I don’t know what that means, but if you want to explain it in the comments feel free to), which is the opposite in the general population. It’s wacky folks.
 
 
+
+```{r Prepare data}
 #### Prepare data
-```{r}
 ##Alex Data
 
 mbti_dat <- as.data.frame(table(pers_dat$mbti), stringsAsFactors = F) %>%
@@ -1775,8 +1999,9 @@ mbti_dat$mbtis <- factor(mbti_dat$mbtis, levels = mb_names)
 
 ```
 
+
+```{r Single Letter Myer-Briggs Data}
 #### Single Letter Myer-Briggs Data
-```{r}
 mbti_dat <- mbti_dat %>%
   mutate(IE = ifelse(str_detect(mbtis, "I"), "I", "E"),
          SN = ifelse(str_detect(mbtis, "S"), "S", "N"),
@@ -1884,6 +2109,7 @@ ggplot(letter_df_g, aes(x = category, y = `percent type`, fill = type)) +
 
 ggsave(filename = "outputs/myer-brigg-lett-666.png", width = hght, height = wdth)
 ```
+
 *Note: The reason the P-values are the same is that I have the chi-square set to `simulate.pvalues` as the distribution of values throws a warning otherwise*
 
 ## Birthday/Zodiacs
@@ -1984,7 +2210,7 @@ ggsave(filename = "outputs/horo-elements-gen-pop.png", width = hght, height = wd
 ```
 
 
-## Preparing the Alex G data for the analysis above
+## Preparing the Alex G data for the same analysis done above
 
 In our group however, this aforementioned balanced distribution doesn’t hold true. Capricorns make up around 3% of our group while Gemini makes up ~12%. That said, this is not a significant change in the distribution according to a chi-square analysis. The same is true for elements, the change nears significance, but does not cross the arbitrary (thanks Fisher) 0.05 threshold, though overall there are less Earth and Water signs in this group.
 
@@ -2018,7 +2244,7 @@ Chi-square analysis against normal population probabilities
 
 ##Chi-squares
 #Make sure in correct order, should all be TRUE
-g_Zodiac$sign == us_birth_sum$sign
+#g_Zodiac$sign == us_birth_sum$sign
 
 sign_chisq <- chisq.test(g_Zodiac$count, p = us_birth_sum$sign_percent)
 sign_chisq
@@ -2079,7 +2305,7 @@ ggsave(filename = "outputs/horo-elements-666.png", width = hght, height = wdth)
 
 ### General Population
 
-I’m also not great with Harry Potter info to be frank But this was relatively interesting because there is some insight to be gained. I had to eyeball the general population percentages from the article below because they didn’t actually give the true numbers What’s interesting is that the main difference between the general population and 666posting is that we have more Slytherin. What makes this even more interesting, is according to the Time’s article, Slytherin makes a large proportion of the younger population, and I’d say that this group leans to the younger side (see previous above ages). And so, I’d argue this cohort doesn’t stray from the normal population distribution when adjusted for age.  But we don’t have enough older people to properly adjust for age, so just take my word for it, K? Great!
+I’m also not great with Harry Potter info, but this was relatively interesting because there is some insight to be gained. I had to eyeball the general population percentages from the article below because they didn’t actually give the true numbers What’s interesting is that the main difference between the general population and 666posting is that we have more Slytherin. What makes this even more interesting, is according to the Time’s article, Slytherin makes a large proportion of the younger population, and I’d say that this group leans to the younger side (see previous above ages). And so, I’d argue this cohort doesn’t stray from the normal population distribution when adjusted for age.  But we don’t have enough older people to properly adjust for age, so just take my word for it, K? Great!
 
 
 ~~Data taken from https://drive.google.com/file/d/0B8PCmhQmtcDKLXlzSGtnZ0hKbjQ/view~~
@@ -2647,6 +2873,7 @@ ggplot(dat_drugs, aes(y=age, x= weed_use, fill=weed_use)) +
   theme_classic()
 ggsave("outputs/weed_usage_boxplot.png")
 ```
+
 Let us test if there is a significant difference between age and weed use.
 
 ```{r}
@@ -2661,8 +2888,10 @@ summary(lm_weed)
  Weed usage interestingly shows older people in this group tend to consume weed more than their younger counterparts. I feel this is somewhat driven by outliers, but “once a week” weed usage, with no outliers, was also significant. Part of me wonders how much of this has to do with the financial situation/living situation. Perhaps older individuals smoke more because they have both the financial ability and space (free from those who might look down on it) to do so. I'm not sure, it would've been pretty weird if I asked “what is your yearly income?” and “Do you live with an authority figure?”.
 
 
+
+```{r weed_laws}
 ### Add world and US weed laws
-```{r}
+
 map <- match(dat_drugs$country, world_weed$country)
 dat_drugs$weed_laws <- world_weed$weed_laws[map]
 map <- match(dat_drugs$state, state_weed$state)
@@ -2722,14 +2951,17 @@ ggplot(dat_habits, aes(x=concerts, fill = concerts)) +
   scale_fill_brewer(palette = "Dark2") +
   theme_classic()
 ```
+
 ## Alex G concerts
 
-Preparing the data
-```{r}
+
+```{r conc_prep}
+## Preparing the data
+
 alex_g_conc_dat <- dat %>% select(Timestamp, alex_g_concerts, state, living_area, concerts) %>%
   filter(!is.na(alex_g_concerts)) %>%
   mutate(`Lives Near Philly?` = ifelse(state %in% c("Pennsylvania",
-                                                    "New Jersey",
+                                                     "New Jersey",
                                                     "Delaware"), "Yes", "No"))
 ```
 
@@ -2742,7 +2974,7 @@ ggplot(alex_g_conc_dat, aes(x = alex_g_concerts)) +
 
 My theory is they live near Philly, and by using the state data I've collected I can determine that two of the largest outliers indeed do live near Philly (defined by living in Pennsylvania, New Jersey or Delaware). That said, the individual who has seen Alex 40 times lives in Missouri.
 
-Fun fact: According to (setlist.fm)[https://www.setlist.fm/search?query=artist:%28%28Sandy%29+Alex+G%29+date:%5B2020-01-01+TO+2020-12-31%5D] Alex has played 284 concerts
+Fun fact: According to [setlist.fm](https://www.setlist.fm/search?query=artist:%28%28Sandy%29+Alex+G%29+date:%5B2020-01-01+TO+2020-12-31%5D) Alex has played 284 concerts
 
 ```{r}
 ggplot(alex_g_conc_dat, aes(x = alex_g_concerts, fill = `Lives Near Philly?`)) +
@@ -2771,8 +3003,12 @@ alex_g_conc_dat$living_area <- factor(alex_g_conc_dat$living_area,
                                                  decreasing= F)))
 ggplot(alex_g_conc_dat, aes(x = alex_g_concerts, fill = living_area)) +
            geom_bar(color="black") +
+  labs(fill = "Area of Living") +
   theme_classic()
 ```
+
+### Violin plot of living area and going to concerts
+
 ```{r}
 ggplot(alex_g_conc_dat, aes(y = alex_g_concerts, x = living_area, fill = living_area)) +
    geom_violin() +
@@ -2788,6 +3024,7 @@ ggplot(no_out_conc, aes(y = alex_g_concerts, x = living_area, fill = living_area
   scale_fill_brewer(palette = "Set1") +
   stat_n_text(size = 3)  +
   theme_classic() +
+  labs(fill = "Area of Living") +
   theme(legend.position = "none") +
   labs(
     title = "Does seeing Alex G concerts depend on
@@ -2799,9 +3036,8 @@ how close you are to a city?",
 ggsave(filename = "outputs/alex_g_where_live.png", width = hght, height = wdth)
 ```
 
-#Fix colors
+### Violin plot of concert frequency and number of Alex G concerts
 
-Check distribution with concert activity
 ```{r}
 ggplot(alex_g_conc_dat, aes(y = alex_g_concerts, x = concerts, fill = concerts)) +
    geom_violin() +
@@ -2849,9 +3085,7 @@ sum_conc_lm$coefficients
 
 ```
 
-And so the significance of living near Philly is gone when you remove the two individual skewing the data. 
-
-So it appears that the biggest determinant of seeing Alex G concerts is if you live near Philly, which makes sense as, before Alex was touring most of his shows were in that area (and people could've included Skin Cells concerts as Alex G concerts). That said, if you remove the outliers, in the dataset, living near Philly is no longer a strong predictor on how many Alex G concerts you've seen, instead, living in a city trends towards significance.
+So it still appears that the biggest determinant of seeing Alex G concerts is if you live near Philly, which makes sense as, before Alex was touring most of his shows were in that area (and people could've included Skin Cells concerts as Alex G concerts). That said, if you remove the outliers, in the dataset, living near Philly is no longer a strong predictor on how many Alex G concerts you've seen, instead, living in a city trends towards significance.
 
 
 ```{r}
@@ -2876,8 +3110,7 @@ base on living near Philly",
 
 Another question we asked is what *type* of college major did people have, or if they even decided to attend college which we look at below.
 
-Data cleaning, similar to art and musician data. 
-```{r}
+```{r Data cleaning similar to art and musician data}
 college_dat <- dat %>% mutate(id = row_number()) %>%
                     select(id, col_major) 
 
@@ -2894,7 +3127,7 @@ sum_major <- as.data.frame(table(college_dat_melt$col_major),
               mutate(Var1 = str_to_title(Var1))
 
 #Check data looks okay
-unique(band_dat_melt$col_major)
+#unique(band_dat_melt$col_major)
 
 #Make dataframe giving a 1 or 0 to each person based on if they play the col_major or not, 1 is TRUE and 0 is false
 college_df <- (as.data.frame.matrix(table(college_dat_melt$id, college_dat_melt$col_major)))
@@ -2981,11 +3214,11 @@ avg_discovery <- ranked_top(dat$discover_method)
 #Their favorite song is Snot
 avg_fave_song <- ranked_top(dat$favorite_song, to_low = FALSE)
 #Their favorite album is Trick
-avg_fave_album <- ranked_top(dat$favorite_album)
+avg_fave_album <- ranked_top(dat$favorite_album, to_low = FALSE)
 #They don't listen to Alex G's unreleased albums
 avg_unreleased <- ranked_top(dat$unreleased_album)
 #They like the gretel music video
-avg_music_vid <- ranked_top(dat$music_vid)
+avg_music_vid <- ranked_top(dat$music_vid, to_low = FALSE)
 #They listen to music via spotify
 avg_music_source <- ranked_top(dat$music_method)
 #They probably play guitar
@@ -2995,9 +3228,9 @@ avg_band <- ranked_top(dat$in_band)
 #Favorite musician
 avg_musician <- ranked_top(musician_dat$favorite_musician, to_low = FALSE)
 #Second fave musician
-second_musician <- ranked_top(musician_dat$sec_musician, rank = 2, to_low = FALSE)
+second_musician <- ranked_top(musician_dat$sec_musician, rank = 1, to_low = FALSE)
 #Non Alex musician
-second_2_musician <- ranked_top(musician_dat$sec_musician)
+second_2_musician <- ranked_top(musician_dat$sec_musician, rank = 2, to_low = FALSE)
 ####NEED TO DO ART
 avg_art <- (sum_art %>% arrange(desc(Freq)))[1,1]
 #Major
@@ -3021,13 +3254,11 @@ med_harry <- ranked_top(dat$hp_house)
 #Astro-sign
 med_sign <- ranked_top(dat$sign, to_low = F)
 
-
-colnames(dat)
 ```
 
   So around `r mean(mdy_hm(dat$Timestamp))` a `r avg_race` `r avg_orientation` `r avg_gender` who is `r avg_age` years old decided to fill out the survey. They live in `r avg_country`, specifically in `r avg_state` and when asked if they prefer multiple romantic partners they generally say `r avg_poly`. Their favorite musician is `r avg_musician`, when you ask them their second favorite musician they'll emphasize how much they like `r second_musician`, before balking and saying `r second_2_musician`. They have a lot of opinions about `r avg_musician`, their favorite song is `r avg_fave_song`, their favorite music video is `r avg_music_vid`, and their favorite album is `r avg_fave_album`. That said, they when asked about what their favorite fan compilation is they reply, `r avg_unreleased`, which is probably because they listen to most of their music through `r avg_music_source` which is somewhat difficult to get non-official tracks on. Their favorite song is definitely `r avg_fave_song`
 
-  Nevertheless, they're still a big `r avg_musician` fan, they started listening to him when they were `r avg_start_listen` years old, and have been to `r avg_alex_conc` so far. When ask what they like to do in their spare time they have a couple hobbies. They like to play the `r avg_instrument`, but when asked if they're in a band, they'd say `r tolower(avg_band)`. They also use `r tolower(avg_art)` to express themselves, and when it comes to concerts they go `r tolower(avg_concert_go)`. They are studying/have studied the `r avg_major` and live `r avg_living`. When it comes to weed they would say "`r avg_weed`" and with alcohol they'd say they'd drink "`r avg_alcohol`".
+  Nevertheless, they're still a big `r avg_musician` fan, they started listening to him when they were `r avg_start_listen` years old, and have been to `r avg_alex_conc` concerts so far. When ask what they like to do in their spare time they have a couple hobbies. They like to play the `r avg_instrument`, but when asked if they're in a band, they'd say `r tolower(avg_band)`. They also use `r tolower(avg_art)` to express themselves, and when it comes to concerts they go `r tolower(avg_concert_go)`. They are studying/have studied the `r avg_major` and live `r avg_living`. When it comes to weed they would say "`r avg_weed`" and with alcohol they'd say they'd drink "`r avg_alcohol`".
   
   When it comes to their political leanings, on the scale of 1 to 10 from left politics to right, and from libertarian to authoritarian, they fall around `r med_left_right` and `r med_lib_auth` respectively. Their personality, if you asked them arbitrarily their MBTI, astrological sign, and Harry Potter House they would also tell you, respectively, `r med_meyers`, `r med_sign`, and "`r med_harry`". They find all of these questions you're asking them kinda weird, almost like this format that I decided to explain the most average Alex G fan didn't pan out the way I wanted, but they know everyone is just trying their best. 
 
