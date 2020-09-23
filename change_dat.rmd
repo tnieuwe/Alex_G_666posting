@@ -1,0 +1,132 @@
+---
+title: "Changing data for app"
+author: "Tim Nieuwenhuis"
+date: "9/14/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+Just making the data ready
+```{r cars}
+dat <- read.csv("inputs/alex_g_stats_8_1.csv", stringsAsFactors = F)
+```
+
+
+prepare mutate
+```{r}
+#WHere we fiind
+websites <- c("umblr", "ound", ".com","iki", "vine", "acebook", "FB", "blog", "chan", "You", "eddit", "etflix")
+online_personality <- c("witter", "artist ZI", "ouTuber")
+friends <- c("other", "Crush", "clerk")
+radio <- "adio"
+journalism <- c("itchfork", "ress", "review")
+live_music <- c("estival", "oncert", "oured", "show")
+compilations_lab <- c("ompilation", "label")
+
+
+hi_low_fact <- function(x, decrease = F){
+  names(table(x)[order(table(x), decreasing = decrease)])
+}
+
+```
+
+All mutates
+```{r}
+dat %>%
+  rename(sec_musician = second_favorite_musician) %>%
+  #Data clean
+  mutate(
+  race = str_to_title(race),
+  orientation = str_to_title(orientation),
+  gender = factor(gender, hi_low_fact(gender, decrease = F)),
+  transgender = factor(transgender, levels = c("No", "Yes", "Prefer not to answer")),
+  polyamorous = ifelse(polyamorous == "Prefer not to say", "Prefer not to answer", polyamorous),
+  polyamorous = factor(polyamorous, levels = c("No", "Yes", "Prefer not to answer")),
+  generation = ifelse(generation == "", "Prefer not to say", generation)
+) %>% #Political compass
+  mutate(quadrant = case_when(
+  left_right <= 3 & lib_auth <= 3 ~ "Libertarian Left",
+  left_right <= 3 & lib_auth >= 7 ~ "Authoritarian Left",
+  left_right >= 7 & lib_auth <= 3 ~ "Libertarian Right",
+  left_right >= 7 & lib_auth >= 7 ~ "Authoritarian Right",
+  left_right >= 4 & left_right <= 6 & lib_auth >= 4 & lib_auth <= 6 ~ "Centrist",
+  left_right >= 4 & left_right <= 6 & lib_auth <= 3 ~ "Libertarian Center",
+  left_right >= 4 & left_right <= 6 & lib_auth >= 7 ~ "Authoritarian Center",
+  lib_auth >= 4 & lib_auth <= 6 & left_right >= 7 ~ "Center Right",
+  lib_auth >= 4 & lib_auth <= 6 & left_right <= 3 ~ "Center Left"
+), quadrant = factor(quadrant, levels = c("Libertarian Left",
+                                          "Authoritarian Left",
+                                          "Center Left",
+                                          "Libertarian Center",
+                                          "Centrist",
+                                          "Authoritarian Center",
+                                          "Libertarian Right",
+                                          "Center Right",
+                                          "Authoritarian Right"
+                                          ))) %>%
+#Musician 
+
+        #Mutate all names to lower first and trim whitesppace
+        mutate(favorite_musician = str_trim(tolower(favorite_musician)),
+               sec_musician = str_trim(tolower(sec_musician)),
+        #Fix all spelling of musician names that stand out to me
+               favorite_musician = case_when(
+                 favorite_musician == "elliot smith" ~ "elliott smith",
+                 str_detect(favorite_musician, "suicide") ~ "teen suicide",
+                 str_detect(favorite_musician, "title") ~ "title fight",
+                 T ~ favorite_musician),
+               sec_musician = case_when(
+                 favorite_musician == "elliot smith" ~ "elliott smith",
+                 str_detect(favorite_musician, "suicide") ~ "teen suicide",
+                 T ~ sec_musician
+               ),
+        #Clean up alex g titles to new/old official spelling and string to title for presentation
+               favorite_musician = ifelse(favorite_musician == "(sandy) alex g", "Alex G", str_to_title(favorite_musician)),
+               sec_musician = ifelse(sec_musician == "(sandy) alex g", "Alex G", str_to_title(sec_musician)))%>%
+#Genre
+
+                  mutate(music_genre = str_replace(str_to_lower(str_trim(music_genre)), "-", " ")) %>%
+                 # filter(music_genre != "") %>%
+                  mutate(music_genre = case_when(
+                    music_genre %in% "imdie rock" ~ "indie rock",
+                    music_genre %in% "lofi / 'indie rock' i guess lol" ~ "lofi",
+                    music_genre %in% "indite rock" ~ "indie rock",
+                    music_genre %in% "indie rock / folk / jazz" ~ "jazz",
+                    music_genre %in% "indie rock, punk, alternative." ~ "punk",
+                    music_genre %in% "shoegaze/indie rock" ~ "shoegaze",
+                    T ~ music_genre
+                    ),
+                    music_genre = str_to_title(music_genre)) %>% mutate(discover_method = case_when(
+  str_detect(discover_method, paste(websites, collapse = "|")) ~ "Other Website",
+  str_detect(discover_method, paste(online_personality, collapse = "|")) ~ "Online Personality",
+  str_detect(discover_method, paste(journalism, collapse = "|")) ~ "Journalism",
+  str_detect(discover_method, paste(friends, collapse = "|")) ~ "Through a friend",
+  str_detect(discover_method, paste(live_music, collapse = "|")) ~ "Live Music",
+  str_detect(discover_method, paste(radio, collapse = "|")) ~ "Radio",
+  str_detect(discover_method, paste(compilations_lab, collapse = "|")) ~ "Compilations/Label",
+  T ~ discover_method
+)) %>% mutate(music_vid = str_to_title(music_vid),
+         music_vid = ifelse(str_detect(music_vid, "Poison"), "Poison Root", music_vid))  %>% mutate(favorite_song = case_when(
+                                    str_detect(favorite_song, "Bonus") ~ "Good",
+                                    str_detect(favorite_song, "House") ~ "Sugarhouse",
+                                    TRUE ~ favorite_song
+                                  ),
+                                  favorite_song = str_to_title(str_trim(favorite_song, side = "both"))) %>%
+  #MBTI
+  mutate(IE = ifelse(str_detect(mbti, "I"), "I", "E"),
+         SN = ifelse(str_detect(mbti, "S"), "S", "N"),
+         FT = ifelse(str_detect(mbti, "F"), "F", "T"),
+         JP = ifelse(str_detect(mbti, "J"), "J", "P"))
+
+```
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
