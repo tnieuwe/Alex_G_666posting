@@ -326,13 +326,14 @@ ggplot(dat_2, aes(x=year_learned)) +
 ggsave("year_start_listening.png", width = 9, height = 7)
 
 ```
+
 So below is the original figure.
 
 ![](inputs/original_plot_2.jpg)
  
  And compared to this figure our new one is definitely different. First of all, we have much more of a normal distribution besides the person... who first heard Alex G in '07. Frankly, I'm a little dubious and would be interested in hearing that story. The individual did not identify which state they live in, so I thought my worries would be assuaged by hearing they lived in PA, but alas, I have no idea. The other interesting aspect is our first non '07 fan comes in around 2011, after Race, an arguably seminal Alex G album. I would be expecting a larger boost with Race, and the previous plot I made did have individuals listening around the time of Race, admittedly few, but more than none. It is important to note Alex G was making music with his band the Skin Cells during the early years as well, but that history is murkier.
  
- Also compared to the previous plot we have a lot more 2018-20 fans, but I think that's primarily because the original data was pulled from late March/early April 2020, and this current survey has been rolling open the entire year, so that is not unexpected. But on the topic of the actual data, the data is for the most part normal, which is more indicative of the sample we're pulling from, as I presume should just continue increasing with each album as his fame has only grown. Maybe there is a critical limit of indie fans however that he might've reached, who knows! I personally believe this is also due to the fact that people trickle into these facebook groups, so while more people might like Alex now, they might not be in the group (or willing to answer a silly survey). It is interesting that 2015 and the release of Beach Music is his largest jump in popularity, as it is also the same year he signed with Domino Records who probably helped promote his work to a wider audience.
+ Also compared to the previous plot we have a lot more 2018-20 fans, but I think that's primarily because the original data was pulled from late March/early April 2020, and this current survey has been rolling open the entire year, so that is not unexpected. But on the topic of the actual data, the data is for the most part normal, which is more indicative of the sample we're pulling from, as I presume should just continue increasing with each album as his fame has only grown. Maybe there is a critical limit of indie fans however that he might've reached, who knows! I personally believe this is also due to the fact that people trickle into these Facebook groups, so while more people might like Alex now, they might not be in the group (or willing to answer a silly survey). It is interesting that 2015 and the release of Beach Music is his largest jump in popularity, as it is also the same year he signed with Domino Records who probably helped promote his work to a wider audience.
 
 
 ### How long have we been listening to Alex G?
@@ -770,9 +771,10 @@ With the below image as a guide, the image isn't completely accurate if you ask 
 
 The reason that I said this is spicy is because, let's be honest, we live in an incredibly politically charged time. And when I posted this, I completely understood people not being comfortable with individuals in the group having, uh, "strong fascist leanings" so it caused a bit of a row (Never a good look when your post has more comments than likes). That said, I still think the data is pretty interesting so let's look at it.
 
-### Preparing the data
-Cleaning the dataset and getting medians and means for each leaning
-```{r}
+
+```{r preparing political dat}
+
+## Cleaning the dataset and getting medians and means for each leaning
 
 #I remove one fill in the blank because... yeah
 political_dat <- select(dat,left_right, lib_auth, gender, age) %>% drop_na() 
@@ -785,6 +787,8 @@ med_LA <- median(political_dat$lib_auth)
 mean_LR <- mean(political_dat$left_right)
 mean_LA <- mean(political_dat$lib_auth)
 ```
+
+### Political plots
 
 As the data is technically a non-continuous discrete ordinal value as I asked for answers in integers this is technically one of the better ways to represent the data. The size of the circle represents the number of individuals who selected said option. We will later have more readable examples of this data later on in case you're interested in exact numbers. 
 
@@ -1043,7 +1047,7 @@ ggplot(sum_instr, aes(x = reorder(Var1, -Freq), y = Freq, fill = Var1)) +
 ggsave("outputs/instrument_summary.png", width = 8, height = 8)
 ```
 
-## Prepare data to be Upset plots instead of venn diagrams
+## The case of the Upset Plot vs the Venn Diagram
 
  Okay, here I'm about to go on a visualization tirade. So I'm sure you're used to Venn diagrams, but have probably not heard of Upset plots. So Venn diagrams are the classic way to represent count crossover between multiple groups, but when groups are large this generally reduces to circles with numbers inside of them. This doesn't do the scale of the differences proper justice, and people, in general, have a better time understanding the magnitude of difference when there is a visualization, especially when comparing sizes of adjacent bars. As a result, a new plot has been formed called Upset plots.
 
@@ -1067,7 +1071,7 @@ for (instru in 1:ncol(instr_dat)) {
 }
 ```
 
-First Upset Plot
+### First Upset Plot
 ```{r fig.height = 6, fig.width = 10, fig.align = "center"}
 plot_up <- upset(fromList(instrument_list),
                  order.by = "freq",
@@ -1082,7 +1086,7 @@ plot_up <- upset(fromList(instrument_list),
 plot_up
 ```
 
-Second Instrument plot, it contains more instruments
+### Second Instrument plot, it contains more instruments
 ```{r  fig.height = 8, fig.width = 10, fig.align = "center"}
 plot_ups <- upset(fromList(instrument_list),
                   order.by = "freq",
@@ -3457,9 +3461,6 @@ Special shoutout to Isabelle for allowing and promoting the survey.
  + Hillary N.: Suggested astrological signs questions
  + Luke D.: Suggested political stance questions
  + Gwendylan T.: Suggested weed usage and Meyer-Briggs type questions
-<<<<<<< HEAD
- + Abigail C.: For testing the survey and giving constructive critques
-=======
  + Abigail C.: For testing the survey and giving constructive critiques
  + Luke P.: Allowing me to link his video
 
@@ -3467,8 +3468,7 @@ Special shoutout to Isabelle for allowing and promoting the survey.
  + Stephanie Y.: Gave critiques to the Rmarkdown and suggested `spotifyr`
  + Veronica B.: Suggested an appropriate statistical test for regional differences, and gave helpful criticisms
  + Kurt W. : Helpful criticisms as well. 
->>>>>>> 2766fcb356955c53c9cdbd90844f4eac3fe939a0
-
+ 
 ## One special thanks
 
 Graham aka Grumpus for talking to me about Alex G back when I knew diddly squat besides [Mary](https://www.youtube.com/watch?v=FR31HVr2_LU&ab_channel=PanfisWater). Thank you for introducing me to one of my favorite artists of all time. 
