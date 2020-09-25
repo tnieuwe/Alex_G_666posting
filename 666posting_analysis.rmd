@@ -12,7 +12,7 @@ output:
 ---
 
 ```{r, echo=FALSE}
-dat <- read.csv("inputs/alex_g_stats_8_1.csv", stringsAsFactors = F)
+dat <- read.csv("inputs/alex_g_stats_9_24.csv", stringsAsFactors = F)
 ```
 
 
@@ -2801,7 +2801,7 @@ auto_ztable(letter_dat_hp,
   
 ```
 
-# Habits
+# Habits and Entertainment 
 
 Step one, per usual, is cleaning up the data for our specific purposes, one of the main changes is shortening of names and adding a fun variable about alcohol consumption. 
 ```{r}
@@ -2821,6 +2821,9 @@ dat_habits <- dat %>%
                  underage_drinking = ifelse(`Drinks in the USA` == "Yes" & age <= 20,
                                             "Yes",
                                             "No"))
+  
+
+
 ```
 
 
@@ -3105,6 +3108,10 @@ z %>%
 
 ## In general
 ```{r}
+
+dat_habits$concerts <- factor(dat_habits$concerts, levels =  unique(dat_habits$concerts)[c(6,4,2,3,5,1)])
+
+
 ggplot(dat_habits, aes(x=concerts, fill = concerts)) +
   geom_bar(color = "black") + coord_flip() +
   labs(title = "How often do you go to concerts?",
@@ -3125,6 +3132,8 @@ alex_g_conc_dat <- dat %>% select(Timestamp, alex_g_concerts, state, living_area
   mutate(`Lives Near Philly?` = ifelse(state %in% c("Pennsylvania",
                                                      "New Jersey",
                                                     "Delaware"), "Yes", "No"))
+alex_g_conc_dat$concerts <- factor(alex_g_conc_dat$concerts, levels =  unique(alex_g_conc_dat$concerts)[c(6,4,2,3,5,1)])
+
 ```
 
 Making a histogram showing the general results. As you can see there are some outliers, but I have theories on why these outliers exist. 
@@ -3207,7 +3216,7 @@ ggsave(filename = "outputs/alex_g_where_live.png", width = hght, height = wdth)
 ```{r}
 ggplot(alex_g_conc_dat, aes(y = alex_g_concerts, x = concerts, fill = concerts)) +
    geom_violin() +
-  
+  geom_sina() + 
   coord_flip() +
   stat_n_text(size = 3)+
   theme_classic()  +
@@ -3232,8 +3241,11 @@ depending on your concert habits",
 ggsave(filename = "outputs/alex_g_conc_hab.png", width = hght, height = wdth)
 ```
 
+That "once a year if ever" dude with 40 Alex G concerts must be 40 then.... something is telling me that might've been a mistake.
 
-I decided to use som linear models to check if any of these variable were good predictors
+
+
+I decided to use some linear models to check if any of these variable were good predictors
 ```{r}
 conc_lm <- lm(formula = alex_g_concerts ~ living_area + `Lives Near Philly?` + concerts,
                 data = alex_g_conc_dat)
@@ -3276,6 +3288,48 @@ base on living near Philly",
   xlab("Live near Philly?") +
   ylab("Number of Alex G Concerts")
 ```
+
+### Book and Movie Genres
+
+I didn't know where this section fit best, so I just put it here. I didn't really have any hypotheses here either, but I hope you enjoy the data!
+
+```{r}
+
+bovie_dat <- dat %>% select(age, movie_genre, book_genre) %>%
+  filter(movie_genre != "", book_genre != "")
+
+movie_plot <- ggplot(bovie_dat, aes(movie_genre)) +
+      geom_bar() +
+     coord_flip() +
+      xlab("Movie Genres") +
+      theme_classic() +
+      geom_text(stat='count', aes(label=..count..), position = position_dodge(width = 1), hjust = -.08) +
+      labs(title = "Favorite Movie Genres",
+           subtitle = paste0("N = ",nrow(bovie_dat)))
+
+movie_plot
+
+book_plot <- ggplot(bovie_dat, aes(book_genre)) +
+        geom_bar() +
+        coord_flip() +
+        xlab("Book Genres") +
+        theme_classic()  +
+        geom_text(stat='count', aes(label=..count..), position = position_dodge(width = 1), hjust = -.08) +
+        labs(title = "Favorite Book Genres",
+             subtitle = paste0("N = ",nrow(bovie_dat)))
+
+book_plot
+
+```
+
+```{r results='asis'}
+auto_ztable(bovie_dat,
+          "movie_genre",
+          "book_genre",
+          "Heatmap Table of book and movie genres",
+          simul_p = T)
+```
+
 
 # College/Major Analysis
 
@@ -3471,7 +3525,7 @@ Special shoutout to Isabelle for allowing and promoting the survey.
  
 ## One special thanks
 
-Graham aka Grumpus for talking to me about Alex G back when I knew diddly squat besides [Mary](https://www.youtube.com/watch?v=FR31HVr2_LU&ab_channel=PanfisWater). Thank you for introducing me to one of my favorite artists of all time. 
+Graham aka [Grumpus](https://grumpus.bandcamp.com/) for talking to me about Alex G back when I knew diddly squat besides [Mary](https://www.youtube.com/watch?v=FR31HVr2_LU&ab_channel=PanfisWater). Thank you for introducing me to one of my favorite artists of all time. 
 
 ## [Things to Do](https://sandy.bandcamp.com/track/things-to-do)
 
