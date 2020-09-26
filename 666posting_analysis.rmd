@@ -22,7 +22,7 @@ I don't know under what context you might be looking at this html, but hello I'm
 ### What is this?
   This is a data analysis I completed on some survey data I collected from a Facebook group known as (Sandy) Alex G 666posting. For those of you that don't know, Alex G is a prolific indie artist who has been putting out music since at least 2010. His popularity has only continued to grow with each album release, but what makes him such an interesting musician is, including his leaked unreleased tracks, Alex has 200+ songs, which to me is impressive.
   
-  I joined the group back in Jan of 2019 as I got into Alex's unreleased discography and have come to really enjoy the community that exists there. One day an individual, Zion, asked how old they were when they started listening to Alex G and how old they were now. I asked if it was okay, collected that data, and made a figure for the group showing the distribution of ages and other ones as well. I then asked if it was okay to make a survey for the group to analyze more data, I got the okay, specifically from Isabelle, and began working. Many individuals helped with the survey as you can see in the bottom, but the result was `r ncol(dat)` columns of data from `r round(nrow(dat), 3)` individuals. Some questions Alex G related, some not. But I hope you find something interesting in this little project I made. I've been working on it on and off in my free time since... April I think? Either way, its a labor of love to give back to the great community I found online. The group is full of cool people and I'm glad to be a part of it (I also think this project helped me become a ~~mod~~ admin so that was nice).
+  I joined the group back in Jan of 2019 as I got into Alex's unreleased discography and have come to really enjoy the community that exists there. One day an individual, Zion, asked how old they were when they started listening to Alex G and how old they were now. I asked if it was okay, collected that data, and made a figure for the group showing the distribution of ages and other ones as well. I then asked if it was okay to make a survey for the group to analyze more data, I got the okay, specifically from Isabelle, and began working. Many individuals helped with the survey as you can see in the bottom, but the result was `r ncol(dat)` columns of data from `r round(nrow(dat), 3)` individuals. Some questions Alex G related, some not. But I hope you find something interesting in this little project I made. I've been working on it on and off in my free time since late April. Either way, its a labor of love to give back to the great community I found online. The group is full of cool people and I'm glad to be a part of it (I also think this project helped me become a ~~mod~~ admin so that was nice).
   
 ### Disclaimer
   At the time of me writing this 666posting is at the cusp of reaching 3,000 members. That's great, but we need to talk about sample size because that means we only have ~`r nrow(dat)/3000*100`% of the group accounted for. Not only that but as this is an optional survey, one must be aware of the type of people who would take the time to fill out the said survey. This is not an unbiased slice of the group, but I do like to think this includes the core group of active individuals. So with that in mind, let's get into the analysis.
@@ -31,17 +31,21 @@ I don't know under what context you might be looking at this html, but hello I'm
 ## Libraries used
 
 + `tidyverse`: Used for general exploratory analysis, primarily used dplyr within it
-+ `ztablel`: Used to make various tables
++ `ztable`: Used to make various tables
 + `UpSetR`: Used to make Upset plots
 + `wordcloud`: Used to make word clouds (surprise!)
 + `rworldmap`: The map of the world!
 + `mapproj`: The map of... US?
++ `wesanderson`: Wes Anderson Color Palletes
 + `maps`: More maps... I gotta clean this up
 + `viridis`: Used for colorblind-friendly palette
-+ `rstatix`: Ummmm
++ `rstatix`: Stat tests
 + `EnvStats`: Used to get the N on ggplots for groupings
 + `ggpubr`: Arranging the plots
 + `spotifyr`: Getting that spotify data!
++ `scales`: Percent axis
++ `reshape2`: Data melting
++ `ggforce`: Sina Plots
 
 ### Seed
 `set.seed(123)` This was just to keep the consistency of the word clouds
@@ -99,8 +103,8 @@ to_zcore <- function(x){
 
 # Demographics Analysis
 
-Data clean for demographics
-```{r}
+
+```{r Data clean for demographics}
 dat <- dat %>% mutate(
   race = str_to_title(race),
   orientation = str_to_title(orientation),
@@ -226,9 +230,12 @@ This is a plot I had inspired this project, how? Quick storytime:
 
 Zion, a member of 666posting asked individuals "What age were you when you discovered Alex G and what age are you now?". Everyone started answering the question and I found it interesting. Eventually, it had over 200+ individuals and I came up with an idea on making two overlapping histograms of people ages of learning about Alex G and their current age. I asked for permission and then I began the first analysis of 666posting. As you'll see I didn't stop there with that data since I thought of other things to do with it, but this eventually led to me asking if I could run a survey which leads to this whole R markdown. So really Zion inspired me to do this, so if you're reading this, thanks dude!
 
-One of the data points I make sure to make is the year learned people learned about Alex G, using the fact this survey was done in 2020 as a reference. This will be used later
+
 
 ```{r}
+## One of the data points I make sure to make is the year learned people learned about Alex G, using the fact this survey was done in 2020 as a reference. This will be used later
+
+
 ##Two histograms
 
 dat <- dat %>% mutate(difference = age - first_age, year_learned = 2020 - difference)
@@ -331,9 +338,9 @@ So below is the original figure.
 
 ![](inputs/original_plot_2.jpg)
  
- And compared to this figure our new one is definitely different. First of all, we have much more of a normal distribution besides the person... who first heard Alex G in '07. Frankly, I'm a little dubious and would be interested in hearing that story. The individual did not identify which state they live in, so I thought my worries would be assuaged by hearing they lived in PA, but alas, I have no idea. The other interesting aspect is our first non '07 fan comes in around 2011, after Race, an arguably seminal Alex G album. I would be expecting a larger boost with Race, and the previous plot I made did have individuals listening around the time of Race, admittedly few, but more than none. It is important to note Alex G was making music with his band the Skin Cells during the early years as well, but that history is murkier.
+ And compared to this figure our new one is definitely different. First of all, we have much more of a normal distribution besides the person... who first heard Alex G in '07. Frankly, I'm a little dubious and would be interested in hearing that story. The individual did not identify which state they live in, so I thought my worries would be assuaged by hearing they lived in PA, but alas, I have no idea. The other interesting aspect is our first non '07 fan comes in around 2011, after Race, an arguably seminal Alex G album. I would be expecting a larger boost with Race, and the previous plot I made did have individuals listening around the time of Race, admittedly few, but more than none. It is important to note Alex G was making music with his band the Skin Cells during the early years as well, but I'm less familiar with that history.
  
- Also compared to the previous plot we have a lot more 2018-20 fans, but I think that's primarily because the original data was pulled from late March/early April 2020, and this current survey has been rolling open the entire year, so that is not unexpected. But on the topic of the actual data, the data is for the most part normal, which is more indicative of the sample we're pulling from, as I presume should just continue increasing with each album as his fame has only grown. Maybe there is a critical limit of indie fans however that he might've reached, who knows! I personally believe this is also due to the fact that people trickle into these Facebook groups, so while more people might like Alex now, they might not be in the group (or willing to answer a silly survey). It is interesting that 2015 and the release of Beach Music is his largest jump in popularity, as it is also the same year he signed with Domino Records who probably helped promote his work to a wider audience.
+ Also compared to the previous plot we have a lot more 2018-20 fans, but I think that's primarily because the original data was pulled from late March/early April 2020, and this current survey has been rolling open the entire year, so that is not unexpected. But on the topic of the actual data, the data is for the most part normal, which is more indicative of the sample we're pulling from, as I presume should just continue increasing with each album as his fame has only grown. Maybe there is a critical limit of indie fans that he might've reached, who knows! I personally believe this is also due to the fact that people trickle into these Facebook groups, so while more people might like Alex now, they might not be in the group (or willing to answer a silly survey). It is interesting that 2015 and the release of Beach Music is his largest jump in popularity, as it is also the same year he signed with Domino Records who probably helped promote his work to a wider audience.
 
 
 ### How long have we been listening to Alex G?
@@ -1063,6 +1070,8 @@ As I said, I couldn’t fit in all the data because of the limitations so sorry 
 #Make Instrument strings look like titles
 colnames(instr_dat) <- str_to_title(colnames(instr_dat))
 
+alex_musicians = nrow(instr_dat %>% filter(Banjo == 1, Bass == 1, Guitar == 1, Mandolin == 1, `Music Software` == 1, `Percussion/Drums` == 1, `Piano/Keyboard` == 1, Voice == 1))
+
 instru = 1
 instrument_list <- list()
 #Probably should change this to a lapply, but we use this loop to generate a list of ids that play a given instrument
@@ -1101,6 +1110,8 @@ plot_ups <- upset(fromList(instrument_list),
 plot_ups
 ```
 
+
+Fun fact there are `r alex_musicians` who play the same instruments as Alex, including the guitar, bass, drums, banjo, voice, mandolin, music software, and keyboard (to my knowledge).
 
 ```{r Save them via graphical device}
 #muted for final readout
@@ -3087,7 +3098,7 @@ dat_drugs <- mutate(dat_drugs, `General Weed Use` = ifelse(
 
 
 
-drug_table <- table(dat_drugs$weed_laws, dat_drugs$weed_use)
+drug_table <- table(dat_drugs$`weed_laws`, dat_drugs$`General Weed Use`)
 
 z <- ztable(drug_table,
             caption = "Weed use to compared to country/state laws",
@@ -3118,6 +3129,7 @@ ggplot(dat_habits, aes(x=concerts, fill = concerts)) +
        subtitle = paste("N = ", nrow(dat_habits)))  +
   scale_fill_brewer(palette = "Dark2") +
   theme_classic() +
+  geom_text(stat='count', aes(label=..count..), position = position_dodge(width = 1), hjust = -.08) +
   theme(legend.position = "none") 
 ```
 
@@ -3530,4 +3542,3 @@ Graham aka [Grumpus](https://grumpus.bandcamp.com/) for talking to me about Alex
 ## [Things to Do](https://sandy.bandcamp.com/track/things-to-do)
 
   - Shiny
-  - Books and movies
