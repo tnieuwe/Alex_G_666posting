@@ -11,8 +11,10 @@ output:
     toc_depth: 1
 ---
 
-```{r, echo=FALSE}
-dat <- read.csv("inputs/alex_g_stats_9_24.csv", stringsAsFactors = F)
+```{r, echo=FALSE, warning = FALSE, message = FALSE}
+library(tidyverse)
+
+dat <- read.csv("inputs/alex_g_stats_9_24.csv", stringsAsFactors = F) %>% filter(!is.na(age))
 ```
 
 
@@ -52,7 +54,7 @@ I don't know under what context you might be looking at this html, but hello I'm
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(ztable)
 library(UpSetR)
@@ -80,7 +82,6 @@ set.seed(123)
 ```{r}
 ## Loading the data and prepping functions
 
-dat <- read.csv("inputs/alex_g_stats_8_1.csv", stringsAsFactors = F)
 
 #functions
 hi_low_fact <- function(x, decrease = F){
@@ -105,6 +106,7 @@ to_zcore <- function(x){
 
 
 ```{r Data clean for demographics}
+
 dat <- dat %>% mutate(
   race = str_to_title(race),
   orientation = str_to_title(orientation),
@@ -122,13 +124,15 @@ dat <- dat %>% mutate(
   As a straight white dude (who we will see is the average Alex G listener), I can't really speak to why or why not Alex is popular or not popular with the other demographics, and frankly I'm not sure it is my place to speculate. As a result, for race, gender, trans identity, and polyamory I will let you draw your own conclusions. I just don't feel I as an individual should be speaking didactically about such a subject.
   
 ```{r, fig.width=10, fig.height=8}
+#dat <- read.csv("inputs/alex_g_stats_9_24.csv", stringsAsFactors = F)
+
 #Age
 age_plot <- ggplot(dat, aes(age, fill = generation)) +
   geom_histogram(breaks=seq(15, 45, by=1), color = "black")+
   ylab("Count") +
   xlab("Age") +
   theme_classic() +
-  scale_x_continuous(breaks = round(seq(min(dat$age), max(dat$age), by = 5)/5) * 5)
+  scale_x_continuous(breaks = round(seq(min(dat$age, na.rm = T), max(dat$age, na.rm = T), by = 5)/5) * 5)
 
 age_summary <- round(t(as.matrix(summary(dat$age))), digits = 2)
 
@@ -1761,7 +1765,7 @@ ggplot(alex_g, aes(x = valence, y= ..scaled.., fill = album_name)) +
   scale_fill_manual(values = alb_df$album_color) +
   theme_classic() +
   theme(legend.position = "none") +
-  ylab("Scaled Density (Valence aka Happiness") +
+  ylab("Scaled Density (Valence aka Happiness)") +
   labs(title = "Valence as an emotional rollercoaster for each album")
 
 ggplot(alex_g, aes(x = track_number, y= valence, fill = album_name)) +
