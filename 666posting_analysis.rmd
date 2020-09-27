@@ -54,7 +54,7 @@ I don't know under what context you might be looking at this html, but hello I'm
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(ztable)
 library(UpSetR)
@@ -1627,7 +1627,7 @@ songs_clean <- songs_only %>%
 
 #### Word Cloud of Favorite Alex G Songs
 
-A word cloud of everyone's favorite Alex G songs from the survey, colored by what album they’re in, size based on the number of people that selected a given song as their favorite. So as you can see the top two favorite songs of those who answered the survey is Snot and Gnaw, and tbh, I’m SNOT surprised. Ugh, anyways the thing I actually love about this image is, because of how Alex names his songs, there are cool phrases that are generated. Personally I love “Be Kind, Bad Man”, it’s just fun sticking his song titles together.
+A word cloud of everyone's favorite Alex G songs from the survey, colored by what album they’re in, size based on the number of people that selected a given song as their favorite. So as you can see the top two favorite songs of those who answered the survey is Snot and Gnaw, and tbh, I’m SNOT surprised. Ugh, anyways the thing I actually love about this image is, because of how Alex names his songs, there are cool phrases that are generated. Personally I love “Screwy People Change My Mind”, it’s just fun sticking his song titles together.
 
 ```{r}
 #Word cloud for markdown
