@@ -36,8 +36,8 @@ I don't know under what context you might be looking at this html, but hello I'm
 + `wordcloud`: Used to make word clouds (surprise!)
 + `rworldmap`: The map of the world!
 + `mapproj`: The map of... US?
-+ `wesanderson`: Wes Anderson Color Palletes
-+ `maps`: More maps... I gotta clean this up
++ `wesanderson`: Wes Anderson Color Palettes
++ `maps`: More maps
 + `viridis`: Used for colorblind-friendly palette
 + `rstatix`: Stat tests
 + `EnvStats`: Used to get the N on ggplots for groupings
@@ -52,7 +52,7 @@ I don't know under what context you might be looking at this html, but hello I'm
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(ztable)
 library(UpSetR)
@@ -1795,6 +1795,27 @@ ggplot(alex_g, aes(x = track_number, y= loudness, fill = album_name)) +
   labs(title = "Loudness barplot for each Alex G album")
 ```
 
+I find the overall increase of volume over his career interesting for two reasons. First, Alex mixed and mastered his songs until Beach Music, which was engineered by someone at Domino Records, and the Domino albums seem to have more consistent volume level. Second, it is known that overtime [music has only gotten louder](https://www.bbc.com/news/entertainment-arts-35250557), and it seems to be true for Alex as well. Actually let us test this real quick
+
+### Has Alex gotten louder over time?
+
+```{r}
+alex_g_avg <- alex_g %>% group_by(album_name) %>% summarise(album_release_year = mean(album_release_year), avg_loudness = mean(loudness))
+
+summary(lm(loudness ~ album_release_year, data = alex_g))
+
+
+ggplot(alex_g, aes(x = album_release_year, y = loudness, fill = album_name)) +
+  geom_boxplot() +
+  scale_fill_manual(values = alb_df$album_color) +
+  theme_classic() +
+  labs(title = "Has Alex gotten louder over time?",
+       fill = "Albums")
+
+```
+
+So, to an extent, yes the theory is correct, his music seems to get louder as time passes, and at least Rules and Trick had a relatively larger distribution of volume levels compared to his later work. 
+
 ## Energy
 
 ```{r, fig.width=7, fig.height=7}
@@ -3527,7 +3548,7 @@ Special shoutout to Isabelle for allowing and promoting the survey.
  + Hillary N.: Suggested astrological signs questions
  + Luke D.: Suggested political stance questions
  + Gwendylan T.: Suggested weed usage and Meyer-Briggs type questions
- + Abigail C.: For testing the survey and giving constructive critiques
+ + Abigail C.: For testing the survey and giving constructive criticism
  + Luke P.: Allowing me to link his video
 
 ## Helpful friends not of the group
