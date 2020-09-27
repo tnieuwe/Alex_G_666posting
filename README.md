@@ -1,5 +1,5 @@
 # An Analysis of the members in (Sandy) Alex G 666posting
-The analysis without code chunks is here, and the analysis with code chuncks is here.
+The analysis without code chunks is [here](https://htmlpreview.github.io/?https://github.com/tnieuwe/Alex_G_666posting/blob/master/666posting_analysis_no_code.html), and the analysis with code chuncks is [here](https://htmlpreview.github.io/?https://github.com/tnieuwe/Alex_G_666posting/blob/master/666posting_analysis_w_code.html).
 
 ## What is this?
 While the analysis opens with that discuss I'll give an overview here for those who don't want to dive in.
