@@ -54,7 +54,7 @@ I don't know under what context you might be looking at this html, but hello I'm
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(ztable)
 library(UpSetR)
@@ -1415,7 +1415,7 @@ ggplot(genre_fave, aes(x = factor(Var1, rev(genre_fave$Var1)), y = Freq)) +
   geom_bar(stat = "identity") + coord_flip() +
   xlab("Top genreibd Favorite Musicians") +
   ylab("Count") +
-  labs(title ="Top Ten genreond Favorite Non-Alex G Artists")  + theme_classic()
+  labs(title ="Top 10 Favorite Genres")  + theme_classic()
 ```
 
 
@@ -3037,6 +3037,7 @@ ggplot(dat_drugs, aes(x=age, fill=`Drinks in the USA`)) +
 
 ggsave("outputs/underage_drinking.png")
 ```
+
 Disgusting...
 
 ### Weed usage plots
@@ -3178,7 +3179,9 @@ Making a histogram showing the general results. As you can see there are some ou
 ```{r}
 ggplot(alex_g_conc_dat, aes(x = alex_g_concerts)) +
            geom_bar(color="black")  +
-  theme_classic()
+  theme_classic() +
+  xlab("How many Alex G concerts have you seen?")
+
 ```
 
 My theory is they live near Philly, and by using the state data I've collected I can determine that two of the largest outliers indeed do live near Philly (defined by living in Pennsylvania, New Jersey or Delaware). That said, the individual who has seen Alex 40 times lives in Missouri.
@@ -3213,6 +3216,7 @@ alex_g_conc_dat$living_area <- factor(alex_g_conc_dat$living_area,
 ggplot(alex_g_conc_dat, aes(x = alex_g_concerts, fill = living_area)) +
            geom_bar(color="black") +
   labs(fill = "Area of Living") +
+  xlab("How many Alex G concerts have you seen?") +
   theme_classic()
 ```
 
@@ -3225,6 +3229,8 @@ ggplot(alex_g_conc_dat, aes(y = alex_g_concerts, x = living_area, fill = living_
   coord_flip() +
   stat_n_text(size = 3) +
   theme_classic()  +
+  xlab("Living area") +
+  ylab("Number of Alex G Concerts") +
   theme(legend.position = "none") 
 
 no_out_conc <- alex_g_conc_dat %>% filter(alex_g_concerts < 10)
@@ -3320,7 +3326,7 @@ ggplot(no_out_conc, aes(y = alex_g_concerts, x = `Lives Near Philly?`, fill = `L
   stat_n_text(size = 3) +
   labs(
     title = "How many Alex G concerts have you seen
-base on living near Philly",
+based on living near Philly",
     subtitle = paste0("N = ", nrow(no_out_conc))
   ) +
   xlab("Live near Philly?") +
