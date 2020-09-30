@@ -2,7 +2,7 @@
 The analysis without code chunks is [here](https://htmlpreview.github.io/?https://github.com/tnieuwe/Alex_G_666posting/blob/master/666posting_analysis_no_code.html), and the analysis with code chuncks is [here](https://htmlpreview.github.io/?https://github.com/tnieuwe/Alex_G_666posting/blob/master/666posting_analysis_w_code.html).
 
 ## What is this?
-While the analysis opens with that discuss I'll give an overview here for those who don't want to dive in.
+An analysis of survey results from a Facebook Group known as (Sandy) Alex G 666posting that I completed in R.
 
 ## Who is Alex G
  Alex G is a somewhat prominent indie musician out of Philly.  He has been writing music for 10+ years and is, at the time I'm writing this, is 27. I'm not going to give his entire history, but when people think of "succesful bedroom artists" (a moniker he doesn't like), he is one of the artists people think of. Up until the release of Beach Music all of his albums were recorded and mixed by him. He is also a multi-instrumentalist, playing almost all fo this instruments on his recordings. His songwriting, lyrics, and production all come together to create an engaging experience I always find myself coming back to. To paraphrase him in an interview "I want my music to hit the 7th time you've listened to it". In my opinion he is one of the greatest and most prolific musicians working today with (including unreleased music) a 200+ song discography. I understand that he's not everyone's cup of tea, but man is he mine. 
