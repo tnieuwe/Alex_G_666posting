@@ -50,11 +50,11 @@ I don't know under what context you might be looking at this html, but hello I'm
 + `ggforce`: Sina Plots
 
 ### Seed
-`set.seed(123)` This was just to keep the consistency of the word clouds
+`set.seed(666)` This was just to keep the consistency of the word clouds, it used to be 123, but uh, Alex G frequently references 666
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(ztable)
 library(UpSetR)
@@ -75,7 +75,7 @@ library(ggforce)
 library(parsnip)
 options(ztable.type = "html")
 #For simulated p-values
-set.seed(123)
+set.seed(666)
 ```
 
 
@@ -624,7 +624,9 @@ us_states_2 <- left_join(us_states, state_df)
 ```
 
 I got the census data from [census.gov](https://www.census.gov/newsroom/press-kits/2019/national-state-estimates.html) particularly the file named:
-`NST-EST2019-01: Table 1. Annual Estimates of the Resident Population for the United States, Regions, States, and Puerto Rico: April 1, 2010 to July 1, 2019` I'm not gonna lie, I was lazy and cleaned up the data in excel, but basically I selected the 2019 data only as it was most relevant. I used this data primarily to control for population in the coloration of the maps below. I don't really have much to say on them so enjoy!
+`NST-EST2019-01: Table 1. Annual Estimates of the Resident Population for the United States...`
+
+I'm not gonna lie, I was lazy and cleaned up the data in excel, but basically I selected the 2019 data only as it was most relevant. I used this data primarily to control for population in the coloration of the maps below. I don't really have much to say on them so enjoy!
 
 ```{r}
 
@@ -1336,12 +1338,12 @@ wordcloud(words = sec_musician$Var1, freq = sec_musician$Freq, min.freq = 1,
                             scale=c(5,0.5)
                             )
 #Print word cloud
-png("outputs/second_musician.png", units="in", width=5, height=5, res=300)
-wordcloud(words = sec_musician$Var1, freq = sec_musician$Freq, min.freq = 1,
-                            max.words=200, random.order=FALSE, rot.per=0.35, 
-                            colors=sec_musician$color_fan, ordered.colors = T
-                            )
-dev.off()
+# png("outputs/second_musician.png", units="in", width=5, height=5, res=300)
+# wordcloud(words = sec_musician$Var1, freq = sec_musician$Freq, min.freq = 1,
+#                             max.words=200, random.order=FALSE, rot.per=0.35, 
+#                             colors=sec_musician$color_fan, ordered.colors = T
+#                             )
+# dev.off()
 ```
 
 ```{r}
@@ -1438,7 +1440,8 @@ unique(dat$discover_method)
 If you're viewing the version without the code you might not know what is going on here, but basically I am using key words in all of the non-normal options to fit them into more normal categories. For example if the answer includes a website, I detect the unique letters in that character string ("umblr" fo Tumblr) and then rename that answer to "other website". This is a more interesting section to look at via the coded version of this file.
 ```{r}
 #I'm trying to avoid making all lower and then upper
-websites <- c("umblr", "ound", ".com","iki", "vine", "acebook", "FB", "blog", "chan", "You", "eddit", "etflix")
+websites <- c("umblr", "ound", ".com","iki", "vine", "acebook", "FB", "blog", "chan", "You", "eddit")
+other_media <-  c("etflix", "GTA", "ake")
 online_personality <- c("witter", "artist ZI", "ouTuber")
 friends <- c("other", "Crush", "clerk")
 radio <- "adio"
@@ -1454,6 +1457,7 @@ dat_disc <- mutate(dat, discover_method = case_when(
   str_detect(discover_method, paste(live_music, collapse = "|")) ~ "Live Music",
   str_detect(discover_method, paste(radio, collapse = "|")) ~ "Radio",
   str_detect(discover_method, paste(compilations_lab, collapse = "|")) ~ "Compilations/Label",
+  str_detect(discover_method, paste(other_media, collapse = "|")) ~ "Other media",
   T ~ discover_method
 )) %>% filter(!discover_method %in% c("", "i really canâ€™t remember ")) %>%
   select(Timestamp, discover_method)
@@ -1627,7 +1631,7 @@ songs_clean <- songs_only %>%
 
 #### Word Cloud of Favorite Alex G Songs
 
-A word cloud of everyone's favorite Alex G songs from the survey, colored by what album they’re in, size based on the number of people that selected a given song as their favorite. So as you can see the top two favorite songs of those who answered the survey is Snot and Gnaw, and tbh, I’m SNOT surprised. Ugh, anyways the thing I actually love about this image is, because of how Alex names his songs, there are cool phrases that are generated. Personally I love “Screwy People Change My Mind”, it’s just fun sticking his song titles together.
+A word cloud of everyone's favorite Alex G songs from the survey, colored by what album they’re in, size based on the number of people that selected a given song as their favorite. So as you can see the top two favorite songs of those who answered the survey is Snot and Gnaw, and tbh, I’m SNOT surprised. Ugh, anyways the thing I actually love about this image is, because of how Alex names his songs, there are cool phrases that are generated. Personally I love “Memory After Ur Gone”, it’s just fun sticking his song titles together.
 
 ```{r}
 #Word cloud for markdown
