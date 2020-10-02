@@ -1,5 +1,5 @@
 # An Analysis of the members in (Sandy) Alex G 666posting
-The analysis without code chunks is [here](https://htmlpreview.github.io/?https://github.com/tnieuwe/Alex_G_666posting/blob/master/666posting_analysis_no_code.html), and the analysis with code chuncks is [here](https://htmlpreview.github.io/?https://github.com/tnieuwe/Alex_G_666posting/blob/master/666posting_analysis_w_code.html).
+The analysis without code chunks is [here](https://bookdown.org/connect/#/apps/5642/access), and the analysis with code chuncks is [here](https://htmlpreview.github.io/?https://github.com/tnieuwe/Alex_G_666posting/blob/master/666posting_analysis_w_code.html).
 
 ## What is this?
 An analysis of survey results from a Facebook Group known as (Sandy) Alex G 666posting that I completed in R.
