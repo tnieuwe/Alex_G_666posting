@@ -17,42 +17,41 @@ editor_options:
 ```{r, echo=FALSE, warning = FALSE, message = FALSE}
 library(tidyverse)
 
-dat <- read.csv("inputs/alex_g_stats_9_24.csv", stringsAsFactors = F) %>% filter(!is.na(age))
+dat <- read.csv("inputs/alex_g_stats_non_public_final.csv", stringsAsFactors = F) %>% filter(!is.na(age))
 ```
 
 ## Preface
 
+I don't know under what context you might be looking at this html, but
+hello I'm Tim. I'm writing this preface so that no matter where you're
+coming from I can explain what you're about to see.
+
 ### What is this?
 
-This is an analysis I completed on survey data I collected from a
-Facebook group known as (Sandy) Alex G 666posting. For those of you that
-don't know, Alex G is a prolific indie artist who has been putting out
-music since at least 2010. He is now a well known musician in the indie
-scene, but what makes him such an interesting musician to me is his over
-200+ song discography (including unreleased tracks). I also love his
-music and he has been my favorite musician for the past couple years as
-well.
+This is a data analysis I completed on some survey data I collected from
+a Facebook group known as Alex G 666posting. Alex G is a prolific indie
+artist who has been releasing music since at least 2010. His popularity
+has continued to grow with each album release, but what makes him such
+an interesting musician is, including his leaked unreleased tracks, Alex
+has 200+ songs.
 
-### How did you end up doing this analysis?
-
-I joined the aforementioned facebook group back in January of 2019 as I
-got into Alex's unreleased discography. Since then I have come to really
-enjoy the community that exists there. One day an individual, Zion, who
-asked how old people in the group were when they started listening to
-Alex G and how old they were now. I asked if it was okay to collect the
-data, and made a couple figures for the group that you will see
-recreated in the analysis. I then asked if it was okay to make a survey
-for the group to gather more data, I got the okay (specifically from
-Isabelle) and began working. Many individuals helped with the survey as
-you can see in the bottom, but the final dataset had `r ncol(dat)`
-columns of data from `r round(nrow(dat), 3)` individuals. Some questions
-Alex G related, some not. But I hope you find something interesting in
-this little project I made. I've been working on it on and off in my
-free time since late April and it has been in its final version since
-late September with only small updates since. Either way, its a labor of
-love to give back to the great community I found online. The group is
-full of cool people and I'm glad to be a part of it (I also think this
-project helped me become a ~~mod~~ admin so that was nice).
+I joined the group back in January of 2019 and have come to really enjoy
+the community that exists there. In the group a member, Zion, asked how
+old people were when they first started listening to Alex G and how old
+they were now. I asked if it was okay, collected that data, and made a
+figure for the group showing the distribution of ages in the group. I
+then asked if it was okay to make a survey for the group to analyze more
+data, I got the okay, specifically from Isabelle, and began working.
+Many individuals helped with the creation of survey as you can see in my
+thanks at the bottom, but the final result was `r ncol(dat)` columns of
+data from `r round(nrow(dat), 3)` individuals. Some questions Alex G
+related, some not. But I hope you find something interesting in this
+little project I made. I've been working on it on and off in my free
+time since late April finishing it up in late September. Either way, its
+a labor of love to give back to the great community I found online. The
+group is full of cool people and I'm glad to be a part of it (I also
+think this project helped me become a ~~mod~~ admin so that was nice).
+>>>>>>> db951d22b5fa8ceb81b1872d7194140016252fab
 
 ### Disclaimer
 
@@ -74,6 +73,7 @@ that in mind, let's get into the analysis.
 -   `wordcloud`: Used to make word clouds (surprise!)
 -   `rworldmap`: The map of the world!
 -   `mapproj`: The map of the US
+>>>>>>> db951d22b5fa8ceb81b1872d7194140016252fab
 -   `wesanderson`: Wes Anderson Color Palettes
 -   `maps`: More maps
 -   `viridis`: Used for colorblind-friendly palette
@@ -155,13 +155,15 @@ dat <- dat %>% mutate(
 ```
 
 So the first demographics we'll take a quick peek at is at age and race.
-We'll look at age in a histogram colored on "what generation do you
-identify with". Get used to the age variable, as it is one of our few
-numerical values, so I'm going to be plotting it a lot. Anyways, overall
-age is right-skewed, with only one real outlier at `r max(dat$age)`.
-Alex G is about 26-27 at the time of me writing this and has been
-writing music since his early teenage years, so the demographics of
-teens and 20-somethings is unsurprising.
+
+First, we'll look at age at a histogram colored on "what generation do
+you identify with". Get used to the age variable, as it is one of our
+few numerical values, so I'm going to be plotting it a lot. Anyways,
+overall age is right-skewed, with only one real outlier at
+`r max(dat$age)`. Alex G is about 26-27 at the time of me writing this
+and has been writing music since his early teenage years, so the
+demographics of teens and 20-somethings is unsurprising.
+
 
 As a straight white dude (who we will see is the average Alex G
 listener), I can't really speak to why or why not Alex is popular or not
@@ -278,12 +280,13 @@ annotate_figure(gpt_plot, top = text_grob(
 
 # The Original Plot
 
+
 This is the plot the inspired the project, how? Quick storytime:
 
 Zion, a member of 666posting asked individuals "What age were you when
 you discovered Alex G and what age are you now?". Everyone started
 answering the question and I found it interesting. Eventually, it had
-over 200+ individuals and I came up with an idea of making two
+200+ individuals and I came up with an idea of making two
 overlapping histograms, one distribution for each respective question. I
 asked for permission and then began the first analysis of 666posting. As
 you'll see I didn't stop there with that data, as I thought of other
@@ -343,12 +346,14 @@ ggsave("start_age_current.png", width = 9, height = 7)
 
 ```
 
+
 Another plot I made, using the aforementioned "year learning of Alex G"
 data I extrapolated is a diagram of his fan base growth over time. I did
 this by using the "first year people learned of Alex G" data, and
 overlaying that with his album releases (the albums are colored on the
 album art). However, unlike my initial making of this plot based on
 people just commenting on a Facebook post, this data is a little... odd.
+
 
 ```{r}
 ##Second histogram
@@ -399,9 +404,10 @@ ggsave("year_start_listening.png", width = 9, height = 7)
 
 ```
 
-So below is the original figure.
+Compare to the original figure.
 
 ![](inputs/original_plot_2.jpg)
+
 
 And compared to this figure our new one is definitely different. First
 of all, we have much more of a normal distribution besides the person...
@@ -421,7 +427,7 @@ Also compared to the previous plot we have a lot more 2018-20 fans, but
 I think that's primarily because the original data was pulled from late
 March/early April 2020, and this current survey has been rolling open
 the entire year, so that is not unexpected. But on the topic of the
-actual data, the data is for the most part normal, which is more
+actual data, the data is for the most part normal, which is more 
 indicative of the sample we're pulling from. I assumed the number of
 fans should just continue increasing with each album as his fame has
 only grown. Maybe there is a critical limit of indie fans that he
@@ -432,6 +438,7 @@ to answer a silly survey). It is interesting that 2015 and the release
 of Beach Music is his largest jump in popularity, as it is also the same
 year he signed with Domino Records who probably helped promote his work
 to a wider audience.
+
 
 ### How long have we been listening to Alex G?
 
@@ -653,6 +660,7 @@ comparing this data to Alex G's touring data so... tada! I took this
 data from
 [setlist.fm](https://www.setlist.fm/stats/concert-map/sandy-alex-g-13d8c919.html),
 they actually have interesting concert statistics, I suggest checking
+
 them out. I actually had a project idea where I was gonna scrape their
 data and make an average Alex G setlist for each year and generate a
 naive Bayes model/shiny app allowing people to put in their perfect
@@ -664,9 +672,11 @@ talking about:
 ![Alex G Concerts Around the World from
 setlist.fm](inputs/alex_g_concerts_world.png)
 
+
 I put the setlist data into a csv file so I could use it in R, and I
 decided to plot the number of concerts in a country versus the number of
 fans. But you can see when I first saw the data....
+
 
 ```{r}
 concerts_world <- read.csv("inputs/countries_concerts.csv", fileEncoding = "UTF-8-BOM")
@@ -713,7 +723,8 @@ Number of concerts per fan linear model with America
 summary(lm(concerts ~ fans , data = joined_country_concerts))
 ```
 
-Number of concerts per fan linear model without America\
+
+Number of concerts per fan linear model without America
 
 ```{r}
 no_america_concerts <- joined_country_concerts %>% filter(Country.Name != "United States")
@@ -731,6 +742,7 @@ So now let us look at the Alex G Fans around the US.
 
 I used the below vignette to guide this section
 <https://cran.r-project.org/web/packages/usmap/vignettes/mapping.html>
+
 
 ```{r Preparing data for US states}
 us_states <- map_data("state")
@@ -754,9 +766,11 @@ particularly the file named:
 `NST-EST2019-01: Table 1. Annual Estimates of the Resident Population for the United States...`
 
 I'm not gonna lie, I was lazy and cleaned up the data in excel, but
+
 basically I filtered to only the 2019 data. I used this data primarily
 to control for population in the coloration of the maps below. I don't
 really have much to say on them so enjoy!
+
 
 ```{r}
 
@@ -771,6 +785,7 @@ census <- census %>% mutate(X2019= round(as.numeric(str_replace_all(X2019, ",", 
 us_states_3 <- left_join(us_states_2, census) %>% mutate(count = ifelse(is.na(count), 0, count),
                                                          adjust = round((count/X2019 * 100000), digits = 3))
 ```
+
 
 ```{r long lat}
 ## This data I'm gonna use to center text in the states, it's basically
@@ -914,6 +929,7 @@ we included Southern East Coast states it would've won.
 
 ### Spice Alert
 
+
 So one of the first graphs I generated with the survey data, because I
 thought it would be a fun one to do, is looking at the political
 leanings in the group. While politics has a lot more depth than can be
@@ -937,6 +953,7 @@ I completely understood people not being comfortable with individuals
 having, uh, "strong fascist leanings" so it caused a bit of a row (Never
 a good look when your post has more comments than likes). That said, I
 still think the data is pretty interesting so let's look at it.
+
 
 ```{r preparing political dat}
 
@@ -1255,6 +1272,21 @@ while the other plot gives you how many people share the same overlap of
 instruments. I hope this makes, sense, but it will be readily apparent
 once you see the plots.
 
+Anyways the way to read this diagram is as follows: The total count of
+each instrument is in the bottom left corner, you can see that we have
+over \~120 guitarists who answered the survey followed by \~70
+keyboard/piano players. Then if you look to the right of that graph
+you'll see dots and lines. If two dots are filled that means that the
+bar above it represents the intersection of individuals who play both
+those instruments. As more dots are filled that represents a greater
+intersection. So you can see that there are 27 solo guitarists, while
+there are 12 people who play all of the instruments in this graph.
+
+As I said, I couldn't fit in all the data because of the limitations so
+sorry to all the unique instrument players, but at least you got a shout
+out in the first graph you Chinese flute-playing god.
+
+
 ```{r}
 #Make Instrument strings look like titles
 colnames(instr_dat) <- str_to_title(colnames(instr_dat))
@@ -1329,6 +1361,7 @@ plot_up
 as Alex, including the guitar, bass, drums, banjo, voice, mandolin,
 music software, and keyboard (to my knowledge).
 
+
 ```{r Save them via graphical device}
 #muted for final readout
 
@@ -1368,7 +1401,7 @@ knowing more musicians who aren't in bands.
 # Non-musical art
 
 This is basically the same analysis as above, but this time we're
-looking at the rest ofThe Arts!
+looking at the rest of the world of The Arts!
 
 ```{r}
 art_dat <- dat %>%  filter(art != "") %>%
@@ -1448,8 +1481,9 @@ art_upset
 
 ### Word Clouds
 
-So... word clouds. Technically speaking word clouds are never a good way
-to represent data in a meaningful way. While the size of the letters
+
+So... word clouds. Technically speaking, word clouds are never a good
+way to represent data in a meaningful way. While the size of the letters
 increases one can still be tricked into thinking, in this case, long
 band names have more votes, which isn't true. As a result, you'll see
 that I ended up coloring the data a little bit to help clarify this
@@ -1789,7 +1823,8 @@ fan_comp_plot
 ggsave("outputs/favorite_fancomp.png", height = 7, width = 7)
 ```
 
-Overall it seems that people don't listen to them, but as I said I
+
+Overall it seems that people don't listen to them, but as I said, I
 suggest it. The winner of them is by a large margin
 [Monsterhead](https://www.youtube.com/watch?v=AyccAi3pkNA&ab_channel=pushedback),
 which makes sense to me. Out of all his compilations, I feel it is the
@@ -1868,8 +1903,9 @@ that selected a given song as their favorite. So as you can see the top
 two favorite songs of those who answered the survey is Snot and Gnaw,
 and tbh, I'm SNOT surprised. Ugh, anyways the thing I actually love
 about this image is, because of how Alex names his songs, there are cool
-phrases that are generated. Personally I love "Memory After Ur Gone",
-it's just fun sticking his song titles together.
+phrases that are generated. Personally I love "Screwy People, I Wait For
+You", it's just fun sticking his song titles together.
+
 
 ```{r}
 #Word cloud for markdown
@@ -1967,8 +2003,8 @@ songs to determine their "valence" (sad to happy; 0 to 1), danceability
 overall top and bottom songs for each of these categories, and honestly,
 I'm dubious a. hell about these. For example, they have a quality known
 as "liveness" which determine if the song is recorded live or not. The
-number 1 "liveness" song is Brick and Sugar House - LIVE, is third! We
-also have loudness in decibels which goes from [Clouds (thanks
+number 1 "liveness" song is Brick meanwhile Sugar House - LIVE, is
+third! We also have loudness in decibels which goes from [Clouds (thanks
 Luke)](https://www.youtube.com/watch?v=kT1hlApvPx0&list=LLPVQqFG7Ox13rWsIahA1jLA&index=3)
 to
 [Brick](https://www.youtube.com/watch?v=IF48Wmz6Buk&ab_channel=DominoRecordingCo.).
@@ -2180,11 +2216,12 @@ amongst fan favorite songs. As a result, it does lean more towards
 danceability preference. With energy people prefer lower energy, with
 fan preference taking a dip around 0.8. Lastly with valence, which I
 will remind is basically happiness, there is a low peak around .30 of
-sad peep with some happy nerds around .75, breaking through the
+ution from danceability trends towards signifigance.
+sad peeps with some happy nerds around .75, breaking through the
 discography distribution. Statistically speaking, using
 Kolmogorov-Smirnov tests, which tests if there is a similar
 distribution, we see that there is no significant difference, but that
-bimodal distribution from danceability trends towards signifigance.
+bimodal distribution from danceability trends towards significance.
 
 # Personality Questions
 
@@ -2500,9 +2537,10 @@ The group, compared to the general population, well, they look NOTHING
 alike. While the population data is relatively outdated *cough cough
 hasn't been updated since 2002* , our distribution is not close to it at
 all, below I will have the outputs side by side. A good portion of our
-members come from the rarer types, and specifically, 18% of
-participating members are the rarest type, INFJ, which makes up \~2% of
-the normal population. Crazy. This, of course, carries over to the
+members come from the rarer types, and specifically,
+`r round(mbti_dat[mbti_dat$mbtis %in% "INFJ", "mbti_percent"] * 100, digits = 2)`%
+of participating members are the rarest type, INFJ, which makes up \~2%
+of the normal population. Crazy. This, of course, carries over to the
 discrete types as well, the starkest difference is the Intuitives
 considerably outnumber the Sensors in this group (I don't know what that
 means, but if you want to explain it in the comments feel free to),
@@ -2530,7 +2568,7 @@ annotate_figure(gpt_lett, top = text_grob(
 
 *Note: The reason the P-values are the same is that I have the
 chi-square set to `simulate.pvalues` as the distribution of values
-throws a warning otherwise*
+throws results in a warning, this isn't the best dataset for this test*
 
 ### Birthday/Zodiacs
 
@@ -2766,13 +2804,14 @@ ggsave(filename = "outputs/horo-elements-666.png", width = hght, height = wdth)
 
 ## Astrology Analysis
 
-In our group, when compared to the general population there does seem to
-be an imbalance. Capricorns make up around 3% of our group while Gemini
-makes up \~12%. That said, this is not a significant change in the
-distribution according to a chi-square analysis. The same is true for
-elements, the change nears significance, but does not cross the
-arbitrary (thanks Fisher) 0.05 threshold, though overall there are less
-Earth and Water signs in this group.
+In our group however, this aforementioned balanced distribution doesn't
+hold true. Capricorns make up around 3% of our group while Gemini makes
+up `r sum(pers_dat$sign == "Gemini")/nrow(pers_dat) * 100`%. That said,
+this is not a significant change in the distribution according to a
+chi-square analysis. The same is true for elements, the change nears
+significance, but does not cross the arbitrary (thanks Fisher) 0.05
+threshold, though overall there are less Earth and Water signs in this
+group.
 
 ```{r width = 10}
 
@@ -2909,8 +2948,8 @@ surv_house_2 <- surv_house +
 ```
 
 As I said above, the only thing of note is the change in Slytherin,
-which I attribute to the trend that Slytherin's are genrally younger,
-and this group a younger sample when compared to the overall populatio.
+which I attribute to the trend that Slytherin's are generally younger,
+and this group a younger sample when compared to the overall population.
 
 ```{r }
 
@@ -3692,7 +3731,7 @@ ggsave(filename = "outputs/alex_g_conc_hab.png", width = hght, height = wdth)
 That "once a year if ever" dude with 40 Alex G concerts must be 40
 then.... something is telling me that might've been a mistake.
 
-I decided to use some linear models to check if any of these variable
+I decided to use some linear models to check if any of these variables
 were good predictors
 
 ```{r}
