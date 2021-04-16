@@ -11,7 +11,7 @@ An analysis of survey results from a Facebook Group known as (Sandy) Alex G 666p
 It is a Facebook group for people who are fans of Alex G where we discuss his music and share memes. The idea behind the group is explained well by this [article](https://www.vice.com/en_us/article/4agvdm/facebook-shitposting-groups-are-the-new-fan-clubs-for-indie-bands), or at least it explains the phenomenon that these types of groups are a part of.
 
 ## Why did you do this?
-In the analysis you'll see the full story, but I made a graph for the group, got approval to make a survey for the group, and then generated the analysis for the group. It should be noted that I had slowly released this data to the group as I generated it, and that this is the final release collated in an Rmarkdown html. I appreciate every single individual who participated in the survey.
+In the analysis you'll see the full story, but I made a graph for the group, got approval to make a survey for the group, and then generated the analysis for the group. It should be noted that I had slowly released this data to the group as I generated it, and that this is the final release collated in an Rmarkdown html. Frankly I did it for fun, for the benefit of the people in the group who are interested, and to pick up some R skills here and there.
 
 ## Data Structure:
 + *code_book.xlsx*: A simple code book explaining the different variables in the main dataset. This includes the original questions that were asked, what they were renamed to in the R analysis and basic facts about how the questions were answered.
